@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Objects\" />
+    <None Remove="Xabe.FFmpeg" />
+    <None Remove="Xabe.FFmpeg.Downloader" />
+    <None Remove="TorrentTitleParser" />
+    <None Remove="Interfaces\" />
+    <None Remove="YoutubeExtractor" />
+    <None Remove="Utilities\" />
+    <None Remove="Objects\Libraries\" />
+    <None Remove="Objects\Extras\" />
+    <None Remove="LibVLCSharp" />
+    <None Remove="YoutubeExplode" />
+    <None Remove="FFMpegSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Objects\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Utilities\" />
+    <Folder Include="Objects\Libraries\" />
+    <Folder Include="Objects\Extras\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Flexx.Core\Flexx.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Xabe.FFmpeg" Version="5.0.2" />
+    <PackageReference Include="Xabe.FFmpeg.Downloader" Version="5.0.2" />
+    <PackageReference Include="TorrentTitleParser" Version="1.0.3" />
+    <PackageReference Include="LibVLCSharp" Version="3.6.1" />
+    <PackageReference Include="YoutubeExplode" Version="6.0.5" />
+  </ItemGroup>
+</Project>

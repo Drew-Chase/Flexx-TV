@@ -1,0 +1,210 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/Flexx.Web-Assembly.csproj": {}
+  },
+  "projects": {
+    "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/Flexx.Core.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/Flexx.Core.csproj",
+        "projectName": "Flexx.Core",
+        "projectPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/Flexx.Core.csproj",
+        "packagesPath": "/Users/drewchase/.nuget/packages/",
+        "outputPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/drewchase/.config/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net5.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net5.0": {
+            "targetAlias": "net5.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net5.0": {
+          "targetAlias": "net5.0",
+          "dependencies": {
+            "ChaseLabs.Configuration": {
+              "target": "Package",
+              "version": "[0.0.6, )"
+            },
+            "ChaseLabs.Logger": {
+              "target": "Package",
+              "version": "[0.1.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/5.0.401/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/Flexx.Media.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/Flexx.Media.csproj",
+        "projectName": "Flexx.Media",
+        "projectPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/Flexx.Media.csproj",
+        "packagesPath": "/Users/drewchase/.nuget/packages/",
+        "outputPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/drewchase/.config/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net5.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net5.0": {
+            "targetAlias": "net5.0",
+            "projectReferences": {
+              "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/Flexx.Core.csproj": {
+                "projectPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/Flexx.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net5.0": {
+          "targetAlias": "net5.0",
+          "dependencies": {
+            "LibVLCSharp": {
+              "target": "Package",
+              "version": "[3.6.1, )"
+            },
+            "TorrentTitleParser": {
+              "target": "Package",
+              "version": "[1.0.3, )"
+            },
+            "Xabe.FFmpeg": {
+              "target": "Package",
+              "version": "[5.0.2, )"
+            },
+            "Xabe.FFmpeg.Downloader": {
+              "target": "Package",
+              "version": "[5.0.2, )"
+            },
+            "YoutubeExplode": {
+              "target": "Package",
+              "version": "[6.0.5, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/5.0.401/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/Flexx.Web-Assembly.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/Flexx.Web-Assembly.csproj",
+        "projectName": "cunt",
+        "projectPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/Flexx.Web-Assembly.csproj",
+        "packagesPath": "/Users/drewchase/.nuget/packages/",
+        "outputPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/drewchase/.config/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net5.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net5.0": {
+            "targetAlias": "net5.0",
+            "projectReferences": {
+              "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/Flexx.Core.csproj": {
+                "projectPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/Flexx.Core.csproj"
+              },
+              "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/Flexx.Media.csproj": {
+                "projectPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/Flexx.Media.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net5.0": {
+          "targetAlias": "net5.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/5.0.401/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

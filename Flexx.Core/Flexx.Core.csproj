@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Data\" />
+    <None Remove="Xabe.FFmpeg" />
+    <None Remove="ChaseLabs.Configuration" />
+    <None Remove="ChaseLabs.Logger" />
+    <None Remove="YoutubeExtractor" />
+    <None Remove="TorrentTitleParser" />
+    <None Remove="Utilities\" />
+    <None Remove="Data\Exceptions\" />
+    <None Remove="Authentication\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Data\" />
+    <Folder Include="Utilities\" />
+    <Folder Include="Data\Exceptions\" />
+    <Folder Include="Authentication\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="ChaseLabs.Configuration" Version="0.0.6" />
+    <PackageReference Include="ChaseLabs.Logger" Version="0.1.1" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "Rihv1CTl5yoHnYY95Tj+e6Udn7Rpis3QIv8rSNzw/AfSQwou93PHmlmfEJLW01Y8pP5nZiJPSdkr3jlHXbEFCw==",
+  "success": true,
+  "projectFilePath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/Flexx.Core.csproj",
+  "expectedPackageFiles": [
+    "/Users/drewchase/.nuget/packages/chaselabs.configuration/0.0.6/chaselabs.configuration.0.0.6.nupkg.sha512",
+    "/Users/drewchase/.nuget/packages/chaselabs.logger/0.1.1/chaselabs.logger.0.1.1.nupkg.sha512"
+  ],
+  "logs": []
+}

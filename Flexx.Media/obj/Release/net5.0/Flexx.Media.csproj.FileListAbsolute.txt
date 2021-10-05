@@ -1,0 +1,15 @@
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/bin/Release/net5.0/Flexx.Media.deps.json
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/bin/Release/net5.0/Flexx.Media.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/bin/Release/net5.0/ref/Flexx.Media.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/bin/Release/net5.0/Flexx.Media.pdb
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/bin/Release/net5.0/Flexx.Core.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/bin/Release/net5.0/Flexx.Core.pdb
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/obj/Release/net5.0/Flexx.Media.csproj.AssemblyReference.cache
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/obj/Release/net5.0/Flexx.Media.GeneratedMSBuildEditorConfig.editorconfig
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/obj/Release/net5.0/Flexx.Media.AssemblyInfoInputs.cache
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/obj/Release/net5.0/Flexx.Media.AssemblyInfo.cs
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/obj/Release/net5.0/Flexx.Media.csproj.CoreCompileInputs.cache
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/obj/Release/net5.0/Flexx.Media.csproj.CopyComplete
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/obj/Release/net5.0/Flexx.Media.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/obj/Release/net5.0/ref/Flexx.Media.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Media/obj/Release/net5.0/Flexx.Media.pdb

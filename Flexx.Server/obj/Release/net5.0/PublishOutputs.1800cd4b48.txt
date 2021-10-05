@@ -1,0 +1,17 @@
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/appsettings.Development.json
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/appsettings.json
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/cunt.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/cunt.deps.json
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/cunt.runtimeconfig.json
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/cunt.pdb
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/CLConfiguration.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/CLLogger.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/Newtonsoft.Json.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/TorrentTitleParser.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/Xabe.FFmpeg.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/Xabe.FFmpeg.Downloader.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/YoutubeExtractor.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/Flexx.Core.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/Flexx.Media.dll
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/Flexx.Core.pdb
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Web-Assembly/bin/Release/net5.0/publish/Flexx.Media.pdb
