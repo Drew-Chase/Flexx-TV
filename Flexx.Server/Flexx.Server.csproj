@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <RootNamespace>Flexx.WebAssembly</RootNamespace>
-    <AssemblyName>cunt</AssemblyName>
+    <RootNamespace>Flexx.Server</RootNamespace>
+    <AssemblyName>Flexx Media Server</AssemblyName>
     <OutputType>WinExe</OutputType>
   </PropertyGroup>
 

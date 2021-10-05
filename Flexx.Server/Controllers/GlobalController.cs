@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using static Flexx.Core.Data.Global;
 
-namespace Flexx.WebAssembly.Controllers
+namespace Flexx.Server.Controllers
 {
     [ApiController]
     [Route("/api/")]

@@ -11,7 +11,7 @@ using static Flexx.Core.Data.Global;
 using Flexx.Media.Objects.Libraries;
 using System.IO;
 
-namespace Flexx.WebAssembly
+namespace Flexx.Server
 {
     public class Program
     {
