@@ -14,15 +14,19 @@
     <None Remove="Utilities\" />
     <None Remove="Data\Exceptions\" />
     <None Remove="Authentication\" />
+    <None Remove="Networking\" />
+    <None Remove="Newtonsoft.Json" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Utilities\" />
     <Folder Include="Data\Exceptions\" />
     <Folder Include="Authentication\" />
+    <Folder Include="Networking\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ChaseLabs.Configuration" Version="0.0.6" />
     <PackageReference Include="ChaseLabs.Logger" Version="0.1.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 </Project>

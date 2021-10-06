@@ -361,5 +361,15 @@ namespace Flexx.Media.Objects
             Metadata.Add("plot", Plot);
             Metadata.Add("release_date", ReleaseDate.ToString("yyyy-MM-dd"));
         }
+
+        public bool ScanForDownloads(out string[] links)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddToTorrentClient(bool useInternal = true)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

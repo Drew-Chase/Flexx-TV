@@ -1,11 +1,15 @@
 ﻿using System;
 using System.IO;
+using System.Xml;
 using Flexx.Core.Data.Exceptions;
+using Flexx.Core.Networking;
 using Flexx.Media.Interfaces;
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Server.Controllers
@@ -37,7 +41,6 @@ namespace Flexx.Server.Controllers
             if (results == null)
                 return new JsonResult(new { message = $"No Results" });
             return new JsonResult(results);
-
         }
         [HttpGet("movies/{tmdb}")]
         public IActionResult GetMovie(string tmdb)

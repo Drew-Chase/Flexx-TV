@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using ChaseLabs.CLConfiguration.List;
+using Flexx.Core.Networking;
 using Flexx.Media.Interfaces;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
@@ -77,26 +78,33 @@ namespace Flexx.Media.Objects
 
         private string meta_directory => Path.Combine(Paths.MetaData, "Movies", TMDB);
 
-        public MovieModel(string path)
+        public MovieModel(string initializer, bool isTMDB = false)
         {
-            PATH = path;
-            Torrent torrent = new(((IMedia)this).FileName);
-            JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString($"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}&year={torrent.Year}")))["results"];
-            if (results.Children().Any())
+            if (isTMDB)
             {
-                TMDB = results[0]["id"].ToString();
+                TMDB = initializer;
             }
             else
             {
-                results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString($"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}")))["results"];
+                PATH = initializer.ToString();
+                Torrent torrent = new(((IMedia)this).FileName);
+                JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString($"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}&year={torrent.Year}")))["results"];
                 if (results.Children().Any())
                 {
                     TMDB = results[0]["id"].ToString();
                 }
                 else
                 {
-                    MovieLibraryModel.Instance.RemoveMedia(this);
-                    return;
+                    results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString($"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}")))["results"];
+                    if (results.Children().Any())
+                    {
+                        TMDB = results[0]["id"].ToString();
+                    }
+                    else
+                    {
+                        MovieLibraryModel.Instance.RemoveMedia(this);
+                        return;
+                    }
                 }
             }
 #if DEBUG
@@ -106,6 +114,7 @@ namespace Flexx.Media.Objects
 #endif
             LoadMetaData();
         }
+
 
         private void LoadMetaData()
         {
@@ -204,5 +213,21 @@ namespace Flexx.Media.Objects
                 Metadata.Add("mpaa", MPAA);
         }
 
+        public bool ScanForDownloads(out string[] links)
+        {
+            links = Indexer.GetMagnetList($"{Title} {ReleaseDate.Year}");
+            return links.Length != 0;
+        }
+
+        public void AddToTorrentClient(bool useInternal = true)
+        {
+            if (ScanForDownloads(out string[] links))
+            {
+                foreach (string link in links)
+                {
+                    Console.WriteLine(link);
+                }
+            }
+        }
     }
 }

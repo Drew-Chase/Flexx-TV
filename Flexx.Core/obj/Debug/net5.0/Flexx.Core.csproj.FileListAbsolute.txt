@@ -9,3 +9,4 @@
 /Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/obj/Debug/net5.0/Flexx.Core.dll
 /Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/obj/Debug/net5.0/ref/Flexx.Core.dll
 /Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/obj/Debug/net5.0/Flexx.Core.pdb
+/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Core/obj/Debug/net5.0/Flexx.Core.csproj.AssemblyReference.cache

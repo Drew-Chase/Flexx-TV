@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text.Json.Serialization;
 using Flexx.Core.Data.Exceptions;
+using Flexx.Core.Networking;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -56,7 +57,7 @@ namespace Flexx.Media.Objects.Libraries
         }
         public static object[] SearchForMovies(string query, int year = -1)
         {
-            string url = string.Empty;
+            string url;
             if (year != -1)
                 url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}&year={year}";
             else
@@ -73,7 +74,7 @@ namespace Flexx.Media.Objects.Libraries
                     id = result["id"].ToString(),
                     title = result["title"].ToString(),
                     year = DateTime.Parse(result["release_date"].ToString()).Year,
-                    poster = string.IsNullOrWhiteSpace(result["poster_path"].ToString())?Paths.MissingPoster:$"https://image.tmdb.org/t/p/original{result["poster_path"]}",
+                    poster = string.IsNullOrWhiteSpace(result["poster_path"].ToString()) ? Paths.MissingPoster : $"https://image.tmdb.org/t/p/original{result["poster_path"]}",
                     rating = double.Parse(result["vote_average"].ToString()),
                 });
             }

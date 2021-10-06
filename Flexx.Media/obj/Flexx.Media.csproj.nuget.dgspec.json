@@ -45,6 +45,10 @@
             "ChaseLabs.Logger": {
               "target": "Package",
               "version": "[0.1.1, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.1, )"
             }
           },
           "imports": [

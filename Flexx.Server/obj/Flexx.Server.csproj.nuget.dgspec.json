@@ -45,6 +45,10 @@
             "ChaseLabs.Logger": {
               "target": "Package",
               "version": "[0.1.1, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.1, )"
             }
           },
           "imports": [
@@ -148,7 +152,7 @@
       "version": "1.0.0",
       "restore": {
         "projectUniqueName": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Server/Flexx.Server.csproj",
-        "projectName": "cunt",
+        "projectName": "Flexx Media Server",
         "projectPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Server/Flexx.Server.csproj",
         "packagesPath": "/Users/drewchase/.nuget/packages/",
         "outputPath": "/Users/drewchase/Documents/Workspaces/Visual Studio/C#/Web/Flexx-TV/Flexx.Server/obj/",

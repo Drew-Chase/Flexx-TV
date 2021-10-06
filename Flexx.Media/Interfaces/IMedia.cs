@@ -25,5 +25,7 @@ namespace Flexx.Media.Interfaces
         virtual FileStream Stream => new(PATH, FileMode.Open, FileAccess.Read);
         CastListModel Cast { get; set; }
         void UpdateMetaData();
+        bool ScanForDownloads(out string[] links);
+        void AddToTorrentClient(bool useInternal = true);
     }
 }
