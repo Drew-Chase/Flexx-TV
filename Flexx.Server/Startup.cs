@@ -20,6 +20,11 @@ namespace Flexx.Server
             {
                 action.EnableEndpointRouting = false;
             });
+            services.AddCors(options =>
+            {
+                options.AddPolicy("debug", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+                options.AddPolicy("release", builder => builder.WithOrigins("flexx-tv.tk"));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -29,6 +34,8 @@ namespace Flexx.Server
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseCors("debug");
 
             app.UseMvc();
 

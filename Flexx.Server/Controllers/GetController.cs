@@ -10,6 +10,8 @@ using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using YoutubeExplode;
+using YoutubeExplode.Videos.Streams;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Server.Controllers
@@ -29,7 +31,7 @@ namespace Flexx.Server.Controllers
         [HttpGet("movies/discover/{category}")]
         public IActionResult GetMovieDiscoveryList(DiscoveryCategory category)
         {
-            object[] results = MovieLibraryModel.DiscoverMovies(category);
+            object[] results = MovieLibraryModel.Instance.DiscoverMovies(category);
             if (results == null)
                 return new JsonResult(new { message = $"No Results" });
             return new JsonResult(results);
@@ -41,6 +43,32 @@ namespace Flexx.Server.Controllers
             if (results == null)
                 return new JsonResult(new { message = $"No Results" });
             return new JsonResult(results);
+        }
+        [HttpGet("movies/{tmdb}/trailer")]
+        public IActionResult GetMovieTrailer(string tmdb)
+        {
+            string trailerURL = "";
+            MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+            if (movie == null)
+            {
+                IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/videos?api_key={TMDB_API}")))["results"][0]["key"].ToString()).Result.GetMuxedStreams().GetWithHighestVideoQuality();
+                if (streamInfo != null)
+                {
+                    trailerURL = streamInfo.Url;
+                }
+                else
+                {
+                    trailerURL = "";
+                }
+            }
+            else
+            {
+                trailerURL = movie.TrailerUrl;
+            }
+            if (string.IsNullOrWhiteSpace(trailerURL))
+                return new NotFoundResult();
+            return RedirectPermanent(trailerURL);
+
         }
         [HttpGet("movies/{tmdb}")]
         public IActionResult GetMovie(string tmdb)

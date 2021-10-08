@@ -31,10 +31,10 @@ namespace Flexx.Media.Objects.Libraries
                     return movie;
                 }
             }
-            throw new MediaNotFoundException(tmdb);
+            return null;
         }
 
-        public static object[] DiscoverMovies(DiscoveryCategory category = DiscoveryCategory.Latest)
+        public object[] DiscoverMovies(DiscoveryCategory category = DiscoveryCategory.Latest)
         {
             string url = $"https://api.themoviedb.org/3/movie/{category.ToString().ToLower()}?api_key={TMDB_API}";
             JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
@@ -50,7 +50,10 @@ namespace Flexx.Media.Objects.Libraries
                     title = result["title"].ToString(),
                     year = DateTime.Parse(result["release_date"].ToString()),
                     poster = $"https://image.tmdb.org/t/p/original{result["poster_path"]}",
+                    cover = $"https://image.tmdb.org/t/p/original{result["backdrop_path"]}",
+                    plot = result["overview"].ToString(),
                     rating = double.Parse(result["vote_average"].ToString()),
+                    downloaded = GetMovieByTMDB(result["id"].ToString()) != null,
                 });
             }
             return model.ToArray();
