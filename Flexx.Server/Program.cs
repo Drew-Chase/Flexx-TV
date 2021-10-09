@@ -28,6 +28,7 @@ namespace Flexx.Server
                     process.Kill();
                 }
             };
+            log.Info("Server is Launching");
             CreateHostBuilder(args).Build().Run();
         }
 
@@ -35,7 +36,12 @@ namespace Flexx.Server
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    webBuilder.UseKestrel(options =>
+                    {
+                        options.ListenAnyIP(3208);
+                    });
                     webBuilder.UseStartup<Startup>();
+                    log.Info("Server is Now Active");
                 });
     }
 }

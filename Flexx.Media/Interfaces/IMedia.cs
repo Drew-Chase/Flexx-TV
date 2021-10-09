@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using ChaseLabs.CLConfiguration.List;
+using ChaseLabs.CLConfiguration.Object;
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Extras;
 using Xabe.FFmpeg;
@@ -17,9 +18,39 @@ namespace Flexx.Media.Interfaces
         sbyte Rating { get; set; }
         string PosterImage { get; set; }
         string CoverImage { get; set; }
-        virtual bool Watched { get => Metadata.GetConfigByKey("watched").ParseBoolean(); set => Metadata.GetConfigByKey("watched").Value = value.ToString(); }
-        virtual uint WatchedDuration { get => uint.Parse(Metadata.GetConfigByKey("watched_duration").Value); set => Metadata.GetConfigByKey("watched_duration").Value = value.ToString(); }
+        virtual bool Watched
+        {
+            get
+            {
+                if (Metadata.GetConfigByKey("watched") == null)
+                    Metadata.Add("watched", false);
+                return Metadata.GetConfigByKey("watched").ParseBoolean();
+            }
+            set
+            {
+                if (Metadata.GetConfigByKey("watched") == null)
+                    Metadata.Add("watched", false);
+                Metadata.GetConfigByKey("watched").Value = value.ToString();
+            }
+        }
+        virtual uint WatchedDuration
+        {
+            get
+            {
+                if (Metadata.GetConfigByKey("watched_duration") == null)
+                    Metadata.Add("watched_duration", 0);
+                return uint.Parse(Metadata.GetConfigByKey("watched_duration").Value);
+            }
+            set
+            {
+                if (Metadata.GetConfigByKey("watched_duration") == null)
+                    Metadata.Add("watched_duration", 0);
+                Metadata.GetConfigByKey("watched_duration").Value = value.ToString();
+            }
+        }
+
         DateTime ReleaseDate { get; set; }
+        DateTime ScannedDate { get; set; }
         ConfigManager Metadata { get; set; }
         virtual IMediaInfo MediaInfo => FFmpeg.GetMediaInfo(PATH).Result;
         virtual FileStream Stream => new(PATH, FileMode.Open, FileAccess.Read);

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Flexx.Core.Data.Exceptions;
 using Flexx.Media.Interfaces;
 using System.Linq;
 
@@ -16,7 +15,6 @@ namespace Flexx.Media.Objects.Libraries
         }
         public virtual void Initialize()
         {
-            medias = medias.OrderBy(m => m.Title).ToList();
         }
         public virtual IMedia GetMediaByName(string name)
         {
@@ -28,7 +26,7 @@ namespace Flexx.Media.Objects.Libraries
                     return media;
                 }
             }
-            throw new MediaNotFoundException(name);
+            return null;
         }
 
         public virtual IMedia[] GetMediaByYear(ushort year)
@@ -45,8 +43,11 @@ namespace Flexx.Media.Objects.Libraries
         }
         public virtual void AddMedia(params IMedia[] medias)
         {
-            if (medias.Length != 0)
-                this.medias.AddRange(medias);
+            foreach (IMedia media in medias)
+            {
+                if (media != null)
+                    this.medias.Add(media);
+            }
         }
         public virtual void RemoveMedia(params IMedia[] medias)
         {

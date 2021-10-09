@@ -9,7 +9,8 @@
       "Flexx.Core/1.0.0": {
         "dependencies": {
           "ChaseLabs.Configuration": "0.0.6",
-          "ChaseLabs.Logger": "0.1.1"
+          "ChaseLabs.Logger": "0.1.1",
+          "Newtonsoft.Json": "13.0.1"
         },
         "runtime": {
           "Flexx.Core.dll": {}
@@ -28,6 +29,14 @@
           "lib/netstandard2.0/CLLogger.dll": {
             "assemblyVersion": "0.1.1.0",
             "fileVersion": "0.1.1.0"
+          }
+        }
+      },
+      "Newtonsoft.Json/13.0.1": {
+        "runtime": {
+          "lib/netstandard2.0/Newtonsoft.Json.dll": {
+            "assemblyVersion": "13.0.0.0",
+            "fileVersion": "13.0.1.25517"
           }
         }
       }
@@ -52,6 +61,13 @@
       "sha512": "sha512-TQYH3dxa4TVzdZCmRReRULNGSOdzCmsTmi9sIyda1kr+/lO6LLglRxCHRSNrNTZyi8Nlb+qCMd0s6W7OohMEdg==",
       "path": "chaselabs.logger/0.1.1",
       "hashPath": "chaselabs.logger.0.1.1.nupkg.sha512"
+    },
+    "Newtonsoft.Json/13.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A==",
+      "path": "newtonsoft.json/13.0.1",
+      "hashPath": "newtonsoft.json.13.0.1.nupkg.sha512"
     }
   }
 }

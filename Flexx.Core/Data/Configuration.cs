@@ -13,11 +13,7 @@ namespace Flexx.Core.Data
 
         public Configuration()
         {
-#if DEBUG
             sysProfile = new(Path.Combine(Paths.Configs, "sys"), false);
-#else
-             sysProfile = new(Path.Combine(Paths.Configs, "sys"), true);
-#endif
             sysProfile.Add("movies", "");
             sysProfile.Add("tv", "");
         }

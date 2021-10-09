@@ -72,11 +72,22 @@ namespace Flexx.Media.Objects
                 catch { }
             }
         }
+        public object ModelObject =>
+            new
+            {
+                id = TMDB,
+                title = Title,
+                plot = Plot,
+                year = ReleaseDate.Year,
+                file = PATH,
+            };
         public DateTime ReleaseDate { get; set; }
         public CastListModel Cast { get; set; }
         public ConfigManager Metadata { get; set; }
 
         private string meta_directory => Path.Combine(Paths.MetaData, "Movies", TMDB);
+
+        public DateTime ScannedDate { get; set; }
 
         public MovieModel(string initializer, bool isTMDB = false)
         {
@@ -88,30 +99,51 @@ namespace Flexx.Media.Objects
             {
                 PATH = initializer.ToString();
                 Torrent torrent = new(((IMedia)this).FileName);
-                JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString($"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}&year={torrent.Year}")))["results"];
+                string query = torrent.Name.Replace($".{torrent.Container}", "").Replace($"({torrent.Year})", "");
+                string url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}&year={torrent.Year}";
+                JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString(url)))["results"];
                 if (results.Children().Any())
                 {
                     TMDB = results[0]["id"].ToString();
                 }
                 else
                 {
-                    results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString($"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}")))["results"];
+                    url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}";
+                    results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString(url)))["results"];
                     if (results.Children().Any())
                     {
                         TMDB = results[0]["id"].ToString();
                     }
                     else
                     {
-                        MovieLibraryModel.Instance.RemoveMedia(this);
-                        return;
+                        url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}&year={torrent.Year}";
+                        results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString(url)))["results"];
+                        if (results.Children().Any())
+                        {
+                            TMDB = results[0]["id"].ToString();
+                        }
+                        else
+                        {
+                            url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}";
+                            results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString(url)))["results"];
+                            if (results.Children().Any())
+                            {
+                                TMDB = results[0]["id"].ToString();
+                            }
+                        }
                     }
                 }
+                if (PATH.Equals(@"/Users/drewchase/Documents/Flexx Library/Movies/X-Men Origins Wolverine (2009).mkv"))
+                    log.Debug("");
+                if (string.IsNullOrWhiteSpace(TMDB))
+                {
+                    MovieLibraryModel.Instance.RemoveMedia(this);
+                    return;
+                }
             }
-#if DEBUG
+
+
             Metadata = new(Path.Combine(Paths.MetaData, "Movies", TMDB, "metadata"), false);
-#else
-            Metadata = new(Path.Combine(Paths.MetaData, "Movies", TMDB, "metadata"), true);
-#endif
             LoadMetaData();
         }
 
@@ -142,6 +174,7 @@ namespace Flexx.Media.Objects
                     }
                     catch { }
                     ReleaseDate = DateTime.Parse(Metadata.GetConfigByKey("release_date").Value);
+                    ScannedDate = DateTime.Parse(Metadata.GetConfigByKey("scanned_date").Value);
                 }
                 catch
                 {
@@ -156,6 +189,7 @@ namespace Flexx.Media.Objects
         {
             log.Debug($"Getting metadata for {TMDB}");
             Cast = new(this);
+            ScannedDate = DateTime.Now;
             using (System.Net.WebClient client = new())
             {
                 try
@@ -208,7 +242,8 @@ namespace Flexx.Media.Objects
                 Metadata.Add("rating", Rating);
             if (!string.IsNullOrWhiteSpace(TrailerUrl))
                 Metadata.Add("trailer", TrailerUrl);
-            Metadata.Add("release_date", ReleaseDate);
+            Metadata.Add("release_date", ReleaseDate.ToString("MM-dd-yyyy"));
+            Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
             if (!string.IsNullOrWhiteSpace(MPAA))
                 Metadata.Add("mpaa", MPAA);
         }

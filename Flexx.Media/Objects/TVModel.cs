@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using ChaseLabs.CLConfiguration.List;
-using Flexx.Core.Data.Exceptions;
 using Flexx.Media.Interfaces;
 using Flexx.Media.Objects.Extras;
 using Newtonsoft.Json;
@@ -122,7 +121,7 @@ namespace Flexx.Media.Objects
             {
                 if (model.Season_Number == season) return model;
             }
-            throw new SeasonNotFoundException(season);
+            return null;
         }
         public SeasonModel AddSeason(int season)
         {
@@ -188,7 +187,7 @@ namespace Flexx.Media.Objects
             {
                 if (model.Episode_Number == episode) return model;
             }
-            throw new EpisodeNotFoundException(episode, Season_Number, Series.Title);
+            return null;
         }
         public EpisodeModel AddEpisode(string file, int episode)
         {
@@ -291,16 +290,26 @@ namespace Flexx.Media.Objects
         public int Episode_Number { get; private set; }
         public string FriendlyName => $"S{(Season.Season_Number < 10 ? "0" + Season.Season_Number : Season.Season_Number)}E{(Episode_Number < 10 ? "0" + Episode_Number : Episode_Number)}";
         public string Metadata_Directory => Path.Combine(Season.Metadata_Directory, Episode_Number.ToString());
+
+        public DateTime ScannedDate { get; set; }
+        public object ModelObject => new
+        {
+            id = Season.Series.TMDB,
+            title = Title,
+            name = FriendlyName,
+            plot = Plot,
+            season = Season.Season_Number,
+            episode = Episode_Number,
+            poster = Season.Series.PosterImage,
+            cover = Season.Series.CoverImage,
+        };
+
         public EpisodeModel(string path, int number, SeasonModel season)
         {
             PATH = path;
             Season = season;
             Episode_Number = number;
-#if DEBUG
             Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false);
-#else
-            Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true);
-#endif
             LoadMetaData();
         }
 
@@ -311,6 +320,7 @@ namespace Flexx.Media.Objects
                 Title = Metadata.GetConfigByKey("title").Value;
                 Plot = Metadata.GetConfigByKey("plot").Value;
                 ReleaseDate = DateTime.Parse(Metadata.GetConfigByKey("release_date").Value);
+                ScannedDate = DateTime.Parse(Metadata.GetConfigByKey("scanned_date").Value);
             }
             catch
             {
@@ -321,6 +331,7 @@ namespace Flexx.Media.Objects
         {
             try
             {
+                ScannedDate = DateTime.Now;
                 JObject json = null;
                 try
                 {
@@ -359,7 +370,8 @@ namespace Flexx.Media.Objects
             }
             Metadata.Add("title", Title);
             Metadata.Add("plot", Plot);
-            Metadata.Add("release_date", ReleaseDate.ToString("yyyy-MM-dd"));
+            Metadata.Add("release_date", ReleaseDate.ToString("MM-dd-yyyy"));
+            Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
         }
 
         public bool ScanForDownloads(out string[] links)

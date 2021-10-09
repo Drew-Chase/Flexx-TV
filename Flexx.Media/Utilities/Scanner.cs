@@ -7,7 +7,6 @@ using static Flexx.Core.Data.Global;
 using System.Threading;
 using System.Threading.Tasks;
 using Flexx.Media.Objects.Libraries;
-using Flexx.Core.Data.Exceptions;
 using Newtonsoft.Json.Linq;
 using System.Net;
 using Newtonsoft.Json;
@@ -62,7 +61,7 @@ namespace Flexx.Media.Utilities
                         if (new FileInfo(f).Length == 0)
                         {
                             log.Error($"File \"{f}\" was corrupted and will not be added");
-                            return false;
+                            //return false;
                         }
                         return true;
                     }
@@ -103,7 +102,7 @@ namespace Flexx.Media.Utilities
                     if (Media_Extensions.Contains(f.Split(".")[^1]))
                     {
                         log.Debug($"Found file \"{f}\"");
-                        if(new FileInfo(f).Length == 0)
+                        if (new FileInfo(f).Length == 0)
                         {
                             log.Error($"File was corrupted!");
                             //return false;
@@ -143,17 +142,13 @@ namespace Flexx.Media.Utilities
             {
                 TVModel show = null;
                 SeasonModel season = null;
-                EpisodeModel episode = null;
                 Torrent torrentData = new(new FileInfo(file).Name);
                 string title = torrentData.Title;
                 int year = torrentData.Year;
                 int season_number = torrentData.Season;
                 int episode_number = torrentData.Episode;
-                try
-                {
-                    show = TvLibraryModel.Instance.GetTVShowByName(title);
-                }
-                catch (SeriesNotFoundException)
+                show = TvLibraryModel.Instance.GetTVShowByName(title);
+                if (show == null)
                 {
                     JObject json = null;
                     string tmdb = string.Empty;
@@ -181,24 +176,14 @@ namespace Flexx.Media.Utilities
                 }
                 if (show != null)
                 {
-                    try
-                    {
-                        season = show.GetSeasonByNumber(season_number);
-                    }
-                    catch (SeasonNotFoundException)
+                    season = show.GetSeasonByNumber(season_number);
+                    if (season == null)
                     {
                         season = show.AddSeason(season_number);
                     }
-                    if (season != null)
+                    else
                     {
-                        try
-                        {
-                            episode = season.GetEpisodeByNumber(episode_number);
-                        }
-                        catch (EpisodeNotFoundException)
-                        {
-                            episode = season.AddEpisode(file, episode_number);
-                        }
+                        TvLibraryModel.Instance.AddMedia(season.AddEpisode(file, episode_number));
                     }
                 }
             }

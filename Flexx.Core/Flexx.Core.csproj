@@ -12,7 +12,6 @@
     <None Remove="YoutubeExtractor" />
     <None Remove="TorrentTitleParser" />
     <None Remove="Utilities\" />
-    <None Remove="Data\Exceptions\" />
     <None Remove="Authentication\" />
     <None Remove="Networking\" />
     <None Remove="Newtonsoft.Json" />
@@ -20,7 +19,6 @@
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Utilities\" />
-    <Folder Include="Data\Exceptions\" />
     <Folder Include="Authentication\" />
     <Folder Include="Networking\" />
   </ItemGroup>

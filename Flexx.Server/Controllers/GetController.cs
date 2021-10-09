@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Xml;
-using Flexx.Core.Data.Exceptions;
 using Flexx.Core.Networking;
 using Flexx.Media.Interfaces;
 using Flexx.Media.Objects;
@@ -39,7 +38,7 @@ namespace Flexx.Server.Controllers
         [HttpGet("movies/discover/search/{query}/{year?}")]
         public IActionResult GetMovieDiscoveryFromQuery(string query, int? year)
         {
-            object[] results = MovieLibraryModel.SearchForMovies(query, year.HasValue ? year.Value : -1);
+            object[] results = MovieLibraryModel.Instance.SearchForMovies(query, year.HasValue ? year.Value : -1);
             if (results == null)
                 return new JsonResult(new { message = $"No Results" });
             return new JsonResult(results);
@@ -76,20 +75,17 @@ namespace Flexx.Server.Controllers
             try
             {
                 MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
-                return new JsonResult(new
-                {
-                    id = movie.TMDB,
-                    title = movie.Title,
-                    plot = movie.Plot,
-                    year = movie.ReleaseDate.Year,
-                    release_date = movie.ReleaseDate.ToString("MM-dd-yyyy"),
-                    rating = movie.Rating,
-                    mpaa = movie.MPAA,
-                });
-            }
-            catch (MediaNotFoundException)
-            {
-                log.Error($"Movie with the TMDB ID of {tmdb} was not loaded");
+                if (movie != null)
+                    return new JsonResult(new
+                    {
+                        id = movie.TMDB,
+                        title = movie.Title,
+                        plot = movie.Plot,
+                        year = movie.ReleaseDate.Year,
+                        release_date = movie.ReleaseDate.ToString("MM-dd-yyyy"),
+                        rating = movie.Rating,
+                        mpaa = movie.MPAA,
+                    });
             }
             catch (Exception e)
             {
@@ -97,16 +93,24 @@ namespace Flexx.Server.Controllers
             }
             return new NotFoundResult();
         }
+        [HttpGet("movies/recently-added")]
+        public IActionResult GetRecentlyAddedMovies()
+        {
+            return new JsonResult(MovieLibraryModel.Instance.GetRecentlyAddedList());
+        }
+        [HttpGet("movies/continue-watching")]
+        public IActionResult GetContinueWatchingMovies()
+        {
+            return new JsonResult(MovieLibraryModel.Instance.GetContinueWatchingList());
+        }
         [HttpGet("movies/{tmdb}/images/poster")]
         public IActionResult GetMoviePoster(string tmdb)
         {
             try
             {
-                return new FileStreamResult(new FileStream(MovieLibraryModel.Instance.GetMovieByTMDB(tmdb).PosterImage, FileMode.Open), "image/jpg");
-            }
-            catch (MediaNotFoundException)
-            {
-                log.Error($"Movie with the TMDB ID of {tmdb} was not loaded");
+                MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+                if (movie != null)
+                    return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open), "image/jpg");
             }
             catch (Exception e)
             {
@@ -119,11 +123,9 @@ namespace Flexx.Server.Controllers
         {
             try
             {
-                return File(new FileStream(MovieLibraryModel.Instance.GetMovieByTMDB(tmdb).CoverImage, FileMode.Open), "image/jpg");
-            }
-            catch (MediaNotFoundException)
-            {
-                log.Error($"Movie with the TMDB ID of {tmdb} was not loaded");
+                MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+                if (movie != null)
+                    return File(new FileStream(movie.CoverImage, FileMode.Open), "image/jpg");
             }
             catch (Exception e)
             {
@@ -142,6 +144,34 @@ namespace Flexx.Server.Controllers
         #endregion
 
         #region TV
+
+        [HttpGet("tv/discover/{category}")]
+        public IActionResult GetShowsDiscoveryList(DiscoveryCategory category)
+        {
+            object[] results = TvLibraryModel.Instance.DiscoverShows(category);
+            if (results == null)
+                return new JsonResult(new { message = $"No Results" });
+            return new JsonResult(results);
+        }
+        [HttpGet("tv/discover/search/{query}/{year?}")]
+        public IActionResult GetShowsDiscoveryFromQuery(string query, int? year)
+        {
+            object[] results = TvLibraryModel.Instance.SearchForShows(query, year.HasValue ? year.Value : -1);
+            if (results == null)
+                return new JsonResult(new { message = $"No Results" });
+            return new JsonResult(results);
+        }
+
+        [HttpGet("tv/recently-added")]
+        public IActionResult GetRecentlyAddedTv()
+        {
+            return new JsonResult(TvLibraryModel.Instance.GetRecentlyAddedList());
+        }
+        [HttpGet("tv/continue-watching")]
+        public IActionResult GetContinueWatchingTv()
+        {
+            return new JsonResult(TvLibraryModel.Instance.GetContinueWatchingList());
+        }
         [HttpGet("tv")]
         public IActionResult GetShows()
         {

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text.Json.Serialization;
-using Flexx.Core.Data.Exceptions;
 using Flexx.Core.Networking;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
@@ -26,6 +26,11 @@ namespace Flexx.Media.Objects.Libraries
         {
             foreach (MovieModel movie in medias)
             {
+                if (movie.TMDB == null)
+                {
+                    RemoveMedia(movie);
+                    continue;
+                }
                 if (movie.TMDB.Equals(tmdb))
                 {
                     return movie;
@@ -58,7 +63,7 @@ namespace Flexx.Media.Objects.Libraries
             }
             return model.ToArray();
         }
-        public static object[] SearchForMovies(string query, int year = -1)
+        public object[] SearchForMovies(string query, int year = -1)
         {
             string url;
             if (year != -1)
@@ -76,9 +81,12 @@ namespace Flexx.Media.Objects.Libraries
                 {
                     id = result["id"].ToString(),
                     title = result["title"].ToString(),
-                    year = DateTime.Parse(result["release_date"].ToString()).Year,
-                    poster = string.IsNullOrWhiteSpace(result["poster_path"].ToString()) ? Paths.MissingPoster : $"https://image.tmdb.org/t/p/original{result["poster_path"]}",
+                    year = DateTime.Parse(result["release_date"].ToString()),
+                    poster = $"https://image.tmdb.org/t/p/original{result["poster_path"]}",
+                    cover = $"https://image.tmdb.org/t/p/original{result["backdrop_path"]}",
+                    plot = result["overview"].ToString(),
                     rating = double.Parse(result["vote_average"].ToString()),
+                    downloaded = GetMovieByTMDB(result["id"].ToString()) != null,
                 });
             }
             return model.ToArray();
@@ -92,16 +100,40 @@ namespace Flexx.Media.Objects.Libraries
                 if (medias[i] != null)
                 {
                     MovieModel movie = ((MovieModel)medias[i]);
-                    model[i] = new
-                    {
-                        id = movie.TMDB,
-                        title = movie.Title,
-                        year = movie.ReleaseDate.Year
-                    };
-
+                    model[i] = movie.ModelObject;
                 }
             }
             return model;
         }
+
+        public object[] GetContinueWatchingList()
+        {
+            var continueWatching = medias.Where(m => !m.Watched && m.WatchedDuration > 0).ToArray();
+            object[] model = new object[continueWatching.Length > 10 ? 10 : continueWatching.Length];
+            for (int i = 0; i < model.Length; i++)
+            {
+                if (continueWatching[i] != null)
+                {
+                    MovieModel movie = ((MovieModel)continueWatching[i]);
+                    model[i] = movie.ModelObject;
+                }
+            }
+            return model;
+        }
+        public object[] GetRecentlyAddedList()
+        {
+            var movies = medias.OrderBy(m => m.ScannedDate).ToArray();
+            object[] model = new object[movies.Length > 10 ? 10 : movies.Length];
+            for (int i = 0; i < model.Length; i++)
+            {
+                if (movies[i] != null)
+                {
+                    MovieModel movie = ((MovieModel)movies[i]);
+                    model[i] = movie.ModelObject;
+                }
+            }
+            return model;
+        }
+
     }
 }
