@@ -189,6 +189,14 @@ namespace Flexx.Media.Objects
             }
             return null;
         }
+
+        public EpisodeModel AddEpisode(int episode)
+        {
+            EpisodeModel model = new(episode, this);
+            Episodes.Add(model);
+            Episodes = Episodes.OrderBy(e => e.Episode_Number).ToList();
+            return model;
+        }
         public EpisodeModel AddEpisode(string file, int episode)
         {
             EpisodeModel model = new(file, episode, this);
@@ -303,6 +311,14 @@ namespace Flexx.Media.Objects
             poster = Season.Series.PosterImage,
             cover = Season.Series.CoverImage,
         };
+
+        public EpisodeModel(int number, SeasonModel season)
+        {
+            Season = season;
+            Episode_Number = number;
+            Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false);
+            LoadMetaData();
+        }
 
         public EpisodeModel(string path, int number, SeasonModel season)
         {

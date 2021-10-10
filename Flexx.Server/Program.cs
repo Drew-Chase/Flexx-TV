@@ -17,6 +17,7 @@ namespace Flexx.Server
     {
         public static void Main(string[] args)
         {
+            Directory.Delete(Paths.TempData, true);
             config = new();
             FFMpegUtil.Init();
             Task.Run(() => MovieLibraryModel.Instance.Initialize());

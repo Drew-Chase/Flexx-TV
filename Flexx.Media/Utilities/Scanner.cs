@@ -143,15 +143,15 @@ namespace Flexx.Media.Utilities
                 TVModel show = null;
                 SeasonModel season = null;
                 Torrent torrentData = new(new FileInfo(file).Name);
+                string tmdb = string.Empty;
                 string title = torrentData.Title;
                 int year = torrentData.Year;
                 int season_number = torrentData.Season;
                 int episode_number = torrentData.Episode;
+                JObject json = null;
                 show = TvLibraryModel.Instance.GetTVShowByName(title);
                 if (show == null)
                 {
-                    JObject json = null;
-                    string tmdb = string.Empty;
                     using (WebClient client = new())
                     {
                         json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={title}&first_air_date_year={year}"));
