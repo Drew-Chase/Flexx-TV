@@ -1,13 +1,12 @@
-﻿using System;
+﻿using Flexx.Media.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Threading;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
 using static Flexx.Core.Data.Global;
-using System.Diagnostics;
-using Flexx.Media.Interfaces;
-using System.IO;
-using System.Threading.Tasks;
-using System.Threading;
-using System.Collections.Generic;
 
 namespace Flexx.Media.Utilities
 {
@@ -15,6 +14,7 @@ namespace Flexx.Media.Utilities
     {
         public static FFMpegUtil Instance = null;
         public List<Process> ActiveTranscodingProcess;
+
         private FFMpegUtil()
         {
             ActiveTranscodingProcess = new();
@@ -30,7 +30,11 @@ namespace Flexx.Media.Utilities
                         string[] files = Directory.GetFiles(Paths.FFMpeg);
                         foreach (string file in files)
                         {
-                            if (!string.IsNullOrWhiteSpace(new FileInfo(file).Extension)) continue;
+                            if (!string.IsNullOrWhiteSpace(new FileInfo(file).Extension))
+                            {
+                                continue;
+                            }
+
                             log.Debug($"Setting file {new FileInfo(file).Name} as an executable");
                             Process.Start("chmod", $"a+x {file}");
                         }
@@ -39,23 +43,31 @@ namespace Flexx.Media.Utilities
             }
             FFmpeg.SetExecutablesPath(Paths.FFMpeg);
         }
+
         public static void Init()
         {
-            if (Instance != null) return;
+            if (Instance != null)
+            {
+                return;
+            }
+
             Instance = new FFMpegUtil();
         }
+
         public static void OptimizePoster(string input, string output)
         {
             OptimizeImage(input, output, 320);
         }
+
         public static void OptimizeCover(string input, string output)
         {
             OptimizeImage(input, output, 1280);
         }
+
         public static void OptimizeImage(string input, string output, int scale)
         {
             string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
-            var process = new Process()
+            Process process = new Process()
             {
                 StartInfo = new()
                 {
@@ -70,6 +82,7 @@ namespace Flexx.Media.Utilities
             process.Exited += (s, e) => File.Delete(input);
             process.Start();
         }
+
         public static FileStream GetTranscodedStream(string requestedUser, IMedia media, int targetResolution, int targetBitRate)
         {
             string fileOutput = Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.TempData, $"stream_{requestedUser}")).FullName, $"v_{requestedUser}_{media.FileName}.m3u8");
@@ -105,7 +118,9 @@ namespace Flexx.Media.Utilities
                     }
                 }
                 if (!issue)
+                {
                     Directory.Delete(dir, true);
+                }
             };
             process.Start();
             Instance.ActiveTranscodingProcess.Add(process);

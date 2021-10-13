@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
-using static Flexx.Core.Data.Global;
-using Flexx.Media.Objects.Libraries;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+using System;
 using System.IO;
+using System.Threading.Tasks;
+using static Flexx.Core.Data.Global;
 
 namespace Flexx.Server
 {
@@ -24,7 +20,7 @@ namespace Flexx.Server
             Task.Run(() => TvLibraryModel.Instance.Initialize());
             AppDomain.CurrentDomain.ProcessExit += (s, e) =>
             {
-                foreach (var process in FFMpegUtil.Instance.ActiveTranscodingProcess)
+                foreach (System.Diagnostics.Process process in FFMpegUtil.Instance.ActiveTranscodingProcess)
                 {
                     process.Kill();
                 }
@@ -33,16 +29,18 @@ namespace Flexx.Server
             CreateHostBuilder(args).Build().Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseKestrel(options =>
-                    {
-                        options.ListenAnyIP(3208);
-                    });
-                    webBuilder.UseStartup<Startup>();
-                    log.Info("Server is Now Active");
-                });
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
+.ConfigureWebHostDefaults(webBuilder =>
+{
+    webBuilder.UseKestrel(options =>
+    {
+        options.ListenAnyIP(3208);
+    });
+    webBuilder.UseStartup<Startup>();
+    log.Info("Server is Now Active");
+});
+        }
     }
 }

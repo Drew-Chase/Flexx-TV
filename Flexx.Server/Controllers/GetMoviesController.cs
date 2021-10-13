@@ -1,17 +1,17 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Net;
-using Flexx.Media.Interfaces;
+﻿using Flexx.Media.Interfaces;
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Linq;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using static Flexx.Core.Data.Global;
+
 namespace Flexx.Server.Controllers
 {
     [ApiController]
@@ -19,26 +19,36 @@ namespace Flexx.Server.Controllers
     public class GetMoviesController : ControllerBase
     {
         #region Movies
+
         public IActionResult Index()
         {
             return new JsonResult(MovieLibraryModel.Instance.GetList());
         }
+
         [HttpGet("discover/{category}")]
         public IActionResult GetMovieDiscoveryList(DiscoveryCategory category)
         {
             object[] results = MovieLibraryModel.Instance.DiscoverMovies(category);
             if (results == null)
+            {
                 return new JsonResult(new { message = $"No Results" });
+            }
+
             return new JsonResult(results);
         }
+
         [HttpGet("discover/search/{query}/{year?}")]
         public IActionResult GetMovieDiscoveryFromQuery(string query, int? year)
         {
             object[] results = MovieLibraryModel.Instance.SearchForMovies(query, year.HasValue ? year.Value : -1);
             if (results == null)
+            {
                 return new JsonResult(new { message = $"No Results" });
+            }
+
             return new JsonResult(results);
         }
+
         [HttpGet("{tmdb}/trailer")]
         public IActionResult GetMovieTrailer(string tmdb)
         {
@@ -61,11 +71,14 @@ namespace Flexx.Server.Controllers
                 trailerURL = movie.TrailerUrl;
             }
 
-            if (string.IsNullOrWhiteSpace(trailerURL) )
+            if (string.IsNullOrWhiteSpace(trailerURL))
+            {
                 return new NotFoundResult();
-            return RedirectPermanent(trailerURL);
+            }
 
+            return RedirectPermanent(trailerURL);
         }
+
         [HttpGet("{tmdb}")]
         public IActionResult GetMovie(string tmdb)
         {
@@ -105,7 +118,6 @@ namespace Flexx.Server.Controllers
                         watched_duration = 0,
                         downloaded = false,
                     });
-
                 }
                 return new JsonResult(movie.ModelObject);
             }
@@ -115,16 +127,19 @@ namespace Flexx.Server.Controllers
             }
             return new NotFoundResult();
         }
+
         [HttpGet("recently-added")]
         public IActionResult GetRecentlyAddedMovies()
         {
             return new JsonResult(MovieLibraryModel.Instance.GetRecentlyAddedList());
         }
+
         [HttpGet("continue-watching")]
         public IActionResult GetContinueWatchingMovies()
         {
             return new JsonResult(MovieLibraryModel.Instance.GetContinueWatchingList());
         }
+
         [HttpGet("{tmdb}/images/poster")]
         public IActionResult GetMoviePoster(string tmdb)
         {
@@ -137,6 +152,7 @@ namespace Flexx.Server.Controllers
             }
             return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open), "image/jpg");
         }
+
         [HttpGet("{tmdb}/images/cover")]
         public IActionResult GetMovieCover(string tmdb)
         {
@@ -157,14 +173,19 @@ namespace Flexx.Server.Controllers
             }
             return new NotFoundResult();
         }
+
         [HttpGet("{tmdb}/{user}/video/{resolution?}/{bitrate?}")]
         public IActionResult GetMovieStream(string tmdb, string user, int? resolution, int? bitrate)
         {
             IMedia movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
             if (resolution.HasValue && bitrate.HasValue)
+            {
                 return File(FFMpegUtil.GetTranscodedStream(user, movie, resolution.Value, bitrate.Value), "application/x-mpegURL", true);
+            }
+
             return File(movie.Stream, "video/mp4", true);
         }
-        #endregion
+
+        #endregion Movies
     }
 }

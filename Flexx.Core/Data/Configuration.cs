@@ -1,7 +1,6 @@
-﻿using System;
-using ChaseLabs.CLConfiguration.List;
-using static Flexx.Core.Data.Global;
+﻿using ChaseLabs.CLConfiguration.List;
 using System.IO;
+using static Flexx.Core.Data.Global;
 
 namespace Flexx.Core.Data
 {
@@ -9,7 +8,7 @@ namespace Flexx.Core.Data
     {
         public string MovieLibraryPath { get => sysProfile.GetConfigByKey("movies").Value; set => sysProfile.GetConfigByKey("movies").Value = value; }
         public string TVLibraryPath { get => sysProfile.GetConfigByKey("tv").Value; set => sysProfile.GetConfigByKey("tv").Value = value; }
-        private ConfigManager sysProfile, userProfile;
+        private readonly ConfigManager sysProfile, userProfile;
 
         public Configuration()
         {

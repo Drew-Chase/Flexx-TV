@@ -1,7 +1,7 @@
-﻿using System;
-using System.IO;
-using ChaseLabs.CLLogger;
+﻿using ChaseLabs.CLLogger;
 using ChaseLabs.CLLogger.Interfaces;
+using System;
+using System.IO;
 
 namespace Flexx.Core.Data
 {
@@ -15,6 +15,7 @@ namespace Flexx.Core.Data
 #endif
         public static Configuration config = new();
         public static string[] Media_Extensions = new string[] { "mpegg", "mpeg", "mp4", "mkv", "m4a", "m4v", "f4v", "f4a", "m4b", "m4r", "f4b", "mov", "3gp", "3gp2", "3g2", "3gpp", "3gpp2", "ogg", "oga", "ogv", "ogx", "wmv", "wma", "flv", "avi" };
+
         public enum DiscoveryCategory
         {
             Latest,
@@ -22,6 +23,7 @@ namespace Flexx.Core.Data
             Top_Rated,
             Upcoming
         }
+
         public static class Paths
         {
             public static string Root => Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "Flexx")).FullName;
@@ -33,6 +35,7 @@ namespace Flexx.Core.Data
             public static string MetaData => Directory.CreateDirectory(Path.Combine(Resources, "metadata")).FullName;
             public static string MovieData => Directory.CreateDirectory(Path.Combine(MetaData, "movies")).FullName;
             public static string TVData => Directory.CreateDirectory(Path.Combine(MetaData, "tv")).FullName;
+
             public static string MissingPoster
             {
                 get
@@ -46,9 +49,9 @@ namespace Flexx.Core.Data
                 }
             }
         }
+
         public static class Functions
         {
-
         }
     }
 }

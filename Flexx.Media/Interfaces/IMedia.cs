@@ -1,9 +1,7 @@
-﻿using System;
-using System.IO;
-using ChaseLabs.CLConfiguration.List;
-using ChaseLabs.CLConfiguration.Object;
-using Flexx.Media.Objects;
+﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Media.Objects.Extras;
+using System;
+using System.IO;
 using Xabe.FFmpeg;
 
 namespace Flexx.Media.Interfaces
@@ -18,33 +16,47 @@ namespace Flexx.Media.Interfaces
         sbyte Rating { get; set; }
         string PosterImage { get; set; }
         string CoverImage { get; set; }
+
         virtual bool Watched
         {
             get
             {
                 if (Metadata.GetConfigByKey("watched") == null)
+                {
                     Metadata.Add("watched", false);
+                }
+
                 return Metadata.GetConfigByKey("watched").ParseBoolean();
             }
             set
             {
                 if (Metadata.GetConfigByKey("watched") == null)
+                {
                     Metadata.Add("watched", false);
+                }
+
                 Metadata.GetConfigByKey("watched").Value = value.ToString();
             }
         }
+
         virtual uint WatchedDuration
         {
             get
             {
                 if (Metadata.GetConfigByKey("watched_duration") == null)
+                {
                     Metadata.Add("watched_duration", 0);
+                }
+
                 return uint.Parse(Metadata.GetConfigByKey("watched_duration").Value);
             }
             set
             {
                 if (Metadata.GetConfigByKey("watched_duration") == null)
+                {
                     Metadata.Add("watched_duration", 0);
+                }
+
                 Metadata.GetConfigByKey("watched_duration").Value = value.ToString();
             }
         }
@@ -55,8 +67,11 @@ namespace Flexx.Media.Interfaces
         virtual IMediaInfo MediaInfo => FFmpeg.GetMediaInfo(PATH).Result;
         virtual FileStream Stream => new(PATH, FileMode.Open, FileAccess.Read);
         CastListModel Cast { get; set; }
+
         void UpdateMetaData();
+
         bool ScanForDownloads(out string[] links);
+
         void AddToTorrentClient(bool useInternal = true);
     }
 }

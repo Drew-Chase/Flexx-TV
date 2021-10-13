@@ -1,15 +1,13 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Xml;
-using Flexx.Core.Networking;
-using Flexx.Media.Interfaces;
+﻿using Flexx.Media.Interfaces;
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Linq;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using static Flexx.Core.Data.Global;
@@ -21,29 +19,43 @@ namespace Flexx.Server.Controllers
     public class GetController : ControllerBase
     {
         [HttpGet("images/missing-artwork")]
-        public IActionResult GetMissingArtworkPoster() => File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
+        public IActionResult GetMissingArtworkPoster()
+        {
+            return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
+        }
+
         #region Movies
+
         [HttpGet("movies")]
         public IActionResult GetMovies()
         {
             return new JsonResult(MovieLibraryModel.Instance.GetList());
         }
+
         [HttpGet("movies/discover/{category}")]
         public IActionResult GetMovieDiscoveryList(DiscoveryCategory category)
         {
             object[] results = MovieLibraryModel.Instance.DiscoverMovies(category);
             if (results == null)
+            {
                 return new JsonResult(new { message = $"No Results" });
+            }
+
             return new JsonResult(results);
         }
+
         [HttpGet("movies/discover/search/{query}/{year?}")]
         public IActionResult GetMovieDiscoveryFromQuery(string query, int? year)
         {
             object[] results = MovieLibraryModel.Instance.SearchForMovies(query, year.HasValue ? year.Value : -1);
             if (results == null)
+            {
                 return new JsonResult(new { message = $"No Results" });
+            }
+
             return new JsonResult(results);
         }
+
         [HttpGet("movies/{tmdb}/trailer")]
         public IActionResult GetMovieTrailer(string tmdb)
         {
@@ -66,10 +78,13 @@ namespace Flexx.Server.Controllers
                 trailerURL = movie.TrailerUrl;
             }
             if (string.IsNullOrWhiteSpace(trailerURL))
+            {
                 return new NotFoundResult();
-            return RedirectPermanent(trailerURL);
+            }
 
+            return RedirectPermanent(trailerURL);
         }
+
         [HttpGet("movies/{tmdb}")]
         public IActionResult GetMovie(string tmdb)
         {
@@ -107,7 +122,6 @@ namespace Flexx.Server.Controllers
                         mpaa = mpaa,
                         downloaded = false,
                     });
-
                 }
                 return new JsonResult(new
                 {
@@ -127,16 +141,19 @@ namespace Flexx.Server.Controllers
             }
             return new NotFoundResult();
         }
+
         [HttpGet("movies/recently-added")]
         public IActionResult GetRecentlyAddedMovies()
         {
             return new JsonResult(MovieLibraryModel.Instance.GetRecentlyAddedList());
         }
+
         [HttpGet("movies/continue-watching")]
         public IActionResult GetContinueWatchingMovies()
         {
             return new JsonResult(MovieLibraryModel.Instance.GetContinueWatchingList());
         }
+
         [HttpGet("movies/{tmdb}/images/poster")]
         public IActionResult GetMoviePoster(string tmdb)
         {
@@ -149,6 +166,7 @@ namespace Flexx.Server.Controllers
             }
             return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open), "image/jpg");
         }
+
         [HttpGet("movies/{tmdb}/images/cover")]
         public IActionResult GetMovieCover(string tmdb)
         {
@@ -169,15 +187,20 @@ namespace Flexx.Server.Controllers
             }
             return new NotFoundResult();
         }
+
         [HttpGet("movies/{tmdb}/{user}/video/{resolution?}/{bitrate?}")]
         public IActionResult GetMovieStream(string tmdb, string user, int? resolution, int? bitrate)
         {
             IMedia movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
             if (resolution.HasValue && bitrate.HasValue)
+            {
                 return File(FFMpegUtil.GetTranscodedStream(user, movie, resolution.Value, bitrate.Value), "application/x-mpegURL", true);
+            }
+
             return File(movie.Stream, "video/mp4", true);
         }
-        #endregion
+
+        #endregion Movies
 
         #region TV
 
@@ -186,15 +209,22 @@ namespace Flexx.Server.Controllers
         {
             object[] results = TvLibraryModel.Instance.DiscoverShows(category);
             if (results == null)
+            {
                 return new JsonResult(new { message = $"No Results" });
+            }
+
             return new JsonResult(results);
         }
+
         [HttpGet("tv/discover/search/{query}/{year?}")]
         public IActionResult GetShowsDiscoveryFromQuery(string query, int? year)
         {
             object[] results = TvLibraryModel.Instance.SearchForShows(query, year.HasValue ? year.Value : -1);
             if (results == null)
+            {
                 return new JsonResult(new { message = $"No Results" });
+            }
+
             return new JsonResult(results);
         }
 
@@ -203,16 +233,19 @@ namespace Flexx.Server.Controllers
         {
             return new JsonResult(TvLibraryModel.Instance.GetRecentlyAddedList());
         }
+
         [HttpGet("tv/continue-watching")]
         public IActionResult GetContinueWatchingTv()
         {
             return new JsonResult(TvLibraryModel.Instance.GetContinueWatchingList());
         }
+
         [HttpGet("tv")]
         public IActionResult GetShows()
         {
             return new JsonResult(TvLibraryModel.Instance.GetList());
         }
+
         [HttpGet("tv/{tmdb}")]
         public IActionResult GetShow(string tmdb)
         {
@@ -242,6 +275,7 @@ namespace Flexx.Server.Controllers
                 added = true
             });
         }
+
         [HttpGet("tv/{tmdb}/images/poster")]
         public IActionResult GetShowPoster(string tmdb)
         {
@@ -255,6 +289,7 @@ namespace Flexx.Server.Controllers
             }
             return File(new FileStream(show.PosterImage, FileMode.Open), "image/jpg");
         }
+
         [HttpGet("tv/{tmdb}/images/cover")]
         public IActionResult GetShowCover(string tmdb)
         {
@@ -267,7 +302,9 @@ namespace Flexx.Server.Controllers
             }
             return File(new FileStream(show.CoverImage, FileMode.Open), "image/jpg");
         }
+
         #region Season
+
         [HttpGet("tv/{tmdb}/{season_number}")]
         public IActionResult GetSeason(string tmdb, int season_number)
         {
@@ -293,6 +330,7 @@ namespace Flexx.Server.Controllers
                 added = true,
             });
         }
+
         [HttpGet("tv/{tmdb}/{season_number}/poster")]
         public IActionResult GetSeasonPoster(string tmdb, int season_number)
         {
@@ -306,7 +344,9 @@ namespace Flexx.Server.Controllers
             SeasonModel season = show.GetSeasonByNumber(season_number);
             return File(new FileStream(season.PosterImage, FileMode.Open), "image/jpg");
         }
+
         #region Episodes
+
         [HttpGet("tv/{tmdb}/{season_number}/{episode_number}")]
         public IActionResult GetEpisode(string tmdb, int season_number, int episode_number)
         {
@@ -335,6 +375,7 @@ namespace Flexx.Server.Controllers
                 downloaded = !string.IsNullOrWhiteSpace(episode.PATH) && System.IO.File.Exists(episode.PATH),
             });
         }
+
         [HttpGet("tv/{tmdb}/{season_number}/{episode_number}/poster")]
         public IActionResult GetEpisodeStill(string tmdb, int season_number, int episode_number)
         {
@@ -350,25 +391,40 @@ namespace Flexx.Server.Controllers
             EpisodeModel episode = season.GetEpisodeByNumber(episode_number);
             return File(new FileStream(episode.PosterImage, FileMode.Open), "image/jpg");
         }
+
         [HttpGet("tv/{tmdb}/{user}/{season_number}/{episode_number}/video/{resolution?}/{bitrate?}")]
         public IActionResult GetEpisodeStream(string tmdb, int season_number, int episode_number, string user, int? resolution, int? bitrate)
         {
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
             if (show == null)
+            {
                 return new JsonResult(new { message = $"Show with ID of \"{tmdb}\" not found" });
+            }
+
             SeasonModel season = show.GetSeasonByNumber(season_number);
             if (season == null)
+            {
                 return new JsonResult(new { message = $"Show with ID of \"{tmdb}\" doesn't contain a season numbered {season_number}" });
+            }
+
             EpisodeModel episode = season.GetEpisodeByNumber(episode_number);
             if (episode == null)
+            {
                 return new JsonResult(new { message = $"Show with ID of \"{tmdb}\" and season #{season_number} doesn't contain episode numbered {episode_number}" });
+            }
 
             if (resolution.HasValue && bitrate.HasValue)
+            {
                 return File(FFMpegUtil.GetTranscodedStream(user, episode, resolution.Value, bitrate.Value), "application/x-mpegURL", true);
+            }
+
             return File(((IMedia)episode).Stream, "video/mp4", true);
         }
-        #endregion
-        #endregion
-        #endregion
+
+        #endregion Episodes
+
+        #endregion Season
+
+        #endregion TV
     }
 }

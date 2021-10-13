@@ -1,25 +1,26 @@
-﻿using System;
+﻿using Flexx.Media.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Flexx.Media.Interfaces;
-using System.Linq;
 
 namespace Flexx.Media.Objects.Libraries
 {
     public class LibraryModel
     {
         protected List<IMedia> medias;
+
         protected LibraryModel()
         {
             medias = new();
         }
+
         public virtual void Initialize()
         {
         }
+
         public virtual IMedia GetMediaByName(string name)
         {
             name = name.ToLower();
-            foreach (var media in medias)
+            foreach (IMedia media in medias)
             {
                 if (media.Title.ToLower().Equals(name) || media.FileName.ToLower().Equals(name))
                 {
@@ -32,7 +33,7 @@ namespace Flexx.Media.Objects.Libraries
         public virtual IMedia[] GetMediaByYear(ushort year)
         {
             List<IMedia> list = new();
-            foreach (var media in medias)
+            foreach (IMedia media in medias)
             {
                 if (media.ReleaseDate.Year.Equals(year))
                 {
@@ -41,14 +42,18 @@ namespace Flexx.Media.Objects.Libraries
             }
             return list.ToArray();
         }
+
         public virtual void AddMedia(params IMedia[] medias)
         {
             foreach (IMedia media in medias)
             {
                 if (media != null)
+                {
                     this.medias.Add(media);
+                }
             }
         }
+
         public virtual void RemoveMedia(params IMedia[] medias)
         {
             foreach (IMedia media in medias)
@@ -56,7 +61,12 @@ namespace Flexx.Media.Objects.Libraries
                 this.medias.Remove(media);
             }
         }
-        public virtual Task RefreshMetadataAsync() => Task.Run(() => RefreshMetadata());
+
+        public virtual Task RefreshMetadataAsync()
+        {
+            return Task.Run(() => RefreshMetadata());
+        }
+
         public virtual void RefreshMetadata()
         {
             foreach (IMedia media in medias)

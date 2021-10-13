@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Net;
-using System.Xml;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Flexx.Core.Networking
 {
@@ -21,10 +16,11 @@ namespace Flexx.Core.Networking
             foreach (string line in lines)
             {
                 if (line.Trim().StartsWith("<link>magnet"))
+                {
                     links.Add(line.Replace("<link>", "").Replace("</link>", "").Trim());
+                }
             }
             return links.ToArray();
         }
-
     }
 }

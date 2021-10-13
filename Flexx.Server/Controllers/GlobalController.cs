@@ -1,6 +1,4 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc;
-using static Flexx.Core.Data.Global;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace Flexx.Server.Controllers
 {
@@ -12,6 +10,7 @@ namespace Flexx.Server.Controllers
         {
             return GetStatus();
         }
+
         [HttpGet("status")]
         public IActionResult GetStatus()
         {
@@ -20,6 +19,5 @@ namespace Flexx.Server.Controllers
                 status = "Online",
             });
         }
-
     }
 }

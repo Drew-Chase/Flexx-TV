@@ -1,16 +1,16 @@
-﻿using System;
+﻿using Flexx.Media.Objects;
+using Flexx.Media.Objects.Libraries;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using Flexx.Media.Objects;
 using System.Linq;
-using static Flexx.Core.Data.Global;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Flexx.Media.Objects.Libraries;
-using Newtonsoft.Json.Linq;
-using System.Net;
-using Newtonsoft.Json;
 using TorrentTitleParser;
+using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Utilities
 {
@@ -21,6 +21,7 @@ namespace Flexx.Media.Utilities
         WeekDays,
         WeekEnds,
     }
+
     public class Scanner
     {
         private Timer scannerTask;
@@ -34,6 +35,7 @@ namespace Flexx.Media.Utilities
                 case ScanFrequency.Daily:
                     span = TimeSpan.FromHours(24);
                     break;
+
                 case ScanFrequency.Weekly:
                     span = TimeSpan.FromDays(7);
                     break;
@@ -77,11 +79,11 @@ namespace Flexx.Media.Utilities
             }
             else
             {
-                foreach (var i in Split(files, 3))
+                foreach (IEnumerable<string> i in Split(files, 3))
                 {
                     Task.Run(() =>
                     {
-                        foreach (var j in i)
+                        foreach (string j in i)
                         {
                             MovieLibraryModel.Instance.AddMedia(PopulateMovieAsync(j).Result);
                         }
@@ -89,8 +91,16 @@ namespace Flexx.Media.Utilities
                 }
             }
         }
-        private static Task<MovieModel> PopulateMovieAsync(string file) => Task.Run(() => PopulateMovie(file));
-        private static MovieModel PopulateMovie(string file) => new(file);
+
+        private static Task<MovieModel> PopulateMovieAsync(string file)
+        {
+            return Task.Run(() => PopulateMovie(file));
+        }
+
+        private static MovieModel PopulateMovie(string file)
+        {
+            return new(file);
+        }
 
         public static void ForTV()
         {
@@ -132,9 +142,13 @@ namespace Flexx.Media.Utilities
             //        });
             //    }
             //}
-
         }
-        private static Task<TVModel[]> PopulateTVAsync(params string[] files) => Task.Run(() => PopulateTV(files));
+
+        private static Task<TVModel[]> PopulateTVAsync(params string[] files)
+        {
+            return Task.Run(() => PopulateTV(files));
+        }
+
         private static TVModel[] PopulateTV(params string[] files)
         {
             List<TVModel> models = new();
@@ -199,11 +213,10 @@ namespace Flexx.Media.Utilities
         /// <returns>An array containing smaller arrays.</returns>
         public static IEnumerable<IEnumerable<T>> Split<T>(T[] array, int size)
         {
-            for (var i = 0; i < (float)array.Length / size; i++)
+            for (int i = 0; i < (float)array.Length / size; i++)
             {
                 yield return array.Skip(i * size).Take(size);
             }
         }
-
     }
 }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using ChaseLabs.CLConfiguration.List;
+﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Core.Networking;
 using Flexx.Media.Interfaces;
 using Flexx.Media.Objects.Extras;
@@ -9,6 +6,9 @@ using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Linq;
 using TorrentTitleParser;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
@@ -25,13 +25,17 @@ namespace Flexx.Media.Objects
         public string Plot { get; set; }
         public string MPAA { get; set; }
         public sbyte Rating { get; set; }
+
         public string PosterImage
         {
             get
             {
                 string path = Path.Combine(meta_directory, "poster.jpg");
                 if (!File.Exists(path))
+                {
                     UpdateMetaData();
+                }
+
                 return path;
             }
             set
@@ -46,17 +50,20 @@ namespace Flexx.Media.Objects
                 }
                 catch
                 {
-
                 }
             }
         }
+
         public string CoverImage
         {
             get
             {
                 string path = Path.Combine(meta_directory, "cover.jpg");
                 if (!File.Exists(path))
+                {
                     UpdateMetaData();
+                }
+
                 return path;
             }
             set
@@ -72,6 +79,7 @@ namespace Flexx.Media.Objects
                 catch { }
             }
         }
+
         public object ModelObject =>
             new
             {
@@ -81,6 +89,7 @@ namespace Flexx.Media.Objects
                 year = ReleaseDate.Year,
                 file = PATH,
             };
+
         public DateTime ReleaseDate { get; set; }
         public CastListModel Cast { get; set; }
         public ConfigManager Metadata { get; set; }
@@ -134,7 +143,10 @@ namespace Flexx.Media.Objects
                     }
                 }
                 if (PATH.Equals(@"/Users/drewchase/Documents/Flexx Library/Movies/X-Men Origins Wolverine (2009).mkv"))
+                {
                     log.Debug("");
+                }
+
                 if (string.IsNullOrWhiteSpace(TMDB))
                 {
                     MovieLibraryModel.Instance.RemoveMedia(this);
@@ -142,11 +154,9 @@ namespace Flexx.Media.Objects
                 }
             }
 
-
             Metadata = new(Path.Combine(Paths.MetaData, "Movies", TMDB, "metadata"), false);
             LoadMetaData();
         }
-
 
         private void LoadMetaData()
         {
@@ -184,7 +194,6 @@ namespace Flexx.Media.Objects
             }
         }
 
-
         public void UpdateMetaData()
         {
             log.Debug($"Getting metadata for {TMDB}");
@@ -210,7 +219,10 @@ namespace Flexx.Media.Objects
                 CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
 
                 if (DateTime.TryParse(json["release_date"].ToString(), out DateTime tmp))
+                {
                     ReleaseDate = tmp;
+                }
+
                 Title = json["title"].ToString();
                 Plot = json["overview"].ToString();
                 try
@@ -219,7 +231,6 @@ namespace Flexx.Media.Objects
                 }
                 catch
                 {
-
                 }
                 foreach (JToken child in ((JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/release_dates?api_key={TMDB_API}")))["results"].Children().ToList())
                 {
@@ -239,13 +250,21 @@ namespace Flexx.Media.Objects
             Metadata.Add("title", Title);
             Metadata.Add("plot", Plot);
             if (Rating != 0)
+            {
                 Metadata.Add("rating", Rating);
+            }
+
             if (!string.IsNullOrWhiteSpace(TrailerUrl))
+            {
                 Metadata.Add("trailer", TrailerUrl);
+            }
+
             Metadata.Add("release_date", ReleaseDate.ToString("MM-dd-yyyy"));
             Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
             if (!string.IsNullOrWhiteSpace(MPAA))
+            {
                 Metadata.Add("mpaa", MPAA);
+            }
         }
 
         public bool ScanForDownloads(out string[] links)

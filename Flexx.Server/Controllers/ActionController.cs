@@ -1,8 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using Flexx.Media.Objects;
+﻿using Flexx.Media.Objects;
 using Flexx.Media.Objects.Libraries;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace Flexx.Server.Controllers
 {
@@ -10,7 +9,6 @@ namespace Flexx.Server.Controllers
     [Route("/api/action")]
     public class ActionController : ControllerBase
     {
-
         [HttpGet("movies/add/{tmdb}")]
         public IActionResult AddMovie(string tmdb)
         {

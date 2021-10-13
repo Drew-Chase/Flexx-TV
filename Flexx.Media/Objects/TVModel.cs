@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using ChaseLabs.CLConfiguration.List;
+﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Media.Interfaces;
 using Flexx.Media.Objects.Extras;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Objects
@@ -29,7 +29,10 @@ namespace Flexx.Media.Objects
             {
                 string path = Path.Combine(Metadata_Directory, "poster.jpg");
                 if (!File.Exists(path))
+                {
                     UpdateMetaData();
+                }
+
                 return path;
             }
             set
@@ -38,13 +41,17 @@ namespace Flexx.Media.Objects
                 new WebClient().DownloadFile(value, path);
             }
         }
+
         public string CoverImage
         {
             get
             {
                 string path = Path.Combine(Metadata_Directory, "cover.jpg");
                 if (!File.Exists(path))
+                {
                     UpdateMetaData();
+                }
+
                 return path;
             }
             set
@@ -55,7 +62,6 @@ namespace Flexx.Media.Objects
         }
 
         public ConfigManager Metadata { get; set; }
-
 
         public string Metadata_Directory => Path.Combine(Paths.MetaData, "TV", TMDB);
 
@@ -70,6 +76,7 @@ namespace Flexx.Media.Objects
 #endif
             LoadMetaData();
         }
+
         private void LoadMetaData()
         {
             try
@@ -85,6 +92,7 @@ namespace Flexx.Media.Objects
                 UpdateMetaData();
             }
         }
+
         public void UpdateMetaData()
         {
             JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}?api_key={TMDB_API}"));
@@ -115,14 +123,19 @@ namespace Flexx.Media.Objects
             Metadata.Add("in_production", InProduction);
             Metadata.Add("start_date", StartDate.ToString("yyyy-MM-dd"));
         }
+
         public SeasonModel GetSeasonByNumber(int season)
         {
             foreach (SeasonModel model in Seasons)
             {
-                if (model.Season_Number == season) return model;
+                if (model.Season_Number == season)
+                {
+                    return model;
+                }
             }
             return null;
         }
+
         public SeasonModel AddSeason(int season)
         {
             SeasonModel model = new(season, this);
@@ -131,6 +144,7 @@ namespace Flexx.Media.Objects
             return model;
         }
     }
+
     public class SeasonModel
     {
         public TVModel Series { get; private set; }
@@ -150,7 +164,10 @@ namespace Flexx.Media.Objects
             {
                 string path = Path.Combine(Metadata_Directory, "poster.jpg");
                 if (!File.Exists(path))
+                {
                     UpdateMetaData();
+                }
+
                 return path;
             }
             set
@@ -168,6 +185,7 @@ namespace Flexx.Media.Objects
         }
 
         public ConfigManager Metadata { get; set; }
+
         public SeasonModel(int season_number, TVModel series)
         {
             Series = series;
@@ -181,11 +199,15 @@ namespace Flexx.Media.Objects
 #endif
             LoadMetaData();
         }
+
         public EpisodeModel GetEpisodeByNumber(int episode)
         {
             foreach (EpisodeModel model in Episodes)
             {
-                if (model.Episode_Number == episode) return model;
+                if (model.Episode_Number == episode)
+                {
+                    return model;
+                }
             }
             return null;
         }
@@ -197,6 +219,7 @@ namespace Flexx.Media.Objects
             Episodes = Episodes.OrderBy(e => e.Episode_Number).ToList();
             return model;
         }
+
         public EpisodeModel AddEpisode(string file, int episode)
         {
             EpisodeModel model = new(file, episode, this);
@@ -204,6 +227,7 @@ namespace Flexx.Media.Objects
             Episodes = Episodes.OrderBy(e => e.Episode_Number).ToList();
             return model;
         }
+
         private void LoadMetaData()
         {
             try
@@ -217,6 +241,7 @@ namespace Flexx.Media.Objects
                 UpdateMetaData();
             }
         }
+
         public void UpdateMetaData()
         {
             try
@@ -252,15 +277,21 @@ namespace Flexx.Media.Objects
             catch
             {
                 if (string.IsNullOrWhiteSpace(Title))
+                {
                     Title = $"Season {Season_Number}";
+                }
+
                 if (string.IsNullOrWhiteSpace(Plot))
+                {
                     Plot = Series.Plot;
+                }
             }
             Metadata.Add("title", Title);
             Metadata.Add("plot", Plot);
             Metadata.Add("start_date", StartDate.ToString("yyyy-MM-dd"));
         }
     }
+
     public class EpisodeModel : IMedia
     {
         public string PATH { get; set; }
@@ -268,13 +299,17 @@ namespace Flexx.Media.Objects
         public string Plot { get; set; }
         public string MPAA { get; set; }
         public sbyte Rating { get; set; }
+
         public string PosterImage
         {
             get
             {
                 string path = Path.Combine(Metadata_Directory, "poster.jpg");
                 if (!File.Exists(path))
+                {
                     UpdateMetaData();
+                }
+
                 return path;
             }
             set
@@ -290,6 +325,7 @@ namespace Flexx.Media.Objects
                 }
             }
         }
+
         public string CoverImage { get; set; }
         public DateTime ReleaseDate { get; set; }
         public ConfigManager Metadata { get; set; }
@@ -300,6 +336,7 @@ namespace Flexx.Media.Objects
         public string Metadata_Directory => Path.Combine(Season.Metadata_Directory, Episode_Number.ToString());
 
         public DateTime ScannedDate { get; set; }
+
         public object ModelObject => new
         {
             id = Season.Series.TMDB,
@@ -343,6 +380,7 @@ namespace Flexx.Media.Objects
                 UpdateMetaData();
             }
         }
+
         public void UpdateMetaData()
         {
             try
@@ -380,9 +418,14 @@ namespace Flexx.Media.Objects
             catch
             {
                 if (string.IsNullOrWhiteSpace(Title))
+                {
                     Title = $"Episode {Episode_Number}";
+                }
+
                 if (string.IsNullOrWhiteSpace(Plot))
+                {
                     Plot = Season.Plot;
+                }
             }
             Metadata.Add("title", Title);
             Metadata.Add("plot", Plot);
