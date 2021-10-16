@@ -23,7 +23,7 @@
     <Folder Include="Networking\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ChaseLabs.Configuration" Version="0.0.6" />
+    <PackageReference Include="ChaseLabs.Configuration" Version="0.1.1" />
     <PackageReference Include="ChaseLabs.Logger" Version="0.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>

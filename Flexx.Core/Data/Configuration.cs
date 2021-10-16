@@ -6,8 +6,8 @@ namespace Flexx.Core.Data
 {
     public class Configuration
     {
-        public string MovieLibraryPath { get => sysProfile.GetConfigByKey("movies").Value; set => sysProfile.GetConfigByKey("movies").Value = value; }
-        public string TVLibraryPath { get => sysProfile.GetConfigByKey("tv").Value; set => sysProfile.GetConfigByKey("tv").Value = value; }
+        public string MovieLibraryPath => sysProfile.GetConfigByKey("movies").Value;
+        public string TVLibraryPath => sysProfile.GetConfigByKey("tv").Value;
         private readonly ConfigManager sysProfile, userProfile;
 
         public Configuration()
