@@ -1,12 +1,11 @@
-﻿using Flexx.Media.Interfaces;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Flexx.Media.Objects.Libraries
 {
     public class LibraryModel
     {
-        protected List<IMedia> medias;
+        protected List<MediaBase> medias;
 
         protected LibraryModel()
         {
@@ -17,10 +16,10 @@ namespace Flexx.Media.Objects.Libraries
         {
         }
 
-        public virtual IMedia GetMediaByName(string name)
+        public virtual MediaBase GetMediaByName(string name)
         {
             name = name.ToLower();
-            foreach (IMedia media in medias)
+            foreach (MediaBase media in medias)
             {
                 if (media.Title.ToLower().Equals(name) || media.FileName.ToLower().Equals(name))
                 {
@@ -30,10 +29,10 @@ namespace Flexx.Media.Objects.Libraries
             return null;
         }
 
-        public virtual IMedia[] GetMediaByYear(ushort year)
+        public virtual MediaBase[] GetMediaByYear(ushort year)
         {
-            List<IMedia> list = new();
-            foreach (IMedia media in medias)
+            List<MediaBase> list = new();
+            foreach (MediaBase media in medias)
             {
                 if (media.ReleaseDate.Year.Equals(year))
                 {
@@ -43,9 +42,9 @@ namespace Flexx.Media.Objects.Libraries
             return list.ToArray();
         }
 
-        public virtual void AddMedia(params IMedia[] medias)
+        public virtual void AddMedia(params MediaBase[] medias)
         {
-            foreach (IMedia media in medias)
+            foreach (MediaBase media in medias)
             {
                 if (media != null)
                 {
@@ -54,9 +53,9 @@ namespace Flexx.Media.Objects.Libraries
             }
         }
 
-        public virtual void RemoveMedia(params IMedia[] medias)
+        public virtual void RemoveMedia(params MediaBase[] medias)
         {
-            foreach (IMedia media in medias)
+            foreach (MediaBase media in medias)
             {
                 this.medias.Remove(media);
             }
@@ -69,7 +68,7 @@ namespace Flexx.Media.Objects.Libraries
 
         public virtual void RefreshMetadata()
         {
-            foreach (IMedia media in medias)
+            foreach (MediaBase media in medias)
             {
                 media.UpdateMetaData();
             }

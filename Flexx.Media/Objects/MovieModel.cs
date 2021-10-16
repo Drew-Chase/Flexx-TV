@@ -1,6 +1,5 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Core.Networking;
-using Flexx.Media.Interfaces;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
@@ -16,17 +15,12 @@ using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Objects
 {
-    public class MovieModel : IMedia
+    public class MovieModel : MediaBase
     {
         public string TrailerUrl { get; private set; }
         public string TMDB { get; private set; }
-        public string PATH { get; set; }
-        public string Title { get; set; }
-        public string Plot { get; set; }
-        public string MPAA { get; set; }
-        public sbyte Rating { get; set; }
 
-        public string PosterImage
+        public override string PosterImage
         {
             get
             {
@@ -54,7 +48,7 @@ namespace Flexx.Media.Objects
             }
         }
 
-        public string CoverImage
+        public override string CoverImage
         {
             get
             {
@@ -88,15 +82,10 @@ namespace Flexx.Media.Objects
                 plot = Plot,
                 year = ReleaseDate.Year,
                 file = PATH,
+                downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH),
             };
 
-        public DateTime ReleaseDate { get; set; }
-        public CastListModel Cast { get; set; }
-        public ConfigManager Metadata { get; set; }
-
         private string meta_directory => Path.Combine(Paths.MetaData, "Movies", TMDB);
-
-        public DateTime ScannedDate { get; set; }
 
         public MovieModel(string initializer, bool isTMDB = false)
         {
@@ -107,7 +96,7 @@ namespace Flexx.Media.Objects
             else
             {
                 PATH = initializer.ToString();
-                Torrent torrent = new(((IMedia)this).FileName);
+                Torrent torrent = new(FileName);
                 string query = torrent.Name.Replace($".{torrent.Container}", "").Replace($"({torrent.Year})", "");
                 string url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}&year={torrent.Year}";
                 JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString(url)))["results"];
@@ -142,10 +131,6 @@ namespace Flexx.Media.Objects
                         }
                     }
                 }
-                if (PATH.Equals(@"/Users/drewchase/Documents/Flexx Library/Movies/X-Men Origins Wolverine (2009).mkv"))
-                {
-                    log.Debug("");
-                }
 
                 if (string.IsNullOrWhiteSpace(TMDB))
                 {
@@ -155,12 +140,15 @@ namespace Flexx.Media.Objects
             }
 
             Metadata = new(Path.Combine(Paths.MetaData, "Movies", TMDB, "metadata"), false);
+
+            Metadata.Add("watched", false);
+            Metadata.Add("watched_duration", (uint)0);
             LoadMetaData();
         }
 
         private void LoadMetaData()
         {
-            if (Metadata.GetConfigByKey("title") == null)
+            if (Metadata.Size() <= 5 || Metadata.GetConfigByKey("title") == null)
             {
                 log.Warn($"No cache saved for {TMDB}");
                 UpdateMetaData();
@@ -172,15 +160,15 @@ namespace Flexx.Media.Objects
                 {
                     Title = Metadata.GetConfigByKey("title").Value;
                     Plot = Metadata.GetConfigByKey("plot").Value;
-                    Rating = (sbyte)Metadata.GetConfigByKey("rating").ParseInt();
+                    Rating = Metadata.GetConfigByKey("rating").Value;
                     try
                     {
-                        TrailerUrl = Metadata.GetConfigByKey("trailer").Value;
+                        TrailerUrl = Metadata.GetConfigByKey("trailer") == null ? string.Empty : Metadata.GetConfigByKey("trailer").Value;
                     }
                     catch { }
                     try
                     {
-                        MPAA = Metadata.GetConfigByKey("mpaa").Value;
+                        MPAA = Metadata.GetConfigByKey("mpaa") == null ? string.Empty : Metadata.GetConfigByKey("mpaa").Value;
                     }
                     catch { }
                     ReleaseDate = DateTime.Parse(Metadata.GetConfigByKey("release_date").Value);
@@ -194,7 +182,7 @@ namespace Flexx.Media.Objects
             }
         }
 
-        public void UpdateMetaData()
+        public override void UpdateMetaData()
         {
             log.Debug($"Getting metadata for {TMDB}");
             Cast = new(this);
@@ -267,13 +255,13 @@ namespace Flexx.Media.Objects
             }
         }
 
-        public bool ScanForDownloads(out string[] links)
+        public override bool ScanForDownloads(out string[] links)
         {
             links = Indexer.GetMagnetList($"{Title} {ReleaseDate.Year}");
             return links.Length != 0;
         }
 
-        public void AddToTorrentClient(bool useInternal = true)
+        public override void AddToTorrentClient(bool useInternal = true)
         {
             if (ScanForDownloads(out string[] links))
             {

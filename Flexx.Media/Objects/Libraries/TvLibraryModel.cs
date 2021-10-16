@@ -147,7 +147,7 @@ namespace Flexx.Media.Objects.Libraries
 
         public object[] GetContinueWatchingList()
         {
-            Interfaces.IMedia[] continueWatching = medias.Where(m => !m.Watched && m.WatchedDuration > 0).ToArray();
+            MediaBase[] continueWatching = medias.Where(m => !m.Watched && m.WatchedDuration > 0).ToArray();
             object[] model = new object[continueWatching.Length > 10 ? 10 : continueWatching.Length];
             for (int i = 0; i < model.Length; i++)
             {
@@ -162,7 +162,7 @@ namespace Flexx.Media.Objects.Libraries
 
         public object[] GetRecentlyAddedList()
         {
-            Interfaces.IMedia[] shows = medias.OrderBy(m => m.ScannedDate).ToArray();
+            MediaBase[] shows = medias.OrderBy(m => m.ScannedDate).ToArray();
             object[] model = new object[shows.Length > 10 ? 10 : shows.Length];
             for (int i = 0; i < model.Length; i++)
             {

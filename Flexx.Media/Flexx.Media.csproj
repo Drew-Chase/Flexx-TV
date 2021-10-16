@@ -19,8 +19,6 @@
     <None Remove="FFMpegSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Objects\" />
-    <Folder Include="Interfaces\" />
     <Folder Include="Utilities\" />
     <Folder Include="Objects\Libraries\" />
     <Folder Include="Objects\Extras\" />

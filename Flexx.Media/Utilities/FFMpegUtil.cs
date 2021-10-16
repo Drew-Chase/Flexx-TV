@@ -1,4 +1,4 @@
-﻿using Flexx.Media.Interfaces;
+﻿using Flexx.Media.Objects;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -83,7 +83,7 @@ namespace Flexx.Media.Utilities
             process.Start();
         }
 
-        public static FileStream GetTranscodedStream(string requestedUser, IMedia media, int targetResolution, int targetBitRate)
+        public static FileStream GetTranscodedStream(string requestedUser, MediaBase media, int targetResolution, int targetBitRate)
         {
             string fileOutput = Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.TempData, $"stream_{requestedUser}")).FullName, $"v_{requestedUser}_{media.FileName}.m3u8");
             File.Create(fileOutput).Close();

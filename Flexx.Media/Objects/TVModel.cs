@@ -1,5 +1,4 @@
 ﻿using ChaseLabs.CLConfiguration.List;
-using Flexx.Media.Interfaces;
 using Flexx.Media.Objects.Extras;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -79,17 +78,18 @@ namespace Flexx.Media.Objects
 
         private void LoadMetaData()
         {
-            try
+            if (Metadata.Size() == 0 || Metadata.GetConfigByKey("title") == null || Metadata.GetConfigByKey("plot") == null)
+                UpdateMetaData();
+            else
             {
                 Title = Metadata.GetConfigByKey("title").Value;
                 Plot = Metadata.GetConfigByKey("plot").Value;
-                Studio = Metadata.GetConfigByKey("studio").Value;
-                InProduction = Metadata.GetConfigByKey("in_production").ParseBoolean();
-                StartDate = DateTime.Parse(Metadata.GetConfigByKey("start_date").Value);
-            }
-            catch
-            {
-                UpdateMetaData();
+                if (Metadata.GetConfigByKey("studio") != null)
+                    Studio = Metadata.GetConfigByKey("studio").Value;
+                if (Metadata.GetConfigByKey("in_production") != null)
+                    InProduction = Metadata.GetConfigByKey("in_production").Value;
+                if (Metadata.GetConfigByKey("start_date") != null)
+                    StartDate = DateTime.Parse(Metadata.GetConfigByKey("start_date").Value);
             }
         }
 
@@ -230,15 +230,14 @@ namespace Flexx.Media.Objects
 
         private void LoadMetaData()
         {
-            try
+            if (Metadata.Size() == 0 || Metadata.GetConfigByKey("title") == null || Metadata.GetConfigByKey("plot") == null)
+                UpdateMetaData();
+            else
             {
                 Title = Metadata.GetConfigByKey("title").Value;
                 Plot = Metadata.GetConfigByKey("plot").Value;
-                StartDate = DateTime.Parse(Metadata.GetConfigByKey("start_date").Value);
-            }
-            catch
-            {
-                UpdateMetaData();
+                if (Metadata.GetConfigByKey("start_date") != null)
+                    StartDate = DateTime.Parse(Metadata.GetConfigByKey("start_date").Value);
             }
         }
 
@@ -292,15 +291,9 @@ namespace Flexx.Media.Objects
         }
     }
 
-    public class EpisodeModel : IMedia
+    public class EpisodeModel : MediaBase
     {
-        public string PATH { get; set; }
-        public string Title { get; set; }
-        public string Plot { get; set; }
-        public string MPAA { get; set; }
-        public sbyte Rating { get; set; }
-
-        public string PosterImage
+        public override string PosterImage
         {
             get
             {
@@ -326,16 +319,10 @@ namespace Flexx.Media.Objects
             }
         }
 
-        public string CoverImage { get; set; }
-        public DateTime ReleaseDate { get; set; }
-        public ConfigManager Metadata { get; set; }
-        public CastListModel Cast { get; set; }
         public SeasonModel Season { get; private set; }
         public int Episode_Number { get; private set; }
         public string FriendlyName => $"S{(Season.Season_Number < 10 ? "0" + Season.Season_Number : Season.Season_Number)}E{(Episode_Number < 10 ? "0" + Episode_Number : Episode_Number)}";
         public string Metadata_Directory => Path.Combine(Season.Metadata_Directory, Episode_Number.ToString());
-
-        public DateTime ScannedDate { get; set; }
 
         public object ModelObject => new
         {
@@ -368,20 +355,20 @@ namespace Flexx.Media.Objects
 
         private void LoadMetaData()
         {
-            try
+            if (Metadata.Size() == 0 || Metadata.GetConfigByKey("title") == null || Metadata.GetConfigByKey("plot") == null)
+                UpdateMetaData();
+            else
             {
                 Title = Metadata.GetConfigByKey("title").Value;
                 Plot = Metadata.GetConfigByKey("plot").Value;
-                ReleaseDate = DateTime.Parse(Metadata.GetConfigByKey("release_date").Value);
-                ScannedDate = DateTime.Parse(Metadata.GetConfigByKey("scanned_date").Value);
-            }
-            catch
-            {
-                UpdateMetaData();
+                if (Metadata.GetConfigByKey("release_date") != null)
+                    ReleaseDate = DateTime.Parse(Metadata.GetConfigByKey("release_date").Value);
+                if (Metadata.GetConfigByKey("scanned_date") != null)
+                    ScannedDate = DateTime.Parse(Metadata.GetConfigByKey("scanned_date").Value);
             }
         }
 
-        public void UpdateMetaData()
+        public override void UpdateMetaData()
         {
             try
             {
@@ -433,12 +420,12 @@ namespace Flexx.Media.Objects
             Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
         }
 
-        public bool ScanForDownloads(out string[] links)
+        public override bool ScanForDownloads(out string[] links)
         {
             throw new NotImplementedException();
         }
 
-        public void AddToTorrentClient(bool useInternal = true)
+        public override void AddToTorrentClient(bool useInternal = true)
         {
             throw new NotImplementedException();
         }

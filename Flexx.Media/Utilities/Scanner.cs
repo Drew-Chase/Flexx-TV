@@ -53,7 +53,7 @@ namespace Flexx.Media.Utilities
         {
             log.Info("Scanning for Movies");
             List<MovieModel> model = new();
-
+            log.Warn(config.MovieLibraryPath);
             string[] files = Directory.GetFiles(config.MovieLibraryPath, "*.*", SearchOption.AllDirectories)
                 .Where(f =>
                 {
@@ -63,7 +63,7 @@ namespace Flexx.Media.Utilities
                         if (new FileInfo(f).Length == 0)
                         {
                             log.Error($"File \"{f}\" was corrupted and will not be added");
-                            //return false;
+                            return false;
                         }
                         return true;
                     }
@@ -115,7 +115,7 @@ namespace Flexx.Media.Utilities
                         if (new FileInfo(f).Length == 0)
                         {
                             log.Error($"File was corrupted!");
-                            //return false;
+                            return false;
                         }
                         return true;
                     }

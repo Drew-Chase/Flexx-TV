@@ -1,5 +1,4 @@
-﻿using Flexx.Media.Interfaces;
-using Flexx.Media.Objects;
+﻿using Flexx.Media.Objects;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;

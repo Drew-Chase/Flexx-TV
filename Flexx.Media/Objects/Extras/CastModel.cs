@@ -1,5 +1,4 @@
-﻿using Flexx.Media.Interfaces;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net;
 using static Flexx.Core.Data.Global;
@@ -18,10 +17,10 @@ namespace Flexx.Media.Objects.Extras
     public class CastListModel
     {
         public CastType Type { get; private set; }
-        private readonly IMedia Media;
+        private readonly MediaBase Media;
         private readonly CastModel[] FullCast;
 
-        public CastListModel(IMedia Media)
+        public CastListModel(MediaBase Media)
         {
             this.Media = Media;
             JObject json;
