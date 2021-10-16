@@ -114,7 +114,25 @@ namespace Flexx.Server.Controllers
         }
 
         #region Season
+        [HttpGet("{tmdb}/seasons")]
+        public IActionResult GetSeasons(string tmdb)
+        {
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            SeasonModel[] seasons = show.Seasons.ToArray();
+            object[] json = new object[seasons.Length];
+            for (int i = 0; i < json.Length; i++)
+            {
+                SeasonModel season = seasons[i];
+                json[i] = new
+                {
+                    title = season.Title,
+                    number = season.Season_Number,
+                    episodes = season.Episodes.Count,
+                };
+            }
+            return new JsonResult(new { seasons = json });
 
+        }
         [HttpGet("{tmdb}/{season_number}")]
         public IActionResult GetSeason(string tmdb, int season_number)
         {
@@ -156,6 +174,27 @@ namespace Flexx.Server.Controllers
         }
 
         #region Episodes
+
+
+        [HttpGet("{tmdb}/{season_number}/episodes")]
+        public IActionResult GetEpisoes(string tmdb, int season_number)
+        {
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            EpisodeModel[] episodes = show.GetSeasonByNumber(season_number).Episodes.ToArray();
+            object[] json = new object[episodes.Length];
+            for (int i = 0; i < json.Length; i++)
+            {
+                EpisodeModel episode = episodes[i];
+                json[i] = new
+                {
+                    title = episode.Title,
+                    number = episode.Episode_Number,
+                    name = episode.FriendlyName,
+                };
+            }
+            return new JsonResult(new { episodes = json });
+
+        }
 
         [HttpGet("{tmdb}/{season_number}/{episode_number}")]
         public IActionResult GetEpisode(string tmdb, int season_number, int episode_number)
@@ -228,7 +267,7 @@ namespace Flexx.Server.Controllers
                 return File(FFMpegUtil.GetTranscodedStream(user, episode, resolution.Value, bitrate.Value), "application/x-mpegURL", true);
             }
 
-            return File(((IMedia)episode).Stream, "video/mp4", true);
+            return File(((MediaBase)episode).Stream, "video/mp4", true);
         }
 
         #endregion Episodes

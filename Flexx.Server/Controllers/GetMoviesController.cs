@@ -177,7 +177,7 @@ namespace Flexx.Server.Controllers
         [HttpGet("{tmdb}/{user}/video/{resolution?}/{bitrate?}")]
         public IActionResult GetMovieStream(string tmdb, string user, int? resolution, int? bitrate)
         {
-            IMedia movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+            MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
             if (resolution.HasValue && bitrate.HasValue)
             {
                 return File(FFMpegUtil.GetTranscodedStream(user, movie, resolution.Value, bitrate.Value), "application/x-mpegURL", true);
