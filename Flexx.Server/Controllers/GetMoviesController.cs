@@ -1,4 +1,6 @@
-﻿using Flexx.Media.Objects;
+﻿using Flexx.Core.Authentication;
+using Flexx.Media.Objects;
+using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
-using System.Linq;
+using System.Net;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using static Flexx.Core.Data.Global;
@@ -19,9 +21,10 @@ namespace Flexx.Server.Controllers
     {
         #region Movies
 
-        public IActionResult Index()
+        [HttpGet("{username}")]
+        public IActionResult GetMovies(string username)
         {
-            return new JsonResult(MovieLibraryModel.Instance.GetList());
+            return new JsonResult(MovieLibraryModel.Instance.GetList(Users.Instance.Get(username)));
         }
 
         [HttpGet("discover/{category}")]
@@ -55,7 +58,7 @@ namespace Flexx.Server.Controllers
             MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
             if (movie == null)
             {
-                IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/videos?api_key={TMDB_API}")))["results"][0]["key"].ToString()).Result.GetMuxedStreams().GetWithHighestVideoQuality();
+                IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/videos?api_key={TMDB_API}")))["results"][0]["key"].ToString()).Result.GetMuxedStreams().GetWithHighestVideoQuality();
                 if (streamInfo != null)
                 {
                     trailerURL = streamInfo.Url;
@@ -78,47 +81,17 @@ namespace Flexx.Server.Controllers
             return RedirectPermanent(trailerURL);
         }
 
-        [HttpGet("{tmdb}")]
-        public IActionResult GetMovie(string tmdb)
+        [HttpGet("{tmdb}/{username}")]
+        public IActionResult GetMovie(string tmdb, string username)
         {
             try
             {
                 MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
                 if (movie == null)
                 {
-                    using System.Net.WebClient client = new();
-                    JObject json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
-                    string mpaa = string.Empty;
-
-                    foreach (JToken child in ((JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/release_dates?api_key={TMDB_API}")))["results"].Children().ToList())
-                    {
-                        try
-                        {
-                            if (child["iso_3166_1"].ToString().ToLower().Equals("us"))
-                            {
-                                mpaa = child["release_dates"][0]["certification"].ToString();
-                            }
-                        }
-                        catch
-                        {
-                            continue;
-                        }
-                    }
-                    return new JsonResult(new
-                    {
-                        id = tmdb,
-                        title = json["title"].ToString(),
-                        plot = json["overview"],
-                        year = DateTime.Parse(json["release_date"].ToString()).Year,
-                        release_date = DateTime.Parse(json["release_date"].ToString()).ToString("MM-dd-yyyy"),
-                        rating = json["vote_average"],
-                        mpaa = mpaa,
-                        watched = false,
-                        watched_duration = 0,
-                        downloaded = false,
-                    });
+                    return new JsonResult(new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}")));
                 }
-                return new JsonResult(movie.ModelObject);
+                return new JsonResult(new MovieObject(movie, Users.Instance.Get(username)));
             }
             catch (Exception e)
             {
@@ -127,16 +100,16 @@ namespace Flexx.Server.Controllers
             return new NotFoundResult();
         }
 
-        [HttpGet("recently-added")]
-        public IActionResult GetRecentlyAddedMovies()
+        [HttpGet("{username}/recently-added")]
+        public IActionResult GetRecentlyAddedMovies(string username)
         {
-            return new JsonResult(MovieLibraryModel.Instance.GetRecentlyAddedList());
+            return new JsonResult(MovieLibraryModel.Instance.GetRecentlyAddedList(Users.Instance.Get(username)));
         }
 
-        [HttpGet("continue-watching")]
-        public IActionResult GetContinueWatchingMovies()
+        [HttpGet("{username}/continue-watching")]
+        public IActionResult GetContinueWatchingMovies(string username)
         {
-            return new JsonResult(MovieLibraryModel.Instance.GetContinueWatchingList());
+            return new JsonResult(MovieLibraryModel.Instance.GetContinueWatchingList(Users.Instance.Get(username)));
         }
 
         [HttpGet("{tmdb}/images/poster")]
@@ -145,8 +118,7 @@ namespace Flexx.Server.Controllers
             MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
             if (movie == null)
             {
-                using System.Net.WebClient client = new();
-                JObject json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
+                JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["poster_path"]}");
             }
             return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open), "image/jpg");
@@ -160,8 +132,7 @@ namespace Flexx.Server.Controllers
                 MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
                 if (movie == null)
                 {
-                    using System.Net.WebClient client = new();
-                    JObject json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
+                    JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
                     return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["backdrop_path"]}");
                 }
                 return File(new FileStream(movie.CoverImage, FileMode.Open), "image/jpg");

@@ -1,7 +1,8 @@
-﻿using Flexx.Media.Utilities;
+﻿using Flexx.Core.Authentication;
+using Flexx.Media.Objects.Extras;
+using Flexx.Media.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -48,21 +49,10 @@ namespace Flexx.Media.Objects.Libraries
             {
                 return null;
             }
-            //object[] model = new object[results.Count];
             List<object> model = new();
             foreach (JToken result in results.Children())
             {
-                model.Add(new
-                {
-                    id = result["id"].ToString(),
-                    title = result["title"].ToString(),
-                    year = DateTime.Parse(result["release_date"].ToString()),
-                    poster = $"https://image.tmdb.org/t/p/original{result["poster_path"]}",
-                    cover = $"https://image.tmdb.org/t/p/original{result["backdrop_path"]}",
-                    plot = result["overview"].ToString(),
-                    rating = double.Parse(result["vote_average"].ToString()),
-                    downloaded = GetMovieByTMDB(result["id"].ToString()) != null,
-                });
+                model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
             }
             return model.ToArray();
         }
@@ -93,51 +83,39 @@ namespace Flexx.Media.Objects.Libraries
                     continue;
                 }
 
-                model.Add(new
-                {
-                    id = result["id"].ToString(),
-                    title = result["title"].ToString(),
-                    year = DateTime.Parse(result["release_date"].ToString()),
-                    poster = $"https://image.tmdb.org/t/p/original{result["poster_path"]}",
-                    cover = $"https://image.tmdb.org/t/p/original{result["backdrop_path"]}",
-                    plot = result["overview"].ToString(),
-                    rating = double.Parse(result["vote_average"].ToString()),
-                    downloaded = GetMovieByTMDB(result["id"].ToString()) != null,
-                });
+                model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
             }
             return model.ToArray();
         }
 
-        public object[] GetList()
+        public object[] GetList(User user)
         {
             object[] model = new object[medias.Count];
             for (int i = 0; i < model.Length; i++)
             {
                 if (medias[i] != null)
                 {
-                    MovieModel movie = ((MovieModel)medias[i]);
-                    model[i] = movie.ModelObject;
+                    model[i] = new MovieObject((MovieModel)medias[i], user);
                 }
             }
             return model;
         }
 
-        public object[] GetContinueWatchingList()
+        public object[] GetContinueWatchingList(User user)
         {
-            MediaBase[] continueWatching = medias.Where(m => !m.Watched && m.WatchedDuration > 0).ToArray();
+            MediaBase[] continueWatching = medias.Where(m => !user.GetHasWatched(m.Title) && user.GetWatchedDuration(m.Title) > 0).ToArray();
             object[] model = new object[continueWatching.Length > 10 ? 10 : continueWatching.Length];
             for (int i = 0; i < model.Length; i++)
             {
                 if (continueWatching[i] != null)
                 {
-                    MovieModel movie = ((MovieModel)continueWatching[i]);
-                    model[i] = movie.ModelObject;
+                    model[i] = new MovieObject((MovieModel)continueWatching[i], user);
                 }
             }
             return model;
         }
 
-        public object[] GetRecentlyAddedList()
+        public object[] GetRecentlyAddedList(User user)
         {
             MediaBase[] movies = medias.OrderBy(m => m.ScannedDate).ToArray();
             object[] model = new object[movies.Length > 10 ? 10 : movies.Length];
@@ -145,8 +123,7 @@ namespace Flexx.Media.Objects.Libraries
             {
                 if (movies[i] != null)
                 {
-                    MovieModel movie = ((MovieModel)movies[i]);
-                    model[i] = movie.ModelObject;
+                    model[i] = new MovieObject((MovieModel)movies[i], user);
                 }
             }
             return model;
