@@ -19,12 +19,11 @@
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Utilities\" />
-    <Folder Include="Authentication\" />
     <Folder Include="Networking\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ChaseLabs.Configuration" Version="0.1.1" />
-    <PackageReference Include="ChaseLabs.Logger" Version="0.1.1" />
+    <PackageReference Include="ChaseLabs.Logger" Version="0.1.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 </Project>
