@@ -89,7 +89,7 @@ namespace Flexx.Media.Utilities
             File.Create(fileOutput).Close();
             Thread.Sleep(500);
             string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
-            string arguments = $" -i \"{media.PATH}\" -vf scale=w=-1:h={targetResolution}:force_original_aspect_ratio=decrease -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -sc_threshold 0 -g 48 -keyint_min 48 -hls_time 4 -b:v {targetBitRate}k -maxrate {targetBitRate}k -bufsize 7500k -b:a 192k -hls_segment_filename \"{fileOutput}-{targetResolution}_%d.ts\" -hls_list_size 10 -f hls hls_master_name \"{fileOutput}-{targetResolution}.m3u8\"";
+            string arguments = $" -i \"{media.PATH}\" -vf scale=w=-1:h={targetResolution}:force_original_aspect_ratio=decrease -vf format=yuv420p -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -sc_threshold 0 -g 48 -keyint_min 48 -hls_time 4 -bit_rate {targetBitRate}k -bufsize 7500k -b:a 192k -hls_segment_filename \"{fileOutput}-{targetResolution}-{targetBitRate}_%d.ts\" -hls_list_size 10 -f hls hls_master_name \"{fileOutput}-{targetResolution}.m3u8\"";
             Process process = new()
             {
                 StartInfo = new()
