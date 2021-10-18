@@ -21,7 +21,6 @@
   <ItemGroup>
     <Folder Include="Utilities\" />
     <Folder Include="Objects\Libraries\" />
-    <Folder Include="Objects\Extras\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Flexx.Core\Flexx.Core.csproj" />
