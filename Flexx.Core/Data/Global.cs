@@ -1,7 +1,9 @@
 ﻿using ChaseLabs.CLLogger;
 using ChaseLabs.CLLogger.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Flexx.Core.Data
 {
@@ -30,6 +32,7 @@ namespace Flexx.Core.Data
             public static string Resources => Directory.CreateDirectory(Path.Combine(Root, "Resources")).FullName;
             public static string Log => Directory.CreateDirectory(Path.Combine(Resources, "Logs")).FullName;
             public static string Configs => Directory.CreateDirectory(Path.Combine(Resources, "Config")).FullName;
+            public static string UserData => Directory.CreateDirectory(Path.Combine(Resources, "UserData")).FullName;
             public static string FFMpeg => Directory.CreateDirectory(Path.Combine(Resources, "ffmpeg")).FullName;
             public static string TempData => Directory.CreateDirectory(Path.Combine(Resources, ".tmp")).FullName;
             public static string MetaData => Directory.CreateDirectory(Path.Combine(Resources, "metadata")).FullName;
@@ -52,6 +55,22 @@ namespace Flexx.Core.Data
 
         public static class Functions
         {
+            public static IEnumerable<T[]> SplitArray<T>(T[] fullArray, int size)
+            {
+                for (int i = 0; i < fullArray.Length; i += size)
+                {
+                    T[] range;
+                    try
+                    {
+                        range = fullArray.ToList().GetRange(i, Math.Min(size, fullArray.Length - i)).ToArray();
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        continue;
+                    }
+                    yield return range;
+                }
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Flexx.Media.Utilities;
+﻿using Flexx.Core.Authentication;
+using Flexx.Media.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -145,9 +146,9 @@ namespace Flexx.Media.Objects.Libraries
             return model.ToArray();
         }
 
-        public object[] GetContinueWatchingList()
+        public object[] GetContinueWatchingList(string user)
         {
-            MediaBase[] continueWatching = medias.Where(m => !m.Watched && m.WatchedDuration > 0).ToArray();
+            MediaBase[] continueWatching = medias.Where(m => !Users.Instance.Get(user).GetHasWatched($"{((EpisodeModel)m).Season.Series.Title}_{((EpisodeModel)m).FriendlyName}") && Users.Instance.Get(user).GetWatchedDuration($"{((EpisodeModel)m).Season.Series.Title}_{((EpisodeModel)m).FriendlyName}") > 0).ToArray();
             object[] model = new object[continueWatching.Length > 10 ? 10 : continueWatching.Length];
             for (int i = 0; i < model.Length; i++)
             {

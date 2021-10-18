@@ -1,4 +1,5 @@
-﻿using Flexx.Media.Objects.Libraries;
+﻿using Flexx.Core.Authentication;
+using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
@@ -18,6 +19,7 @@ namespace Flexx.Server
             FFMpegUtil.Init();
             Task.Run(() => MovieLibraryModel.Instance.Initialize());
             Task.Run(() => TvLibraryModel.Instance.Initialize());
+            _ = Users.Instance;
             AppDomain.CurrentDomain.ProcessExit += (s, e) =>
             {
                 foreach (System.Diagnostics.Process process in FFMpegUtil.Instance.ActiveTranscodingProcess)

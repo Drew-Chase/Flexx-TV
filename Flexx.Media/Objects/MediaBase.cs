@@ -17,18 +17,17 @@ namespace Flexx.Media.Objects
         public virtual string PosterImage { get; set; }
         public virtual string CoverImage { get; set; }
 
-        public virtual bool Watched => Metadata.GetConfigByKey("watched").Value;
-
-        public virtual uint WatchedDuration => Metadata.GetConfigByKey("watched").Value;
-
         public DateTime ReleaseDate { get; set; }
         public DateTime ScannedDate { get; set; }
         public ConfigManager Metadata { get; set; }
         public virtual IMediaInfo MediaInfo => FFmpeg.GetMediaInfo(PATH).Result;
         public virtual FileStream Stream => new(PATH, FileMode.Open, FileAccess.Read);
         public CastListModel Cast { get; set; }
+        public bool Downloaded => !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
 
-        public virtual void UpdateMetaData() { }
+        public virtual void UpdateMetaData()
+        {
+        }
 
         public virtual bool ScanForDownloads(out string[] links)
         {
@@ -36,6 +35,8 @@ namespace Flexx.Media.Objects
             return false;
         }
 
-        public virtual void AddToTorrentClient(bool useInternal = true) { }
+        public virtual void AddToTorrentClient(bool useInternal = true)
+        {
+        }
     }
 }

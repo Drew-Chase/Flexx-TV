@@ -69,9 +69,9 @@ namespace Flexx.Media.Objects
             TMDB = tmdb;
             Seasons = new();
 #if DEBUG
-            Metadata = new(Path.Combine(Metadata_Directory, "metadata"));
+            Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false, "FlexxTV");
 #else
-            Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true);
+            Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true, "FlexxTV");
 #endif
             LoadMetaData();
         }
@@ -79,17 +79,27 @@ namespace Flexx.Media.Objects
         private void LoadMetaData()
         {
             if (Metadata.Size() == 0 || Metadata.GetConfigByKey("title") == null || Metadata.GetConfigByKey("plot") == null)
+            {
                 UpdateMetaData();
+            }
             else
             {
                 Title = Metadata.GetConfigByKey("title").Value;
                 Plot = Metadata.GetConfigByKey("plot").Value;
                 if (Metadata.GetConfigByKey("studio") != null)
+                {
                     Studio = Metadata.GetConfigByKey("studio").Value;
+                }
+
                 if (Metadata.GetConfigByKey("in_production") != null)
+                {
                     InProduction = Metadata.GetConfigByKey("in_production").Value;
+                }
+
                 if (Metadata.GetConfigByKey("start_date") != null)
+                {
                     StartDate = DateTime.Parse(Metadata.GetConfigByKey("start_date").Value);
+                }
             }
         }
 
@@ -231,13 +241,17 @@ namespace Flexx.Media.Objects
         private void LoadMetaData()
         {
             if (Metadata.Size() == 0 || Metadata.GetConfigByKey("title") == null || Metadata.GetConfigByKey("plot") == null)
+            {
                 UpdateMetaData();
+            }
             else
             {
                 Title = Metadata.GetConfigByKey("title").Value;
                 Plot = Metadata.GetConfigByKey("plot").Value;
                 if (Metadata.GetConfigByKey("start_date") != null)
+                {
                     StartDate = DateTime.Parse(Metadata.GetConfigByKey("start_date").Value);
+                }
             }
         }
 
@@ -319,6 +333,8 @@ namespace Flexx.Media.Objects
             }
         }
 
+        public string MetaDataKey => $"{Season.Series.Title}_{FriendlyName}";
+
         public SeasonModel Season { get; private set; }
         public int Episode_Number { get; private set; }
         public string FriendlyName => $"S{(Season.Season_Number < 10 ? "0" + Season.Season_Number : Season.Season_Number)}E{(Episode_Number < 10 ? "0" + Episode_Number : Episode_Number)}";
@@ -356,15 +372,22 @@ namespace Flexx.Media.Objects
         private void LoadMetaData()
         {
             if (Metadata.Size() == 0 || Metadata.GetConfigByKey("title") == null || Metadata.GetConfigByKey("plot") == null)
+            {
                 UpdateMetaData();
+            }
             else
             {
                 Title = Metadata.GetConfigByKey("title").Value;
                 Plot = Metadata.GetConfigByKey("plot").Value;
                 if (Metadata.GetConfigByKey("release_date") != null)
+                {
                     ReleaseDate = DateTime.Parse(Metadata.GetConfigByKey("release_date").Value);
+                }
+
                 if (Metadata.GetConfigByKey("scanned_date") != null)
+                {
                     ScannedDate = DateTime.Parse(Metadata.GetConfigByKey("scanned_date").Value);
+                }
             }
         }
 

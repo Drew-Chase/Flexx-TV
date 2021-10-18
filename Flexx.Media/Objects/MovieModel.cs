@@ -1,6 +1,4 @@
-﻿using ChaseLabs.CLConfiguration.List;
-using Flexx.Core.Networking;
-using Flexx.Media.Objects.Extras;
+﻿using Flexx.Core.Networking;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
@@ -74,17 +72,6 @@ namespace Flexx.Media.Objects
             }
         }
 
-        public object ModelObject =>
-            new
-            {
-                id = TMDB,
-                title = Title,
-                plot = Plot,
-                year = ReleaseDate.Year,
-                file = PATH,
-                downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH),
-            };
-
         private string meta_directory => Path.Combine(Paths.MetaData, "Movies", TMDB);
 
         public MovieModel(string initializer, bool isTMDB = false)
@@ -138,8 +125,11 @@ namespace Flexx.Media.Objects
                     return;
                 }
             }
-
-            Metadata = new(Path.Combine(Paths.MetaData, "Movies", TMDB, "metadata"), false);
+#if DEBUG
+            Metadata = new(Path.Combine(Paths.MetaData, "Movies", TMDB, "metadata"), false, "FlexxTV");
+#else
+            Metadata = new(Path.Combine(Paths.MetaData, "Movies", TMDB, "metadata"), true, "FlexxTV");
+#endif
 
             Metadata.Add("watched", false);
             Metadata.Add("watched_duration", (uint)0);
