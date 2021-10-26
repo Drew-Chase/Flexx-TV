@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using TorrentTitleParser;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
@@ -16,6 +17,7 @@ namespace Flexx.Media.Objects
     public class MovieModel : MediaBase
     {
         public string TrailerUrl { get; private set; }
+        public bool HasTrailer { get; private set; }
         public string TMDB { get; private set; }
 
         public override string PosterImage
@@ -67,6 +69,48 @@ namespace Flexx.Media.Objects
                     string tmp = Path.Combine(Paths.TempData, $"mc_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
                     FFMpegUtil.OptimizeCover(tmp, path);
+                }
+                catch { }
+            }
+        }
+
+        public string CoverImageWithLanguage
+        {
+            get
+            {
+                string path = Path.Combine(meta_directory, "cover-lang.jpg");
+                return path;
+            }
+            set
+            {
+                try
+                {
+                    log.Debug($"Optimizing Language Cover Image for {TMDB}");
+                    string path = Path.Combine(meta_directory, "cover-lang.jpg");
+                    string tmp = Path.Combine(Paths.TempData, $"mcl_{TMDB}.jpg");
+                    new System.Net.WebClient().DownloadFile(value, tmp);
+                    FFMpegUtil.OptimizeCover(tmp, path);
+                }
+                catch { }
+            }
+        }
+
+        public string LogoImage
+        {
+            get
+            {
+                string path = Path.Combine(meta_directory, "logo.png");
+                return path;
+            }
+            set
+            {
+                try
+                {
+                    log.Debug($"Optimizing Logo Image for {TMDB}");
+                    string path = Path.Combine(meta_directory, "logo.png");
+                    string tmp = Path.Combine(Paths.TempData, $"ml_{TMDB}.png");
+                    new System.Net.WebClient().DownloadFile(value, tmp);
+                    FFMpegUtil.OptimizeLogo(tmp, path);
                 }
                 catch { }
             }
@@ -134,6 +178,7 @@ namespace Flexx.Media.Objects
             Metadata.Add("watched", false);
             Metadata.Add("watched_duration", (uint)0);
             LoadMetaData();
+            GetTrailer();
         }
 
         private void LoadMetaData()
@@ -151,11 +196,6 @@ namespace Flexx.Media.Objects
                     Title = Metadata.GetConfigByKey("title").Value;
                     Plot = Metadata.GetConfigByKey("plot").Value;
                     Rating = Metadata.GetConfigByKey("rating").Value;
-                    try
-                    {
-                        TrailerUrl = Metadata.GetConfigByKey("trailer") == null ? string.Empty : Metadata.GetConfigByKey("trailer").Value;
-                    }
-                    catch { }
                     try
                     {
                         MPAA = Metadata.GetConfigByKey("mpaa") == null ? string.Empty : Metadata.GetConfigByKey("mpaa").Value;
@@ -179,20 +219,12 @@ namespace Flexx.Media.Objects
             ScannedDate = DateTime.Now;
             using (System.Net.WebClient client = new())
             {
-                try
-                {
-                    IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(((JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/videos?api_key={TMDB_API}")))["results"][0]["key"].ToString()).Result.GetMuxedStreams().GetWithHighestVideoQuality();
-                    if (streamInfo != null)
-                    {
-                        TrailerUrl = streamInfo.Url;
-                    }
-                }
-                catch
-                {
-                    TrailerUrl = "";
-                }
                 JObject json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}?api_key={TMDB_API}"));
-
+                JObject imagesJson = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/images?api_key={TMDB_API}&include_image_language=en"));
+                if (imagesJson["backdrops"].Any())
+                    CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
+                if (imagesJson["logos"].Any())
+                    LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
                 PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
                 CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
 
@@ -232,11 +264,6 @@ namespace Flexx.Media.Objects
                 Metadata.Add("rating", Rating);
             }
 
-            if (!string.IsNullOrWhiteSpace(TrailerUrl))
-            {
-                Metadata.Add("trailer", TrailerUrl);
-            }
-
             Metadata.Add("release_date", ReleaseDate.ToString("MM-dd-yyyy"));
             Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
             if (!string.IsNullOrWhiteSpace(MPAA))
@@ -260,6 +287,35 @@ namespace Flexx.Media.Objects
                     Console.WriteLine(link);
                 }
             }
+        }
+
+        private void GetTrailer()
+        {
+            string trailerURL;
+            var results = ((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/videos?api_key={TMDB_API}")))["results"];
+            if (results.Any())
+            {
+                JToken keyObject = results[0]["key"];
+                string key = keyObject.ToString();
+                IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(key).Result.GetMuxedStreams().GetWithHighestVideoQuality();
+                if (!string.IsNullOrWhiteSpace(key) && streamInfo != null)
+                {
+                    trailerURL = streamInfo.Url;
+                }
+                else
+                {
+                    trailerURL = "";
+                }
+            }
+            else
+            {
+                trailerURL = "";
+            }
+
+            TrailerUrl = trailerURL;
+            HasTrailer = !string.IsNullOrWhiteSpace(TrailerUrl);
+            if (HasTrailer)
+                log.Debug($"Found Trailer for {Title}");
         }
     }
 }

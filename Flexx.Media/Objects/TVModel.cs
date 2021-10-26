@@ -1,5 +1,6 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Media.Objects.Extras;
+using Flexx.Media.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -37,7 +38,9 @@ namespace Flexx.Media.Objects
             set
             {
                 string path = Path.Combine(Metadata_Directory, "poster.jpg");
-                new WebClient().DownloadFile(value, path);
+                string tmp = Path.Combine(Paths.TempData, $"sp_{TMDB}.jpg");
+                new System.Net.WebClient().DownloadFile(value, tmp);
+                FFMpegUtil.OptimizePoster(tmp, path);
             }
         }
 
@@ -56,7 +59,51 @@ namespace Flexx.Media.Objects
             set
             {
                 string path = Path.Combine(Metadata_Directory, "cover.jpg");
-                new WebClient().DownloadFile(value, path);
+                string tmp = Path.Combine(Paths.TempData, $"sc_{TMDB}.jpg");
+                new System.Net.WebClient().DownloadFile(value, tmp);
+                FFMpegUtil.OptimizeCover(tmp, path);
+            }
+        }
+
+        public string CoverImageWithLanguage
+        {
+            get
+            {
+                string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
+                return path;
+            }
+            set
+            {
+                try
+                {
+                    log.Debug($"Optimizing Language Cover Image for {TMDB}");
+                    string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
+                    string tmp = Path.Combine(Paths.TempData, $"scl_{TMDB}.jpg");
+                    new System.Net.WebClient().DownloadFile(value, tmp);
+                    FFMpegUtil.OptimizeCover(tmp, path);
+                }
+                catch { }
+            }
+        }
+
+        public string LogoImage
+        {
+            get
+            {
+                string path = Path.Combine(Metadata_Directory, "logo.png");
+                return path;
+            }
+            set
+            {
+                try
+                {
+                    log.Debug($"Optimizing Logo Image for {TMDB}");
+                    string path = Path.Combine(Metadata_Directory, "logo.png");
+                    string tmp = Path.Combine(Paths.TempData, $"ml_{TMDB}.png");
+                    new System.Net.WebClient().DownloadFile(value, tmp);
+                    FFMpegUtil.OptimizeLogo(tmp, path);
+                }
+                catch { }
             }
         }
 
@@ -106,6 +153,11 @@ namespace Flexx.Media.Objects
         public void UpdateMetaData()
         {
             JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}?api_key={TMDB_API}"));
+            JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/images?api_key={TMDB_API}&include_image_language=en"));
+            if (imagesJson["backdrops"].Any())
+                CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
+            if (imagesJson["logos"].Any())
+                LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
 
             Title = json["name"].ToString();
             Plot = json["overview"].ToString();
@@ -164,7 +216,8 @@ namespace Flexx.Media.Objects
         public DateTime StartDate { get; private set; }
 
         public int Season_Number { get; private set; }
-        public List<EpisodeModel> Episodes { get; private set; }
+        private List<EpisodeModel> _episodes;
+        public List<EpisodeModel> Episodes { get; set; }
 
         public string Metadata_Directory => Path.Combine(Series.Metadata_Directory, Season_Number.ToString());
 
@@ -200,6 +253,7 @@ namespace Flexx.Media.Objects
         {
             Series = series;
             Season_Number = season_number;
+            _episodes = new();
             Episodes = new();
 
 #if DEBUG
@@ -208,10 +262,12 @@ namespace Flexx.Media.Objects
             Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true);
 #endif
             LoadMetaData();
+            Episodes = Episodes.OrderBy(e => e.Episode_Number).ToList();
         }
 
         public EpisodeModel GetEpisodeByNumber(int episode)
         {
+            Episodes = Episodes.OrderBy(e => e.Episode_Number).ToList();
             foreach (EpisodeModel model in Episodes)
             {
                 if (model.Episode_Number == episode)
@@ -339,18 +395,6 @@ namespace Flexx.Media.Objects
         public int Episode_Number { get; private set; }
         public string FriendlyName => $"S{(Season.Season_Number < 10 ? "0" + Season.Season_Number : Season.Season_Number)}E{(Episode_Number < 10 ? "0" + Episode_Number : Episode_Number)}";
         public string Metadata_Directory => Path.Combine(Season.Metadata_Directory, Episode_Number.ToString());
-
-        public object ModelObject => new
-        {
-            id = Season.Series.TMDB,
-            title = Title,
-            name = FriendlyName,
-            plot = Plot,
-            season = Season.Season_Number,
-            episode = Episode_Number,
-            poster = Season.Series.PosterImage,
-            cover = Season.Series.CoverImage,
-        };
 
         public EpisodeModel(int number, SeasonModel season)
         {
