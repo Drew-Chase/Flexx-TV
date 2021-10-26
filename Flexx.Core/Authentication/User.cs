@@ -79,7 +79,7 @@ namespace Flexx.Core.Authentication
         {
             WatchedDuration.Clear();
             HasWatched.Clear();
-            Parallel.ForEach(userProfile.List(), config =>
+            foreach (var config in userProfile.List())
             {
                 if (config.Key.EndsWith("-watched_duration"))
                 {
@@ -97,7 +97,7 @@ namespace Flexx.Core.Authentication
                         HasWatched.Add(config.Key, config.Value);
                     }
                 }
-            });
+            }
         }
 
         public void SetHasWatched(string title, bool watched)
