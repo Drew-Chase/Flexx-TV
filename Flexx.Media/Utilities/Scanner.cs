@@ -69,27 +69,10 @@ namespace Flexx.Media.Utilities
                     }
                     return false;
                 }).ToArray();
-
-            if (files.Length < 21)
+            Parallel.ForEach(files, file =>
             {
-                foreach (string file in files)
-                {
-                    MovieLibraryModel.Instance.AddMedia(PopulateMovieAsync(file).Result);
-                }
-            }
-            else
-            {
-                foreach (IEnumerable<string> i in Split(files, 3))
-                {
-                    Task.Run(() =>
-                    {
-                        foreach (string j in i)
-                        {
-                            MovieLibraryModel.Instance.AddMedia(PopulateMovieAsync(j).Result);
-                        }
-                    });
-                }
-            }
+                MovieLibraryModel.Instance.AddMedia(PopulateMovieAsync(file).Result);
+            });
         }
 
         private static Task<MovieModel> PopulateMovieAsync(string file)
@@ -121,27 +104,10 @@ namespace Flexx.Media.Utilities
                     }
                     return false;
                 }).ToArray();
-
-            //if (files.Length < 21)
-            //{
             foreach (string file in files)
             {
                 TvLibraryModel.Instance.AddMedia(PopulateTVAsync(file).Result);
             }
-            //}
-            //else
-            //{
-            //    foreach (var i in Split(files, 3))
-            //    {
-            //        Task.Run(() =>
-            //        {
-            //            foreach (var j in i)
-            //            {
-            //                TvLibraryModel.Instance.AddMedia(PopulateTVAsync(j).Result);
-            //            }
-            //        });
-            //    }
-            //}
         }
 
         private static Task<TVModel[]> PopulateTVAsync(params string[] files)
