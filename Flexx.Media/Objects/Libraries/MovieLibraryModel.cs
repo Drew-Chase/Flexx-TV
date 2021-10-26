@@ -43,7 +43,7 @@ namespace Flexx.Media.Objects.Libraries
 
         public object[] DiscoverMovies(DiscoveryCategory category = DiscoveryCategory.Latest)
         {
-            string url = $"https://api.themoviedb.org/3/movie/{category.ToString().ToLower()}?api_key={TMDB_API}";
+            string url = $"https://api.themoviedb.org/3/movie/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
             JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
             if (results == null)
             {

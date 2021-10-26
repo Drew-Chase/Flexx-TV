@@ -1,8 +1,8 @@
 ﻿using Flexx.Core.Authentication;
+using Flexx.Media.Objects.Extras;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -58,49 +58,29 @@ namespace Flexx.Media.Objects.Libraries
             TVShows.AddRange(shows);
         }
 
-        public object[] GetList()
+        public object[] GetList(User user)
         {
             object[] model = new object[TVShows.Count];
             for (int i = 0; i < model.Length; i++)
             {
                 if (TVShows[i] != null)
-                {
-                    TVModel show = TVShows[i];
-                    model[i] = new
-                    {
-                        id = show.TMDB,
-                        title = show.Title,
-                        year = show.StartDate.Year,
-                        seasons = show.Seasons.Count,
-                    };
-                }
+                    model[i] = new SeriesObject(TVShows[i], user);
             }
             return model;
         }
 
         public object[] DiscoverShows(DiscoveryCategory category = DiscoveryCategory.Popular)
         {
-            string url = $"https://api.themoviedb.org/3/tv/{category.ToString().ToLower()}?api_key={TMDB_API}";
+            string url = $"https://api.themoviedb.org/3/tv/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
             JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
             if (results == null)
             {
                 return null;
             }
-            //object[] model = new object[results.Count];
             List<object> model = new();
             foreach (JToken result in results.Children())
             {
-                model.Add(new
-                {
-                    id = result["id"].ToString(),
-                    title = result["name"].ToString(),
-                    year = DateTime.Parse(result["first_air_date"].ToString()).Year,
-                    poster = $"https://image.tmdb.org/t/p/original{result["poster_path"]}",
-                    cover = $"https://image.tmdb.org/t/p/original{result["backdrop_path"]}",
-                    plot = result["overview"].ToString(),
-                    rating = double.Parse(result["vote_average"].ToString()),
-                    downloaded = GetShowByTMDB(result["id"].ToString()) != null,
-                });
+                model.Add(new SeriesObject(JsonConvert.SerializeObject(result)));
             }
             return model.ToArray();
         }
@@ -131,46 +111,34 @@ namespace Flexx.Media.Objects.Libraries
                     continue;
                 }
 
-                model.Add(new
-                {
-                    id = result["id"].ToString(),
-                    title = result["name"].ToString(),
-                    year = DateTime.Parse(result["first_air_date"].ToString()).Year,
-                    poster = $"https://image.tmdb.org/t/p/original{result["poster_path"]}",
-                    cover = $"https://image.tmdb.org/t/p/original{result["backdrop_path"]}",
-                    plot = result["overview"].ToString(),
-                    rating = double.Parse(result["vote_average"].ToString()),
-                    downloaded = GetShowByTMDB(result["id"].ToString()) != null,
-                });
+                model.Add(new SeriesObject(JsonConvert.SerializeObject(result)));
             }
             return model.ToArray();
         }
 
-        public object[] GetContinueWatchingList(string user)
+        public object[] GetContinueWatchingList(User user)
         {
-            MediaBase[] continueWatching = medias.Where(m => !Users.Instance.Get(user).GetHasWatched($"{((EpisodeModel)m).Season.Series.Title}_{((EpisodeModel)m).FriendlyName}") && Users.Instance.Get(user).GetWatchedDuration($"{((EpisodeModel)m).Season.Series.Title}_{((EpisodeModel)m).FriendlyName}") > 0).ToArray();
+            MediaBase[] continueWatching = medias.Where(m => !user.GetHasWatched($"{((EpisodeModel)m).Season.Series.Title}_{((EpisodeModel)m).FriendlyName}") && user.GetWatchedDuration($"{((EpisodeModel)m).Season.Series.Title}_{((EpisodeModel)m).FriendlyName}") > 0).ToArray();
             object[] model = new object[continueWatching.Length > 10 ? 10 : continueWatching.Length];
             for (int i = 0; i < model.Length; i++)
             {
                 if (continueWatching[i] != null)
                 {
-                    EpisodeModel episode = ((EpisodeModel)continueWatching[i]);
-                    model[i] = episode.ModelObject;
+                    model[i] = new EpisodeObject((EpisodeModel)continueWatching[i], user);
                 }
             }
             return model;
         }
 
-        public object[] GetRecentlyAddedList()
+        public object[] GetRecentlyAddedList(User user)
         {
-            MediaBase[] shows = medias.OrderBy(m => m.ScannedDate).ToArray();
-            object[] model = new object[shows.Length > 10 ? 10 : shows.Length];
+            MediaBase[] episode = medias.OrderBy(m => m.ScannedDate).ToArray();
+            object[] model = new object[episode.Length > 10 ? 10 : episode.Length];
             for (int i = 0; i < model.Length; i++)
             {
-                if (shows[i] != null)
+                if (episode[i] != null)
                 {
-                    EpisodeModel episode = ((EpisodeModel)shows[i]);
-                    model[i] = episode.ModelObject;
+                    model[i] = new EpisodeObject((EpisodeModel)episode[i], user);
                 }
             }
             return model;
