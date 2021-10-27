@@ -72,7 +72,11 @@ namespace Flexx.Media.Utilities
         public static void OptimizeImage(string input, string output, int scale)
         {
             string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
-            if (File.Exists(output)) File.Delete(output);
+            if (File.Exists(output))
+            {
+                File.Delete(output);
+            }
+
             Process process = new()
             {
                 StartInfo = new()
@@ -92,7 +96,10 @@ namespace Flexx.Media.Utilities
         public static FileStream GetTranscodedStream(string requestedUser, MediaBase media, int targetResolution, int targetBitRate)
         {
             if (string.IsNullOrWhiteSpace(media.PATH))
+            {
                 return null;
+            }
+
             string fileOutput = Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.TempData, $"stream_{requestedUser}")).FullName, $"v_{requestedUser}_{media.FileName}.m3u8");
             File.Create(fileOutput).Close();
             Thread.Sleep(500);

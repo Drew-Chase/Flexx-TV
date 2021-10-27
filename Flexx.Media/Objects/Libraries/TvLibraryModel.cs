@@ -64,7 +64,9 @@ namespace Flexx.Media.Objects.Libraries
             for (int i = 0; i < model.Length; i++)
             {
                 if (TVShows[i] != null)
+                {
                     model[i] = new SeriesObject(TVShows[i], user);
+                }
             }
             return model;
         }

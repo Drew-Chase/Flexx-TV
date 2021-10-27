@@ -23,7 +23,6 @@
     <None Remove="Views\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Controllers\" />
     <Folder Include="Views\" />
   </ItemGroup>
   <ItemGroup>

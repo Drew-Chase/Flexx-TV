@@ -45,7 +45,10 @@ namespace Flexx.Media.Objects.Extras
             Title = result["title"].ToString();
             Plot = result["overview"].ToString();
             if (DateTime.TryParse(result["release_date"].ToString(), out DateTime date))
+            {
                 Year = (ushort)date.Year;
+            }
+
             Poster = $"https://image.tmdb.org/t/p/original{result["poster_path"]}";
             Cover = $"https://image.tmdb.org/t/p/original{result["backdrop_path"]}";
             Rating = double.Parse(result["vote_average"].ToString());
@@ -119,7 +122,10 @@ namespace Flexx.Media.Objects.Extras
             Title = result["name"].ToString();
             Plot = result["overview"].ToString();
             if (DateTime.TryParse(result["first_air_date"].ToString(), out DateTime date))
+            {
                 ReleaseDate = date;
+            }
+
             Watched = false;
             Added = TvLibraryModel.Instance.GetShowByTMDB(ID) != null;
         }
@@ -170,12 +176,20 @@ namespace Flexx.Media.Objects.Extras
             Name = result["name"].ToString();
             Plot = result["overview"].ToString();
             if (DateTime.TryParse(result["air_date"].ToString(), out DateTime date))
+            {
                 ReleaseDate = date;
+            }
+
             Watched = false;
             if (result["episode_count"] != null)
+            {
                 Episodes = int.TryParse(result["episode_count"].ToString(), out int episode) ? episode : 0;
+            }
+
             if (result["season_number"] != null)
+            {
                 Season = int.TryParse(result["season_number"].ToString(), out int season) ? season : 0;
+            }
         }
     }
 
@@ -216,12 +230,14 @@ namespace Flexx.Media.Objects.Extras
             int seasonIndex = episode.Season.Series.Seasons.IndexOf(episode.Season);
             EpisodeModel next = episode.Season.Episodes.Count <= currentIndex ? episode.Season.Episodes.ElementAt(currentIndex + 1) : episode.Season.Series.Seasons.Count <= seasonIndex ? episode.Season.Series.Seasons.ElementAt(seasonIndex + 1).Episodes.ElementAt(0) : null;
             if (next != null)
+            {
                 NextEpisode = new
                 {
                     Season = next.Season.Season_Number,
                     Episode = next.Episode_Number,
                     Name = next.FriendlyName,
                 };
+            }
         }
 
         public EpisodeObject(string json)
@@ -234,7 +250,10 @@ namespace Flexx.Media.Objects.Extras
             Name = $"S{(Season < 10 ? "0" + Season : Season)}E{(Episode < 10 ? "0" + Episode : Episode)}";
             Plot = result["overview"].ToString();
             if (DateTime.TryParse(result["air_date"].ToString(), out DateTime date))
+            {
                 ReleaseDate = date;
+            }
+
             Rating = double.Parse(result["vote_average"].ToString());
             Downloaded = false;
             Watched = false;

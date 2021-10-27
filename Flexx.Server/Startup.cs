@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Text.Json.Serialization;
 
 namespace Flexx.Server
 {
@@ -21,7 +20,6 @@ namespace Flexx.Server
                 options.AddPolicy("debug", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
                 options.AddPolicy("release", builder => builder.WithOrigins("flexx-tv.tk"));
             });
-            services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

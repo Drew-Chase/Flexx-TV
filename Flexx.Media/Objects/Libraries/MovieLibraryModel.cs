@@ -70,20 +70,18 @@ namespace Flexx.Media.Objects.Libraries
             }
 
             JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
-            if (results == null)
-            {
-                return null;
-            }
-
             List<object> model = new();
-            foreach (JToken result in results.Children())
+            if (results != null && results.Any())
             {
-                if (string.IsNullOrWhiteSpace(result["release_date"].ToString()))
+                foreach (JToken result in results.Children())
                 {
-                    continue;
-                }
+                    if (string.IsNullOrWhiteSpace(result["release_date"].ToString()))
+                    {
+                        continue;
+                    }
 
-                model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
+                    model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
+                }
             }
             return model.ToArray();
         }

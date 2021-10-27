@@ -62,7 +62,7 @@ namespace Flexx.Server.Controllers
         [HttpGet("discover/search/{query}")]
         public IActionResult GetMovieDiscoveryFromQuery(string query, int? year)
         {
-            object[] results = MovieLibraryModel.Instance.SearchForMovies(query, year.HasValue ? year.Value : -1);
+            object[] results = MovieLibraryModel.Instance.SearchForMovies(query, year ?? -1);
             if (results == null)
             {
                 return new JsonResult(new { message = $"No Results" });
@@ -91,7 +91,10 @@ namespace Flexx.Server.Controllers
             {
                 JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
                 if (json["poster_path"] == null || string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
+                {
                     return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
+                }
+
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["poster_path"]}");
             }
             return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open), "image/jpg");
@@ -109,7 +112,9 @@ namespace Flexx.Server.Controllers
                     {
                         JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/images?api_key={TMDB_API}&include_image_language=en"));
                         if (imagesJson["backdrops"].Any())
+                        {
                             return new RedirectResult($"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}");
+                        }
                     }
 
                     JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
@@ -134,10 +139,17 @@ namespace Flexx.Server.Controllers
                 {
                     JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/images?api_key={TMDB_API}&include_image_language=en"));
                     if (imagesJson["logos"].Any())
+                    {
                         return new RedirectResult($"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}");
+                    }
+
                     return new NotFoundResult();
                 }
-                if (string.IsNullOrWhiteSpace(movie.LogoImage)) return new NotFoundResult();
+                if (string.IsNullOrWhiteSpace(movie.LogoImage))
+                {
+                    return new NotFoundResult();
+                }
+
                 return File(new FileStream(movie.LogoImage, FileMode.Open), "image/jpg");
             }
             catch (Exception e)
@@ -154,7 +166,7 @@ namespace Flexx.Server.Controllers
             string trailerURL = string.Empty;
             if (movie == null)
             {
-                var results = ((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/videos?api_key={TMDB_API}")))["results"];
+                JToken results = ((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/videos?api_key={TMDB_API}")))["results"];
                 if (results.Any())
                 {
                     JToken keyObject = results[0]["key"];
@@ -177,11 +189,15 @@ namespace Flexx.Server.Controllers
             else
             {
                 if (movie.HasTrailer)
+                {
                     trailerURL = movie.TrailerUrl;
+                }
             }
 
             if (string.IsNullOrWhiteSpace(trailerURL))
+            {
                 return new NotFoundResult();
+            }
 
             return RedirectPermanent(trailerURL);
         }

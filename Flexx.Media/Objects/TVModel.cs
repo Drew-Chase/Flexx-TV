@@ -155,9 +155,14 @@ namespace Flexx.Media.Objects
             JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}?api_key={TMDB_API}"));
             JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/images?api_key={TMDB_API}&include_image_language=en"));
             if (imagesJson["backdrops"].Any())
+            {
                 CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
+            }
+
             if (imagesJson["logos"].Any())
+            {
                 LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
+            }
 
             Title = json["name"].ToString();
             Plot = json["overview"].ToString();
@@ -216,7 +221,7 @@ namespace Flexx.Media.Objects
         public DateTime StartDate { get; private set; }
 
         public int Season_Number { get; private set; }
-        private List<EpisodeModel> _episodes;
+        private readonly List<EpisodeModel> _episodes;
         public List<EpisodeModel> Episodes { get; set; }
 
         public string Metadata_Directory => Path.Combine(Series.Metadata_Directory, Season_Number.ToString());

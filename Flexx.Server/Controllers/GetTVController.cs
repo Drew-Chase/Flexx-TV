@@ -25,7 +25,7 @@ namespace Flexx.Server.Controllers
         [HttpGet("{username}")]
         public IActionResult GetShows(string username)
         {
-            var result = new JsonResult(TvLibraryModel.Instance.GetList(Users.Instance.Get(username)));
+            JsonResult result = new JsonResult(TvLibraryModel.Instance.GetList(Users.Instance.Get(username)));
             return result;
         }
 
@@ -86,7 +86,10 @@ namespace Flexx.Server.Controllers
             {
                 JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}?api_key={TMDB_API}"));
                 if (json["poster_path"] == null || string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
+                {
                     return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
+                }
+
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["poster_path"]}");
             }
             return File(new FileStream(show.PosterImage, FileMode.Open), "image/jpg");
@@ -102,7 +105,9 @@ namespace Flexx.Server.Controllers
                 {
                     JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/images?api_key={TMDB_API}&include_image_language=en"));
                     if (imagesJson["backdrops"].Any())
+                    {
                         return new RedirectResult($"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}");
+                    }
                 }
                 JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}?api_key={TMDB_API}"));
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["backdrop_path"]}");
@@ -118,10 +123,17 @@ namespace Flexx.Server.Controllers
             {
                 JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/images?api_key={TMDB_API}&include_image_language=en"));
                 if (imagesJson["logos"].Any())
+                {
                     return new RedirectResult($"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}");
+                }
+
                 return new NotFoundResult();
             }
-            if (string.IsNullOrWhiteSpace(show.LogoImage)) return new NotFoundResult();
+            if (string.IsNullOrWhiteSpace(show.LogoImage))
+            {
+                return new NotFoundResult();
+            }
+
             return File(new FileStream(show.LogoImage, FileMode.Open), "image/png");
         }
 
@@ -169,7 +181,10 @@ namespace Flexx.Server.Controllers
             {
                 JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/season/{season_number}?api_key={TMDB_API}"));
                 if (json["poster_path"] == null || string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
+                {
                     return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
+                }
+
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["poster_path"]}");
             }
             SeasonModel season = show.GetSeasonByNumber(season_number);
@@ -189,9 +204,11 @@ namespace Flexx.Server.Controllers
             {
                 Parallel.ForEach((JArray)((JToken)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/season/{season_number}?api_key={TMDB_API}")))["episodes"], token =>
                 {
-                    var episode = new EpisodeObject(JsonConvert.SerializeObject(token));
+                    EpisodeObject episode = new EpisodeObject(JsonConvert.SerializeObject(token));
                     if (episode.ReleaseDate <= DateTime.Now)
+                    {
                         json.Add(episode);
+                    }
                 });
             }
             else

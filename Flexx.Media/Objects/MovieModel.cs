@@ -222,9 +222,15 @@ namespace Flexx.Media.Objects
                 JObject json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}?api_key={TMDB_API}"));
                 JObject imagesJson = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/images?api_key={TMDB_API}&include_image_language=en"));
                 if (imagesJson["backdrops"].Any())
+                {
                     CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
+                }
+
                 if (imagesJson["logos"].Any())
+                {
                     LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
+                }
+
                 PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
                 CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
 
@@ -292,7 +298,7 @@ namespace Flexx.Media.Objects
         private void GetTrailer()
         {
             string trailerURL;
-            var results = ((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/videos?api_key={TMDB_API}")))["results"];
+            JToken results = ((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/videos?api_key={TMDB_API}")))["results"];
             if (results.Any())
             {
                 JToken keyObject = results[0]["key"];
@@ -315,7 +321,9 @@ namespace Flexx.Media.Objects
             TrailerUrl = trailerURL;
             HasTrailer = !string.IsNullOrWhiteSpace(TrailerUrl);
             if (HasTrailer)
+            {
                 log.Debug($"Found Trailer for {Title}");
+            }
         }
     }
 }
