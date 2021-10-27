@@ -18,6 +18,8 @@ namespace Flexx.Media.Objects
         public string Title { get; private set; }
         public string Plot { get; private set; }
         public string Studio { get; private set; }
+        public string Rating { get; private set; }
+        public string MPAA { get; private set; }
         public bool InProduction { get; private set; }
         public DateTime StartDate { get; private set; }
         public CastListModel MainCast { get; private set; }
@@ -121,6 +123,7 @@ namespace Flexx.Media.Objects
             Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true, "FlexxTV");
 #endif
             LoadMetaData();
+            MainCast = new("tv", TMDB);
         }
 
         private void LoadMetaData()
@@ -133,9 +136,18 @@ namespace Flexx.Media.Objects
             {
                 Title = Metadata.GetConfigByKey("title").Value;
                 Plot = Metadata.GetConfigByKey("plot").Value;
+                Plot = Metadata.GetConfigByKey("plot").Value;
                 if (Metadata.GetConfigByKey("studio") != null)
                 {
                     Studio = Metadata.GetConfigByKey("studio").Value;
+                }
+                if (Metadata.GetConfigByKey("mpaa") != null)
+                {
+                    MPAA = Metadata.GetConfigByKey("mpaa").Value;
+                }
+                if (Metadata.GetConfigByKey("rating") != null)
+                {
+                    Rating = Metadata.GetConfigByKey("rating").Value;
                 }
 
                 if (Metadata.GetConfigByKey("in_production") != null)
@@ -166,6 +178,16 @@ namespace Flexx.Media.Objects
 
             Title = json["name"].ToString();
             Plot = json["overview"].ToString();
+            Rating = json["vote_average"].ToString();
+            foreach (var token in (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/content_ratings?api_key={TMDB_API}")))["results"])
+            {
+                if (token["iso_3166_1"].ToString().Equals("US"))
+                {
+                    MPAA = token["rating"].ToString();
+                    break;
+                }
+
+            }
             try
             {
                 Studio = json["networks"][0]["name"].ToString();
@@ -187,6 +209,8 @@ namespace Flexx.Media.Objects
             Metadata.Add("title", Title);
             Metadata.Add("plot", Plot);
             Metadata.Add("studio", Studio);
+            Metadata.Add("mpaa", MPAA);
+            Metadata.Add("rating", Rating);
             Metadata.Add("in_production", InProduction);
             Metadata.Add("start_date", StartDate.ToString("yyyy-MM-dd"));
         }

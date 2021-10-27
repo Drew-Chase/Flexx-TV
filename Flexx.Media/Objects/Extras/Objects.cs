@@ -22,6 +22,7 @@ namespace Flexx.Media.Objects.Extras
         public string Cover { get; }
         public bool Watched { get; }
         public ushort WatchedDuration { get; }
+        public CastModel[] MainCast { get; }
 
         public MovieObject(MovieModel movie, User user)
         {
@@ -36,6 +37,7 @@ namespace Flexx.Media.Objects.Extras
             Cover = movie.CoverImage;
             Watched = user.GetHasWatched(movie.Title);
             WatchedDuration = user.GetWatchedDuration(movie.Title);
+            MainCast = movie.Cast.GetCast().Take(10).ToArray();
         }
 
         public MovieObject(string json)
@@ -70,6 +72,8 @@ namespace Flexx.Media.Objects.Extras
                     continue;
                 }
             }
+
+            MainCast = new CastListModel("movie", ID).GetCast().Take(10).ToArray();
         }
     }
 
@@ -79,10 +83,14 @@ namespace Flexx.Media.Objects.Extras
         public string Title { get; }
         public string Plot { get; }
         public DateTime ReleaseDate { get; }
+        public int Year { get; }
         public bool Watched { get; }
         public bool Added { get; }
+        public string MPAA { get; }
+        public string Rating { get; }
 
         public object UpNext { get; }
+        public CastModel[] MainCast { get; }
 
         public SeriesObject(TVModel show, User user)
         {
@@ -90,6 +98,7 @@ namespace Flexx.Media.Objects.Extras
             Title = show.Title;
             Plot = show.Plot;
             ReleaseDate = show.StartDate;
+            Year = ReleaseDate.Year;
             Watched = !show.Seasons.Where(s =>
             {
                 return s.Episodes.Where(e =>
@@ -113,6 +122,9 @@ namespace Flexx.Media.Objects.Extras
                 Episode = UnwatchedEpisode.Episode_Number,
                 Name = UnwatchedEpisode.FriendlyName,
             };
+            MPAA = show.MPAA;
+            Rating = show.Rating;
+            MainCast = show.MainCast.GetCast().Take(10).ToArray();
         }
 
         public SeriesObject(string json)
@@ -124,10 +136,23 @@ namespace Flexx.Media.Objects.Extras
             if (DateTime.TryParse(result["first_air_date"].ToString(), out DateTime date))
             {
                 ReleaseDate = date;
+                Year = ReleaseDate.Year;
             }
 
             Watched = false;
             Added = TvLibraryModel.Instance.GetShowByTMDB(ID) != null;
+            Rating = result["vote_average"].ToString();
+            foreach (var token in (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{ID}/content_ratings?api_key={TMDB_API}&language=en-US")))["results"])
+            {
+                if (token["iso_3166_1"].ToString().Equals("US"))
+                {
+                    MPAA = token["rating"].ToString();
+                    break;
+                }
+
+            }
+
+            MainCast = new CastListModel("tv", ID).GetCast().Take(10).ToArray();
         }
     }
 

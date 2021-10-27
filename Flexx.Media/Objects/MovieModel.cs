@@ -179,6 +179,7 @@ namespace Flexx.Media.Objects
             Metadata.Add("watched_duration", (uint)0);
             LoadMetaData();
             GetTrailer();
+            Cast = new("movie", TMDB);
         }
 
         private void LoadMetaData()
@@ -215,7 +216,6 @@ namespace Flexx.Media.Objects
         public override void UpdateMetaData()
         {
             log.Debug($"Getting metadata for {TMDB}");
-            Cast = new(this);
             ScannedDate = DateTime.Now;
             using (System.Net.WebClient client = new())
             {

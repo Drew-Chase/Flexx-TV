@@ -92,11 +92,11 @@ namespace Flexx.Media.Objects.Libraries
             string url;
             if (year != -1)
             {
-                url = $"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={query}&year={year}";
+                url = $"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={query}&year={year}&language=en-US";
             }
             else
             {
-                url = $"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={query}";
+                url = $"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={query}&language=en-US";
             }
 
             JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
@@ -106,13 +106,8 @@ namespace Flexx.Media.Objects.Libraries
             }
 
             List<object> model = new();
-            foreach (JToken result in results.Children())
+            foreach (JToken result in results)
             {
-                if (string.IsNullOrWhiteSpace(result["release_date"].ToString()))
-                {
-                    continue;
-                }
-
                 model.Add(new SeriesObject(JsonConvert.SerializeObject(result)));
             }
             return model.ToArray();

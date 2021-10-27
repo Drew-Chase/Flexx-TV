@@ -1,41 +1,42 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Objects.Extras
 {
-    public enum CastType
-    {
-        Actor,
-        Director,
-        Writer,
-        Producter,
-        Generic
-    }
-
     public class CastListModel
     {
-        public CastType Type { get; private set; }
-        private readonly MediaBase Media;
         private readonly CastModel[] FullCast;
 
-        public CastListModel(MediaBase Media)
+        public CastListModel(string media_type, string tmdb)
         {
-            this.Media = Media;
-            JObject json;
-            using (WebClient client = new())
+            List<CastModel> cast = new();
+            JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/{media_type}/{tmdb}/credits?api_key={TMDB_API}"));
+            Parallel.ForEach((JArray)json["cast"], token =>
             {
-                if (Media.GetType().Equals(typeof(MovieModel)))
-                {
-                    json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{((MovieModel)Media).TMDB}/credits?api_key={TMDB_API}"));
-                }
-                else
-                {
-                    json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/tv/{((EpisodeModel)Media).Season.Series.TMDB}/credits?api_key={TMDB_API}"));
-                }
-            }
+                cast.Add(new(token["name"].ToString(), token["character"].ToString(), token["profile_path"].ToString(), "Actor"));
+            });
+            Parallel.ForEach((JArray)json["crew"], token =>
+            {
+                cast.Add(new(token["name"].ToString(), token["department"].ToString(), token["profile_path"].ToString(), token["job"].ToString()));
+            });
+            FullCast = cast.ToArray();
         }
+        public CastModel[] GetCast()
+        {
+            return FullCast;
+        }
+
+        public CastModel[] GetCast(string job)
+        {
+            return FullCast.Where(c => c.Job.Equals(job)).ToArray();
+        }
+
     }
 
     public class CastModel
@@ -43,12 +44,14 @@ namespace Flexx.Media.Objects.Extras
         public string Name { get; private set; }
         public string Role { get; private set; }
         public string ProfileImage { get; private set; }
+        public string Job { get; private set; }
 
-        public CastModel(string Name, string Role, string ProfileImage)
+        public CastModel(string Name, string Role, string ProfileImage, string Job)
         {
             this.Name = Name;
             this.Role = Role;
-            this.ProfileImage = ProfileImage;
+            this.ProfileImage = $"https://image.tmdb.org/t/p/original{ProfileImage}";
+            this.Job = Job;
         }
     }
 }
