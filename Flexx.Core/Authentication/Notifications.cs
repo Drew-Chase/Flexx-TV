@@ -81,7 +81,6 @@ namespace Flexx.Core.Authentication
 
         private void LoadFromCache()
         {
-            Console.WriteLine("");
             foreach (Config config in notificationManager.List())
             {
                 if (Enum.TryParse(typeof(NotificationType), config.Key.Split("**-**")[0].Trim().Replace("**-**", ""), out object type))
