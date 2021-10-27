@@ -45,10 +45,10 @@ namespace Flexx.Core.Authentication
         private void LoadExisting()
         {
             log.Info("Loading UserData");
-            string[] files = Directory.GetFiles(Paths.UserData, "*", SearchOption.TopDirectoryOnly);
+            string[] files = Directory.GetFiles(Paths.UserData, "*.userdata", SearchOption.AllDirectories);
             Parallel.ForEach(files, file =>
             {
-                Add(new FileInfo(file).Name);
+                Add(new FileInfo(file).Name.Replace(".userdata", ""));
             });
         }
     }
@@ -58,20 +58,22 @@ namespace Flexx.Core.Authentication
         private readonly Dictionary<string, ushort> WatchedDuration;
         private readonly Dictionary<string, bool> HasWatched;
         private readonly ConfigManager userProfile;
-        public string Username { get; private set; }
+        public string Username { get; }
         public bool IsAuthorized => false;
+        public Notifications Notifications { get; }
 
         internal User(string username)
         {
             log.Debug($"Loading Data for user {username}");
             Username = username;
 #if DEBUG
-            userProfile = new(Path.Combine(Paths.UserData, username), false, "FlexxTV");
+            userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"), false, "FlexxTV");
 #else
-            userProfile= new(Path.Combine(Paths.UserData, username), true, "FlexxTV");
+            userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"), true, "FlexxTV");
 #endif
             HasWatched = new();
             WatchedDuration = new();
+            Notifications = new(this);
             UpdateDictionaries();
         }
 
@@ -79,7 +81,7 @@ namespace Flexx.Core.Authentication
         {
             WatchedDuration.Clear();
             HasWatched.Clear();
-            foreach (var config in userProfile.List())
+            foreach (ChaseLabs.CLConfiguration.Object.Config config in userProfile.List())
             {
                 if (config.Key.EndsWith("-watched_duration"))
                 {
@@ -186,6 +188,11 @@ namespace Flexx.Core.Authentication
                 WatchedDuration.Add(key, cfg.Value);
                 return cfg.Value;
             }
+        }
+
+        public override string ToString()
+        {
+            return Username;
         }
     }
 }
