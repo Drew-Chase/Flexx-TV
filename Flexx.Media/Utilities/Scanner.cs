@@ -1,4 +1,5 @@
 ﻿using Flexx.Media.Objects;
+using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -24,10 +25,10 @@ namespace Flexx.Media.Utilities
 
     public class Scanner
     {
-        private Timer scannerTask;
 
-        public void ScheduleScannerTask(ScanFrequency frequency = ScanFrequency.Daily)
+        public static void ScheduleScannerTask(ScanFrequency frequency = ScanFrequency.Daily)
         {
+            Timer scannerTask;
             TimeSpan span = TimeSpan.FromHours(24);
 
             switch (frequency)
@@ -48,6 +49,8 @@ namespace Flexx.Media.Utilities
                 }
             }, null, TimeSpan.Zero, span);
         }
+
+        #region Movies
 
         public static void ForMovies()
         {
@@ -73,6 +76,10 @@ namespace Flexx.Media.Utilities
             {
                 MovieLibraryModel.Instance.AddMedia(PopulateMovieAsync(file).Result);
             });
+            Task.Run(() => PrefetchMovies()).ContinueWith(a =>
+            {
+                Task.Run(() => MovieLibraryModel.Instance.FetchAllTrailers());
+            });
         }
 
         private static Task<MovieModel> PopulateMovieAsync(string file)
@@ -84,7 +91,48 @@ namespace Flexx.Media.Utilities
         {
             return new(file);
         }
+        private static void PrefetchMovies()
+        {
+            log.Info($"Prefetching Movies");
+            Parallel.ForEach(Directory.GetFiles(Paths.MovieData, "prefetch.metadata", SearchOption.AllDirectories), file =>
+            {
+                try
+                {
+                    MovieLibraryModel.Instance.AddMedia(new MovieModel(new ChaseLabs.CLConfiguration.List.ConfigManager(file)));
+                }
+                catch (Exception e)
+                {
+                    log.Error("Issue with Prefetching Local Movies", e);
+                }
+            });
+            foreach (DiscoveryCategory category in Enum.GetValues(typeof(DiscoveryCategory)))
+            {
+                if (category == DiscoveryCategory.None) continue;
+                log.Debug($"Prefetching {category} Movies");
+                string url = $"https://api.themoviedb.org/3/movie/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
+                JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
+                if (results == null || !results.Any())
+                {
+                    continue;
+                }
+                Parallel.ForEach(results, result =>
+                {
+                    if (result["id"] != null && MovieLibraryModel.Instance.GetMovieByTMDB(result["id"].ToString()) == null)
+                        try
+                        {
+                            MovieLibraryModel.Instance.AddMedia(new MovieModel(result["id"].ToString(), category));
+                        }
+                        catch (Exception e)
+                        {
+                            log.Error("Issue with Prefetching Remote Movies", e);
+                        }
+                });
+            }
 
+            log.Warn($"Done Prefetching Movies");
+        }
+        #endregion
+        #region TV
         public static void ForTV()
         {
             log.Info("Scanning for TV Shows");
@@ -108,6 +156,10 @@ namespace Flexx.Media.Utilities
             {
                 TvLibraryModel.Instance.AddMedia(PopulateTVAsync(file).Result);
             }
+            Task.Run(() => PrefetchTV()).ContinueWith(a =>
+            {
+                Task.Run(() => TvLibraryModel.Instance.AddGhostEpisodes());
+            });
         }
 
         private static Task<TVModel[]> PopulateTVAsync(params string[] files)
@@ -169,6 +221,54 @@ namespace Flexx.Media.Utilities
             }
             return models.ToArray();
         }
+
+        private static void PrefetchTV()
+        {
+            log.Info($"Prefetching TV Shows");
+            Parallel.ForEach(Directory.GetFiles(Paths.TVData, "prefetch.metadata", SearchOption.AllDirectories), file =>
+            {
+                try
+                {
+                    TvLibraryModel.Instance.AddMedia(new TVModel(new ChaseLabs.CLConfiguration.List.ConfigManager(file)));
+                }
+                catch (Exception e)
+                {
+                    log.Error("Issue with Prefetching Local TV Shows", e);
+                }
+            });
+            foreach (DiscoveryCategory category in Enum.GetValues(typeof(DiscoveryCategory)))
+            {
+                if (category == DiscoveryCategory.None) continue;
+                log.Debug($"Prefetching {category} TV Shows");
+                string url = $"https://api.themoviedb.org/3/tv/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
+                JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
+                if (results == null || !results.Any())
+                {
+                    continue;
+                }
+                Parallel.ForEach(results, result =>
+                {
+                    if (result["id"] != null && TvLibraryModel.Instance.GetShowByTMDB(result["id"].ToString()) == null)
+                    {
+                        TVModel model = null;
+                        try
+                        {
+                            model = new(result["id"].ToString(), category);
+                        }
+                        catch (Exception e)
+                        {
+                            log.Error("Issue with Prefetching Remote TV Shows", e);
+                        }
+                        if (model != null)
+                            TvLibraryModel.Instance.AddMedia(model);
+                    }
+                });
+
+            }
+
+            log.Warn($"Done Prefetching TV Shows");
+        }
+        #endregion
 
         /// <summary>
         /// Splits an array into several smaller arrays.

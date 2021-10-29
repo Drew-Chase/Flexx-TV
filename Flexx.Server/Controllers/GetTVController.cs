@@ -25,14 +25,13 @@ namespace Flexx.Server.Controllers
         [HttpGet("{username}")]
         public IActionResult GetShows(string username)
         {
-            JsonResult result = new JsonResult(TvLibraryModel.Instance.GetList(Users.Instance.Get(username)));
-            return result;
+            return new JsonResult(TvLibraryModel.Instance.GetLocalList(Users.Instance.Get(username)));
         }
 
-        [HttpGet("discover/{category}")]
-        public IActionResult GetShowsDiscoveryList(DiscoveryCategory category)
+        [HttpGet("{username}/discover/{category}")]
+        public IActionResult GetShowsDiscoveryList(DiscoveryCategory category, string username)
         {
-            object[] results = TvLibraryModel.Instance.DiscoverShows(category);
+            SeriesObject[] results = TvLibraryModel.Instance.DiscoverShows(Users.Instance.Get(username), category);
             if (results == null)
             {
                 return new JsonResult(new { message = $"No Results" });
@@ -129,7 +128,7 @@ namespace Flexx.Server.Controllers
 
                 return new NotFoundResult();
             }
-            if (string.IsNullOrWhiteSpace(show.LogoImage))
+            if (string.IsNullOrWhiteSpace(show.LogoImage) || !System.IO.File.Exists(show.LogoImage))
             {
                 return new NotFoundResult();
             }

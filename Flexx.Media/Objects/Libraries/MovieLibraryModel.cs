@@ -3,9 +3,11 @@ using Flexx.Media.Objects.Extras;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Objects.Libraries
@@ -20,7 +22,15 @@ namespace Flexx.Media.Objects.Libraries
 
         public override void Initialize()
         {
-            Scanner.ForMovies();
+            try
+            {
+                Scanner.ForMovies();
+            }
+            catch (Exception e)
+            {
+                log.Fatal("Unhandled Exception was found while trying to initialize Movies Library", e);
+                Environment.Exit(0);
+            }
             base.Initialize();
         }
 
@@ -41,23 +51,20 @@ namespace Flexx.Media.Objects.Libraries
             return null;
         }
 
-        public object[] DiscoverMovies(DiscoveryCategory category = DiscoveryCategory.Latest)
+        public MovieObject[] DiscoverMovies(User user, DiscoveryCategory category = DiscoveryCategory.Latest) => GetList(user).Where(m => m.Category == category).ToArray();
+
+
+        public void FetchAllTrailers()
         {
-            string url = $"https://api.themoviedb.org/3/movie/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
-            JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
-            if (results == null)
+            log.Info($"Fetching All Movie Trailers");
+            Parallel.ForEach(medias, movie =>
             {
-                return null;
-            }
-            List<object> model = new();
-            foreach (JToken result in results.Children())
-            {
-                model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
-            }
-            return model.ToArray();
+                ((MovieModel)movie).GetTrailer();
+            });
+            log.Warn($"Done Fetching Movie Trailers");
         }
 
-        public object[] SearchForMovies(string query, int year = -1)
+        public MovieObject[] SearchForMovies(string query, int year = -1)
         {
             string url;
             if (year != -1)
@@ -70,12 +77,12 @@ namespace Flexx.Media.Objects.Libraries
             }
 
             JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
-            List<object> model = new();
+            List<MovieObject> model = new();
             if (results != null && results.Any())
             {
-                foreach (JToken result in results.Children())
+                foreach (JToken result in results)
                 {
-                    if (string.IsNullOrWhiteSpace(result["release_date"].ToString()))
+                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace(result["release_date"].ToString()))
                     {
                         continue;
                     }
@@ -86,17 +93,24 @@ namespace Flexx.Media.Objects.Libraries
             return model.ToArray();
         }
 
-        public object[] GetList(User user)
+        public MovieObject[] GetList(User user)
         {
-            object[] model = new object[medias.Count];
-            for (int i = 0; i < model.Length; i++)
+            List<MovieObject> list = new();
+            foreach (MovieModel movie in medias.ToArray())
             {
-                if (medias[i] != null)
-                {
-                    model[i] = new MovieObject((MovieModel)medias[i], user);
-                }
+                list.Add(new(movie, user));
             }
-            return model;
+            return list.OrderBy(m => m.Title).ToArray();
+        }
+        public MovieObject[] GetLocalList(User user)
+        {
+            List<MovieObject> list = new();
+            foreach (MovieModel movie in medias.ToArray())
+            {
+                if (movie.Downloaded)
+                    list.Add(new(movie, user));
+            }
+            return list.OrderBy(m => m.Title).ToArray();
         }
 
         public object[] GetContinueWatchingList(User user)

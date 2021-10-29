@@ -25,7 +25,7 @@ namespace Flexx.Server.Controllers
         [HttpGet("{username}")]
         public IActionResult GetMovies(string username)
         {
-            return new JsonResult(MovieLibraryModel.Instance.GetList(Users.Instance.Get(username)));
+            return new JsonResult(MovieLibraryModel.Instance.GetLocalList(Users.Instance.Get(username)));
         }
 
         [HttpGet("{tmdb}/{username}")]
@@ -36,7 +36,15 @@ namespace Flexx.Server.Controllers
                 MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
                 if (movie == null)
                 {
-                    return new JsonResult(new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}")));
+                    try
+                    {
+                        var model = new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
+                        return new JsonResult(new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}")));
+                    }
+                    catch
+                    {
+                        return new BadRequestResult();
+                    }
                 }
                 return new JsonResult(new MovieObject(movie, Users.Instance.Get(username)));
             }
@@ -47,10 +55,10 @@ namespace Flexx.Server.Controllers
             return new NotFoundResult();
         }
 
-        [HttpGet("discover/{category}")]
-        public IActionResult GetMovieDiscoveryList(DiscoveryCategory category)
+        [HttpGet("{username}/discover/{category}")]
+        public IActionResult GetMovieDiscoveryList(DiscoveryCategory category, string username)
         {
-            object[] results = MovieLibraryModel.Instance.DiscoverMovies(category);
+            object[] results = MovieLibraryModel.Instance.DiscoverMovies(Users.Instance.Get(username), category);
             if (results == null)
             {
                 return new JsonResult(new { message = $"No Results" });

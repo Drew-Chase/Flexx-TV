@@ -3,6 +3,7 @@ using Flexx.Media.Objects.Extras;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -23,9 +24,16 @@ namespace Flexx.Media.Objects.Libraries
 
         public override void Initialize()
         {
-            TVShows = new();
-            Scanner.ForTV();
-            Task.Run(() => AddGhostEpisodes());
+            try
+            {
+                TVShows = new();
+                Scanner.ForTV();
+            }
+            catch (Exception e)
+            {
+                log.Fatal("Unhandled Exception was found while trying to initialize TV Shows Library", e);
+                Environment.Exit(0);
+            }
             base.Initialize();
         }
 
@@ -58,33 +66,20 @@ namespace Flexx.Media.Objects.Libraries
             TVShows.AddRange(shows);
         }
 
-        public object[] GetList(User user)
+        public SeriesObject[] GetLocalList(User user) => GetList(user).Where(t => t.Added).ToArray();
+        public SeriesObject[] GetList(User user)
         {
-            object[] model = new object[TVShows.Count];
-            for (int i = 0; i < model.Length; i++)
+            List<SeriesObject> model = new();
+            foreach (var show in TVShows)
             {
-                if (TVShows[i] != null)
-                {
-                    model[i] = new SeriesObject(TVShows[i], user);
-                }
-            }
-            return model;
-        }
-
-        public object[] DiscoverShows(DiscoveryCategory category = DiscoveryCategory.Popular)
-        {
-            string url = $"https://api.themoviedb.org/3/tv/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
-            JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
-            if (results == null)
-            {
-                return null;
-            }
-            List<object> model = new();
-            foreach (JToken result in results.Children())
-            {
-                model.Add(new SeriesObject(JsonConvert.SerializeObject(result)));
+                model.Add(new(show, user));
             }
             return model.ToArray();
+        }
+
+        public SeriesObject[] DiscoverShows(User user, DiscoveryCategory category = DiscoveryCategory.Popular)
+        {
+            return GetList(user).Where(t => t.Category == category).ToArray();
         }
 
         public object[] SearchForShows(string query, int year = -1)
@@ -141,35 +136,114 @@ namespace Flexx.Media.Objects.Libraries
             return model;
         }
 
-        public void AddGhostEpisodes()
+        public void AddGhostEpisodes(TVModel show = null)
         {
-            using WebClient client = new();
-            JObject json = null;
-            foreach (TVModel tvModel in TVShows)
+            try
             {
-                json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/tv/{tvModel.TMDB}?api_key={TMDB_API}"));
-                JArray seasons = (JArray)json["seasons"];
-                foreach (JToken season in seasons)
+                JObject json = null;
+                if (show == null)
                 {
-                    int season_number = int.Parse(season["season_number"].ToString());
-                    SeasonModel seasonModel = tvModel.GetSeasonByNumber(season_number);
-                    if (seasonModel == null)
-                    {
-                        log.Debug($"Adding Ghost Season for {tvModel.Title} Season {season_number}");
-                        seasonModel = tvModel.AddSeason(season_number);
-                    }
-                    JObject seasonJson = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/tv/{tvModel.TMDB}/season/{season_number}?api_key={TMDB_API}"));
-                    JArray episodes = (JArray)seasonJson["episodes"];
-                    foreach (JToken episode in episodes)
-                    {
-                        int episode_number = int.Parse(episode["episode_number"].ToString());
-                        if (seasonModel.GetEpisodeByNumber(episode_number) == null)
+
+                    Parallel.ForEach(TVShows.Where(t => t.Category == DiscoveryCategory.None), tvModel =>
                         {
-                            log.Debug($"Adding Ghost Episode for {tvModel.Title} Season {season_number} Episode {episode_number}");
-                            seasonModel.AddEpisode(episode_number);
-                        }
+                            try
+                            {
+                                json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tvModel.TMDB}?api_key={TMDB_API}"));
+                                JArray seasons = (JArray)json["seasons"];
+                                Parallel.ForEach(seasons, season =>
+                                {
+                                    int season_number = int.Parse(season["season_number"].ToString());
+                                    try
+                                    {
+                                        SeasonModel seasonModel = tvModel.GetSeasonByNumber(season_number);
+                                        if (seasonModel == null)
+                                        {
+                                            log.Debug($"Adding Ghost Season for {tvModel.Title} Season {season_number}");
+                                            seasonModel = tvModel.AddSeason(season_number);
+                                        }
+                                        JObject seasonJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tvModel.TMDB}/season/{season_number}?api_key={TMDB_API}"));
+                                        JArray episodes = (JArray)seasonJson["episodes"];
+                                        Parallel.ForEach(episodes, episode =>
+                                        {
+                                            int episode_number = int.Parse(episode["episode_number"].ToString());
+                                            try
+                                            {
+                                                if (seasonModel.GetEpisodeByNumber(episode_number) == null)
+                                                {
+                                                    log.Debug($"Adding Ghost Episode for {tvModel.Title} Season {season_number} Episode {episode_number}");
+                                                    seasonModel.AddEpisode(episode_number);
+                                                }
+                                            }
+                                            catch (Exception e)
+                                            {
+                                                log.Error($"Had issues trying to load Ghost Episodes for \"{tvModel.Title}\" Season {season_number} Episode {episode_number}", e);
+                                            }
+                                        });
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        log.Error($"Had issues trying to load Ghost Episodes for \"{tvModel.Title}\" Season {season_number}", e);
+                                    }
+                                });
+                            }
+                            catch (Exception e)
+                            {
+                                log.Error($"Had issues trying to load Ghost Episodes for \"{tvModel.Title}\"", e);
+                            }
+                        });
+                }
+                else
+                {
+
+                    try
+                    {
+                        json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{show.TMDB}?api_key={TMDB_API}"));
+                        JArray seasons = (JArray)json["seasons"];
+                        Parallel.ForEach(seasons, season =>
+                        {
+                            int season_number = int.Parse(season["season_number"].ToString());
+                            try
+                            {
+                                SeasonModel seasonModel = show.GetSeasonByNumber(season_number);
+                                if (seasonModel == null)
+                                {
+                                    log.Debug($"Adding Ghost Season for {show.Title} Season {season_number}");
+                                    seasonModel = show.AddSeason(season_number);
+                                }
+                                JObject seasonJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{show.TMDB}/season/{season_number}?api_key={TMDB_API}"));
+                                JArray episodes = (JArray)seasonJson["episodes"];
+                                Parallel.ForEach(episodes, episode =>
+                                {
+                                    int episode_number = int.Parse(episode["episode_number"].ToString());
+                                    try
+                                    {
+                                        if (seasonModel.GetEpisodeByNumber(episode_number) == null)
+                                        {
+                                            log.Debug($"Adding Ghost Episode for {show.Title} Season {season_number} Episode {episode_number}");
+                                            seasonModel.AddEpisode(episode_number);
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        log.Error($"Had issues trying to load Ghost Episodes for \"{show.Title}\" Season {season_number} Episode {episode_number}", e);
+                                    }
+                                });
+                            }
+                            catch (Exception e)
+                            {
+                                log.Error($"Had issues trying to load Ghost Episodes for \"{show.Title}\" Season {season_number}", e);
+                            }
+                        });
+                    }
+                    catch (Exception e)
+                    {
+                        log.Error($"Had issues trying to load Ghost Episodes for \"{show.Title}\"", e);
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                log.Error($"Had Issues trying to load Ghost Episodes", e);
             }
         }
     }

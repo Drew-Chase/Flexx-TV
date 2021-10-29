@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Objects.Libraries
 {
@@ -48,7 +50,15 @@ namespace Flexx.Media.Objects.Libraries
             {
                 if (media != null)
                 {
-                    this.medias.Add(media);
+                    if (GetMediaByName(media.Title) == null)
+                    {
+                        log.Debug($"Adding \"{media.Title}\"");
+                        this.medias.Add(media);
+                    }
+                    else
+                    {
+                        log.Warn($"Not Adding Reduntant Title \"{media.Title}\"");
+                    }
                 }
             }
         }

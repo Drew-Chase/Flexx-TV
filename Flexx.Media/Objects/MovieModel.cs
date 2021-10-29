@@ -1,4 +1,5 @@
-﻿using Flexx.Core.Networking;
+﻿using ChaseLabs.CLConfiguration.List;
+using Flexx.Core.Networking;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
@@ -19,12 +20,13 @@ namespace Flexx.Media.Objects
         public string TrailerUrl { get; private set; }
         public bool HasTrailer { get; private set; }
         public string TMDB { get; private set; }
+        public DiscoveryCategory Category { get; private set; }
 
         public override string PosterImage
         {
             get
             {
-                string path = Path.Combine(meta_directory, "poster.jpg");
+                string path = Path.Combine(Metadata_Directory, "poster.jpg");
                 if (!File.Exists(path))
                 {
                     UpdateMetaData();
@@ -37,7 +39,7 @@ namespace Flexx.Media.Objects
                 try
                 {
                     log.Debug($"Optimizing Poster for {TMDB}");
-                    string path = Path.Combine(meta_directory, "poster.jpg");
+                    string path = Path.Combine(Metadata_Directory, "poster.jpg");
                     string tmp = Path.Combine(Paths.TempData, $"mp_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
                     FFMpegUtil.OptimizePoster(tmp, path);
@@ -52,7 +54,7 @@ namespace Flexx.Media.Objects
         {
             get
             {
-                string path = Path.Combine(meta_directory, "cover.jpg");
+                string path = Path.Combine(Metadata_Directory, "cover.jpg");
                 if (!File.Exists(path))
                 {
                     UpdateMetaData();
@@ -65,7 +67,7 @@ namespace Flexx.Media.Objects
                 try
                 {
                     log.Debug($"Optimizing Cover Image for {TMDB}");
-                    string path = Path.Combine(meta_directory, "cover.jpg");
+                    string path = Path.Combine(Metadata_Directory, "cover.jpg");
                     string tmp = Path.Combine(Paths.TempData, $"mc_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
                     FFMpegUtil.OptimizeCover(tmp, path);
@@ -78,7 +80,8 @@ namespace Flexx.Media.Objects
         {
             get
             {
-                string path = Path.Combine(meta_directory, "cover-lang.jpg");
+                string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
+                if (!File.Exists(path)) return CoverImage;
                 return path;
             }
             set
@@ -86,7 +89,7 @@ namespace Flexx.Media.Objects
                 try
                 {
                     log.Debug($"Optimizing Language Cover Image for {TMDB}");
-                    string path = Path.Combine(meta_directory, "cover-lang.jpg");
+                    string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
                     string tmp = Path.Combine(Paths.TempData, $"mcl_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
                     FFMpegUtil.OptimizeCover(tmp, path);
@@ -99,7 +102,7 @@ namespace Flexx.Media.Objects
         {
             get
             {
-                string path = Path.Combine(meta_directory, "logo.png");
+                string path = Path.Combine(Metadata_Directory, "logo.png");
                 return path;
             }
             set
@@ -107,7 +110,7 @@ namespace Flexx.Media.Objects
                 try
                 {
                     log.Debug($"Optimizing Logo Image for {TMDB}");
-                    string path = Path.Combine(meta_directory, "logo.png");
+                    string path = Path.Combine(Metadata_Directory, "logo.png");
                     string tmp = Path.Combine(Paths.TempData, $"ml_{TMDB}.png");
                     new System.Net.WebClient().DownloadFile(value, tmp);
                     FFMpegUtil.OptimizeLogo(tmp, path);
@@ -116,10 +119,34 @@ namespace Flexx.Media.Objects
             }
         }
 
-        private string meta_directory => Path.Combine(Paths.MetaData, "Movies", TMDB);
-
-        public MovieModel(string initializer, bool isTMDB = false)
+        private string Metadata_Directory;
+        public MovieModel(ConfigManager metadata)
         {
+            Metadata = metadata;
+            if (metadata.GetConfigByKey("id") != null && metadata.GetConfigByKey("category") != null)
+            {
+                if (Enum.TryParse(typeof(DiscoveryCategory), metadata.GetConfigByKey("category").Value, out object category))
+                    Init(metadata.GetConfigByKey("id").Value, true, (DiscoveryCategory)category);
+            }
+        }
+
+        public MovieModel(string TMDB, DiscoveryCategory Category)
+        {
+#if DEBUG
+            Metadata = new(Path.Combine(Paths.MovieData, TMDB, "prefetch.metadata"), false, "FlexxTV");
+#else
+            Metadata = new(Path.Combine(Paths.MovieData, TMDB, "prefetch.metadata"), true, "FlexxTV");
+#endif
+            Init(TMDB, true, Category);
+        }
+        public MovieModel(string Initializer, bool IsTMDB = false)
+        {
+            Init(Initializer, IsTMDB, DiscoveryCategory.None);
+        }
+
+        private void Init(string initializer, bool isTMDB, DiscoveryCategory Category)
+        {
+            this.Category = Category;
             if (isTMDB)
             {
                 TMDB = initializer;
@@ -169,16 +196,26 @@ namespace Flexx.Media.Objects
                     return;
                 }
             }
+            Metadata_Directory = Path.Combine(Paths.MovieData, TMDB);
+            if (Metadata == null)
+            {
+                try
+                {
 #if DEBUG
-            Metadata = new(Path.Combine(Paths.MetaData, "Movies", TMDB, "metadata"), false, "FlexxTV");
+                    Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false, "FlexxTV");
 #else
-            Metadata = new(Path.Combine(Paths.MetaData, "Movies", TMDB, "metadata"), true, "FlexxTV");
+                    Metadata = new(Path.Combine(meta_directory, "metadata"), true, "FlexxTV");
 #endif
-
-            Metadata.Add("watched", false);
-            Metadata.Add("watched_duration", (uint)0);
+                }
+                catch (Exception e)
+                {
+                    log.Fatal("Had Trouble setting metadata", e);
+                    UpdateMetaData();
+                    Cast = new("movie", TMDB);
+                    return;
+                }
+            }
             LoadMetaData();
-            GetTrailer();
             Cast = new("movie", TMDB);
         }
 
@@ -196,7 +233,8 @@ namespace Flexx.Media.Objects
                 {
                     Title = Metadata.GetConfigByKey("title").Value;
                     Plot = Metadata.GetConfigByKey("plot").Value;
-                    Rating = Metadata.GetConfigByKey("rating").Value;
+                    if (Metadata.GetConfigByKey("rating") != null)
+                        Rating = Metadata.GetConfigByKey("rating").Value;
                     try
                     {
                         MPAA = Metadata.GetConfigByKey("mpaa") == null ? string.Empty : Metadata.GetConfigByKey("mpaa").Value;
@@ -263,8 +301,10 @@ namespace Flexx.Media.Objects
                     }
                 }
             }
+            Metadata.Add("id", TMDB);
             Metadata.Add("title", Title);
             Metadata.Add("plot", Plot);
+            Metadata.Add("category", Category.ToString());
             if (Rating != 0)
             {
                 Metadata.Add("rating", Rating);
@@ -295,18 +335,43 @@ namespace Flexx.Media.Objects
             }
         }
 
-        private void GetTrailer()
+        public void GetTrailer()
         {
             string trailerURL;
-            JToken results = ((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/videos?api_key={TMDB_API}")))["results"];
+            string json;
+            try
+            {
+                json = new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/videos?api_key={TMDB_API}");
+            }
+            catch (Exception e)
+            {
+                log.Error($"Unable to get reponse regarding {TMDB} trailer", e);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(json)) return;
+            JToken results = ((JObject)JsonConvert.DeserializeObject(json))["results"];
             if (results.Any())
             {
                 JToken keyObject = results[0]["key"];
                 string key = keyObject.ToString();
-                IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(key).Result.GetMuxedStreams().GetWithHighestVideoQuality();
-                if (!string.IsNullOrWhiteSpace(key) && streamInfo != null)
+                if (!string.IsNullOrWhiteSpace(key))
                 {
-                    trailerURL = streamInfo.Url;
+                    try
+                    {
+                        IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(key).Result.GetMuxedStreams().GetWithHighestVideoQuality();
+                        if (streamInfo != null)
+                        {
+                            trailerURL = streamInfo.Url;
+                        }
+                        else
+                        {
+                            trailerURL = "";
+                        }
+                    }
+                    catch
+                    {
+                        trailerURL = "";
+                    }
                 }
                 else
                 {
@@ -323,6 +388,10 @@ namespace Flexx.Media.Objects
             if (HasTrailer)
             {
                 log.Debug($"Found Trailer for {Title}");
+            }
+            else
+            {
+                log.Debug($"No Trailer was Found for {Title}");
             }
         }
     }

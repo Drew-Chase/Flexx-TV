@@ -1,5 +1,6 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Media.Objects.Extras;
+using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -8,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Objects
@@ -24,6 +26,7 @@ namespace Flexx.Media.Objects
         public DateTime StartDate { get; private set; }
         public CastListModel MainCast { get; private set; }
         public List<SeasonModel> Seasons { get; private set; }
+        public bool Added { get; private set; }
 
         public string PosterImage
         {
@@ -72,6 +75,7 @@ namespace Flexx.Media.Objects
             get
             {
                 string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
+                if (!File.Exists(path)) return CoverImage;
                 return path;
             }
             set
@@ -111,24 +115,54 @@ namespace Flexx.Media.Objects
 
         public ConfigManager Metadata { get; set; }
 
-        public string Metadata_Directory => Path.Combine(Paths.MetaData, "TV", TMDB);
+        public string Metadata_Directory => Path.Combine(Paths.TVData, TMDB);
+        public DiscoveryCategory Category { get; set; }
 
-        public TVModel(string tmdb)
+        public TVModel(string tmdb, DiscoveryCategory category = DiscoveryCategory.None)
         {
             TMDB = tmdb;
             Seasons = new();
+            Category = category;
+            if (category == DiscoveryCategory.None)
+            {
 #if DEBUG
-            Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false, "FlexxTV");
+                Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false, "FlexxTV");
 #else
-            Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true, "FlexxTV");
+                Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true, "FlexxTV");
 #endif
+                Added = true;
+            }
+            else
+            {
+#if DEBUG
+                Metadata = new(Path.Combine(Metadata_Directory, "prefetch.metadata"), false, "FlexxTV");
+#else
+                Metadata = new(Path.Combine(Metadata_Directory, "prefetch.metadata"), true, "FlexxTV");
+#endif
+                Added = false;
+            }
             LoadMetaData();
+            MainCast = new("tv", TMDB);
+        }
+
+        public TVModel(ConfigManager metadata)
+        {
+            Metadata = metadata;
+            Seasons = new();
+            Category = Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object cat) ? (DiscoveryCategory)cat : DiscoveryCategory.None;
+            if (Metadata.GetConfigByKey("id") == null)
+                UpdateMetaData();
+            else
+            {
+                TMDB = Metadata.GetConfigByKey("id").Value;
+                LoadMetaData();
+            }
             MainCast = new("tv", TMDB);
         }
 
         private void LoadMetaData()
         {
-            if (Metadata.Size() == 0 || Metadata.GetConfigByKey("title") == null || Metadata.GetConfigByKey("plot") == null)
+            if (Metadata.Size() == 0 || Metadata.GetConfigByKey("id") == null || Metadata.GetConfigByKey("title") == null || Metadata.GetConfigByKey("plot") == null)
             {
                 UpdateMetaData();
             }
@@ -136,7 +170,7 @@ namespace Flexx.Media.Objects
             {
                 Title = Metadata.GetConfigByKey("title").Value;
                 Plot = Metadata.GetConfigByKey("plot").Value;
-                Plot = Metadata.GetConfigByKey("plot").Value;
+                Added = Metadata.GetConfigByKey("added").Value;
                 if (Metadata.GetConfigByKey("studio") != null)
                 {
                     Studio = Metadata.GetConfigByKey("studio").Value;
@@ -159,34 +193,63 @@ namespace Flexx.Media.Objects
                 {
                     StartDate = DateTime.Parse(Metadata.GetConfigByKey("start_date").Value);
                 }
+                if (Metadata.GetConfigByKey("category") != null)
+                {
+                    Category = Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object cat) ? (DiscoveryCategory)cat : DiscoveryCategory.None;
+                }
             }
         }
 
         public void UpdateMetaData()
         {
-            JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}?api_key={TMDB_API}"));
-            JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/images?api_key={TMDB_API}&include_image_language=en"));
-            if (imagesJson["backdrops"].Any())
+            JObject json = null;
+            try
             {
-                CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
+                json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}?api_key={TMDB_API}"));
             }
-
-            if (imagesJson["logos"].Any())
+            catch (Exception e)
             {
-                LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
+                log.Error($"Unable to gather metadata for TV Show with ID of {TMDB}", e);
+                return;
+            }
+            try
+            {
+
+                JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/images?api_key={TMDB_API}&include_image_language=en"));
+                if (imagesJson["backdrops"].Any())
+                {
+                    CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
+                }
+
+                if (imagesJson["logos"].Any())
+                {
+                    LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
+                }
+            }
+            catch (Exception e)
+            {
+                log.Error($"Unable to get Image metadata for TV Show with ID of {TMDB}", e);
             }
 
             Title = json["name"].ToString();
             Plot = json["overview"].ToString();
             Rating = json["vote_average"].ToString();
-            foreach (var token in (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/content_ratings?api_key={TMDB_API}")))["results"])
+            try
             {
-                if (token["iso_3166_1"].ToString().Equals("US"))
-                {
-                    MPAA = token["rating"].ToString();
-                    break;
-                }
 
+                foreach (var token in (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/content_ratings?api_key={TMDB_API}")))["results"])
+                {
+                    if (token["iso_3166_1"].ToString().Equals("US"))
+                    {
+                        MPAA = token["rating"].ToString();
+                        break;
+                    }
+
+                }
+            }
+            catch
+            {
+                MPAA = "NR";
             }
             try
             {
@@ -206,13 +269,34 @@ namespace Flexx.Media.Objects
             PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
             CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
 
+            Metadata.Add("id", TMDB);
             Metadata.Add("title", Title);
+            Metadata.Add("added", Added);
             Metadata.Add("plot", Plot);
+            Metadata.Add("category", Category.ToString());
             Metadata.Add("studio", Studio);
             Metadata.Add("mpaa", MPAA);
             Metadata.Add("rating", Rating);
             Metadata.Add("in_production", InProduction);
             Metadata.Add("start_date", StartDate.ToString("yyyy-MM-dd"));
+        }
+        public void AddToFlexx()
+        {
+            Added = true;
+            if (Metadata.GetConfigByKey("added") == null)
+                Metadata.Add("added", true);
+            else
+                Metadata.GetConfigByKey("added").Value = true;
+            TvLibraryModel.Instance.AddGhostEpisodes(this);
+            ScanForMissing();
+        }
+
+        public void ScanForMissing()
+        {
+            Parallel.ForEach(Seasons, season =>
+            {
+                season.ScanForMissing();
+            });
         }
 
         public SeasonModel GetSeasonByNumber(int season)
@@ -388,6 +472,14 @@ namespace Flexx.Media.Objects
             Metadata.Add("plot", Plot);
             Metadata.Add("start_date", StartDate.ToString("yyyy-MM-dd"));
         }
+
+        public void ScanForMissing()
+        {
+            Parallel.ForEach(Episodes, episode =>
+            {
+                episode.ScanForMissing();
+            });
+        }
     }
 
     public class EpisodeModel : MediaBase
@@ -524,6 +616,10 @@ namespace Flexx.Media.Objects
         public override void AddToTorrentClient(bool useInternal = true)
         {
             throw new NotImplementedException();
+        }
+
+        public void ScanForMissing()
+        {
         }
     }
 }
