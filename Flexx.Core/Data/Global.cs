@@ -20,6 +20,7 @@ namespace Flexx.Core.Data
 
         public enum DiscoveryCategory
         {
+            None,
             Latest,
             Popular,
             Top_Rated,
@@ -33,11 +34,11 @@ namespace Flexx.Core.Data
             public static string Log => Directory.CreateDirectory(Path.Combine(Resources, "Logs")).FullName;
             public static string Configs => Directory.CreateDirectory(Path.Combine(Resources, "Config")).FullName;
             public static string UserData => Directory.CreateDirectory(Path.Combine(Resources, "UserData")).FullName;
-            public static string FFMpeg => Directory.CreateDirectory(Path.Combine(Resources, "ffmpeg")).FullName;
+            public static string FFMpeg => Directory.CreateDirectory(Path.Combine(Resources, "FFMpeg")).FullName;
             public static string TempData => Directory.CreateDirectory(Path.Combine(Resources, ".tmp")).FullName;
-            public static string MetaData => Directory.CreateDirectory(Path.Combine(Resources, "metadata")).FullName;
-            public static string MovieData => Directory.CreateDirectory(Path.Combine(MetaData, "movies")).FullName;
-            public static string TVData => Directory.CreateDirectory(Path.Combine(MetaData, "tv")).FullName;
+            public static string MetaData => Directory.CreateDirectory(Path.Combine(Resources, "Metadata")).FullName;
+            public static string MovieData => Directory.CreateDirectory(Path.Combine(MetaData, "Movies")).FullName;
+            public static string TVData => Directory.CreateDirectory(Path.Combine(MetaData, "TV")).FullName;
 
             public static string MissingPoster
             {
