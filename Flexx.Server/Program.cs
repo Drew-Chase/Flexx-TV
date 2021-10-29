@@ -17,8 +17,8 @@ namespace Flexx.Server
             Directory.Delete(Paths.TempData, true);
             config = new();
             FFMpegUtil.Init();
-            Task.Run(() => MovieLibraryModel.Instance.Initialize());
-            Task.Run(() => TvLibraryModel.Instance.Initialize());
+            Task.Run(() => MovieLibraryModel.Instance.Initialize()).ContinueWith(a => log.Warn("Done Loading Movies"));
+            Task.Run(() => TvLibraryModel.Instance.Initialize()).ContinueWith(a => log.Warn("Done Loading TV Shows"));
             _ = Users.Instance;
             AppDomain.CurrentDomain.ProcessExit += (s, e) =>
             {
