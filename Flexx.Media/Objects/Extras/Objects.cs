@@ -23,6 +23,7 @@ namespace Flexx.Media.Objects.Extras
         public bool Watched { get; }
         public ushort WatchedDuration { get; }
         public CastModel[] MainCast { get; }
+        public DiscoveryCategory Category { get; }
 
         public MovieObject(MovieModel movie, User user)
         {
@@ -33,11 +34,10 @@ namespace Flexx.Media.Objects.Extras
             Rating = movie.Rating;
             Downloaded = movie.Downloaded;
             Year = (ushort)movie.ReleaseDate.Year;
-            Poster = movie.PosterImage;
-            Cover = movie.CoverImage;
             Watched = user.GetHasWatched(movie.Title);
             WatchedDuration = user.GetWatchedDuration(movie.Title);
             MainCast = movie.Cast.GetCast().Take(10).ToArray();
+            Category = movie.Category;
         }
 
         public MovieObject(string json)
@@ -57,6 +57,7 @@ namespace Flexx.Media.Objects.Extras
             Downloaded = MovieLibraryModel.Instance.GetMovieByTMDB(result["id"].ToString()) != null;
             Watched = false;
             WatchedDuration = 0;
+            Category = DiscoveryCategory.None;
 
             foreach (JToken child in ((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{ID}/release_dates?api_key={TMDB_API}")))["results"].Children().ToList())
             {
@@ -88,6 +89,7 @@ namespace Flexx.Media.Objects.Extras
         public bool Added { get; }
         public string MPAA { get; }
         public string Rating { get; }
+        public DiscoveryCategory Category { get; }
 
         public object UpNext { get; }
         public CastModel[] MainCast { get; }
@@ -111,17 +113,21 @@ namespace Flexx.Media.Objects.Extras
                     return false;
                 }).Any();
             }).Any();
-            Added = true;
-            SeasonModel[] UnwatchedSeasons = show.Seasons.Where(s => !new SeasonObject(s, user).Watched && new SeasonObject(s, user).Season != 0).ToArray();
-            SeasonModel UnwatchedSeason = UnwatchedSeasons.Length == 0 ? show.Seasons.ElementAt(0) : UnwatchedSeasons[0];
-            EpisodeModel[] UnwatchedEpisodes = UnwatchedSeason.Episodes.Where(e => !new EpisodeObject(e, user).Watched && new EpisodeObject(e, user).Downloaded).ToArray();
-            EpisodeModel UnwatchedEpisode = UnwatchedEpisodes.Length == 0 ? UnwatchedSeason.Episodes.ElementAt(0) : UnwatchedEpisodes[0];
-            UpNext = new
+            Added = show.Added;
+            Category = show.Category;
+            if (show.Added)
             {
-                Season = UnwatchedEpisode.Season.Season_Number,
-                Episode = UnwatchedEpisode.Episode_Number,
-                Name = UnwatchedEpisode.FriendlyName,
-            };
+                SeasonModel[] UnwatchedSeasons = show.Seasons.Where(s => !new SeasonObject(s, user).Watched && new SeasonObject(s, user).Season != 0).ToArray();
+                SeasonModel UnwatchedSeason = UnwatchedSeasons.Length == 0 ? show.Seasons.ElementAt(0) : UnwatchedSeasons[0];
+                EpisodeModel[] UnwatchedEpisodes = UnwatchedSeason.Episodes.Where(e => !new EpisodeObject(e, user).Watched && new EpisodeObject(e, user).Downloaded).ToArray();
+                EpisodeModel UnwatchedEpisode = UnwatchedEpisodes.Length == 0 ? UnwatchedSeason.Episodes.ElementAt(0) : UnwatchedEpisodes[0];
+                UpNext = new
+                {
+                    Season = UnwatchedEpisode.Season.Season_Number,
+                    Episode = UnwatchedEpisode.Episode_Number,
+                    Name = UnwatchedEpisode.FriendlyName,
+                };
+            }
             MPAA = show.MPAA;
             Rating = show.Rating;
             MainCast = show.MainCast.GetCast().Take(10).ToArray();
@@ -140,7 +146,7 @@ namespace Flexx.Media.Objects.Extras
             }
 
             Watched = false;
-            Added = TvLibraryModel.Instance.GetShowByTMDB(ID) != null;
+            Added = TvLibraryModel.Instance.GetShowByTMDB(ID) != null && TvLibraryModel.Instance.GetShowByTMDB(ID).Added;
             Rating = result["vote_average"].ToString();
             foreach (var token in (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{ID}/content_ratings?api_key={TMDB_API}&language=en-US")))["results"])
             {
@@ -153,6 +159,7 @@ namespace Flexx.Media.Objects.Extras
             }
 
             MainCast = new CastListModel("tv", ID).GetCast().Take(10).ToArray();
+            Category = DiscoveryCategory.None;
         }
     }
 
