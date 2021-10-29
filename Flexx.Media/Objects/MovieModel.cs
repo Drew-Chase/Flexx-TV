@@ -81,7 +81,11 @@ namespace Flexx.Media.Objects
             get
             {
                 string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
-                if (!File.Exists(path)) return CoverImage;
+                if (!File.Exists(path))
+                {
+                    return CoverImage;
+                }
+
                 return path;
             }
             set
@@ -120,13 +124,16 @@ namespace Flexx.Media.Objects
         }
 
         private string Metadata_Directory;
+
         public MovieModel(ConfigManager metadata)
         {
             Metadata = metadata;
             if (metadata.GetConfigByKey("id") != null && metadata.GetConfigByKey("category") != null)
             {
                 if (Enum.TryParse(typeof(DiscoveryCategory), metadata.GetConfigByKey("category").Value, out object category))
+                {
                     Init(metadata.GetConfigByKey("id").Value, true, (DiscoveryCategory)category);
+                }
             }
         }
 
@@ -139,6 +146,7 @@ namespace Flexx.Media.Objects
 #endif
             Init(TMDB, true, Category);
         }
+
         public MovieModel(string Initializer, bool IsTMDB = false)
         {
             Init(Initializer, IsTMDB, DiscoveryCategory.None);
@@ -234,7 +242,10 @@ namespace Flexx.Media.Objects
                     Title = Metadata.GetConfigByKey("title").Value;
                     Plot = Metadata.GetConfigByKey("plot").Value;
                     if (Metadata.GetConfigByKey("rating") != null)
+                    {
                         Rating = Metadata.GetConfigByKey("rating").Value;
+                    }
+
                     try
                     {
                         MPAA = Metadata.GetConfigByKey("mpaa") == null ? string.Empty : Metadata.GetConfigByKey("mpaa").Value;
@@ -348,7 +359,11 @@ namespace Flexx.Media.Objects
                 log.Error($"Unable to get reponse regarding {TMDB} trailer", e);
                 return;
             }
-            if (string.IsNullOrWhiteSpace(json)) return;
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return;
+            }
+
             JToken results = ((JObject)JsonConvert.DeserializeObject(json))["results"];
             if (results.Any())
             {

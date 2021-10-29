@@ -51,8 +51,10 @@ namespace Flexx.Media.Objects.Libraries
             return null;
         }
 
-        public MovieObject[] DiscoverMovies(User user, DiscoveryCategory category = DiscoveryCategory.Latest) => GetList(user).Where(m => m.Category == category).ToArray();
-
+        public MovieObject[] DiscoverMovies(User user, DiscoveryCategory category = DiscoveryCategory.Latest)
+        {
+            return GetList(user).Where(m => m.Category == category).ToArray();
+        }
 
         public void FetchAllTrailers()
         {
@@ -102,13 +104,16 @@ namespace Flexx.Media.Objects.Libraries
             }
             return list.OrderBy(m => m.Title).ToArray();
         }
+
         public MovieObject[] GetLocalList(User user)
         {
             List<MovieObject> list = new();
             foreach (MovieModel movie in medias.ToArray())
             {
                 if (movie.Downloaded)
+                {
                     list.Add(new(movie, user));
+                }
             }
             return list.OrderBy(m => m.Title).ToArray();
         }

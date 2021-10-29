@@ -38,7 +38,7 @@ namespace Flexx.Server.Controllers
                 {
                     try
                     {
-                        var model = new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
+                        MovieObject model = new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
                         return new JsonResult(new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}")));
                     }
                     catch
@@ -103,7 +103,6 @@ namespace Flexx.Server.Controllers
                     return new RedirectResult($"https://image.tmdb.org/t/p/original{json[0]["file_path"]}");
                 }
                 return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
-
             }
             return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open), "image/jpg");
         }

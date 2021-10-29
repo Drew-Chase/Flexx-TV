@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -27,6 +26,7 @@ namespace Flexx.Media.Objects.Extras
             });
             FullCast = cast.ToArray();
         }
+
         public CastModel[] GetCast()
         {
             return FullCast;
@@ -36,7 +36,6 @@ namespace Flexx.Media.Objects.Extras
         {
             return FullCast.Where(c => c.Job.Equals(job)).ToArray();
         }
-
     }
 
     public class CastModel

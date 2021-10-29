@@ -1,5 +1,4 @@
 ﻿using Flexx.Media.Objects;
-using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -25,7 +24,6 @@ namespace Flexx.Media.Utilities
 
     public class Scanner
     {
-
         public static void ScheduleScannerTask(ScanFrequency frequency = ScanFrequency.Daily)
         {
             Timer scannerTask;
@@ -91,6 +89,7 @@ namespace Flexx.Media.Utilities
         {
             return new(file);
         }
+
         private static void PrefetchMovies()
         {
             log.Info($"Prefetching Movies");
@@ -107,7 +106,11 @@ namespace Flexx.Media.Utilities
             });
             foreach (DiscoveryCategory category in Enum.GetValues(typeof(DiscoveryCategory)))
             {
-                if (category == DiscoveryCategory.None) continue;
+                if (category == DiscoveryCategory.None)
+                {
+                    continue;
+                }
+
                 log.Debug($"Prefetching {category} Movies");
                 string url = $"https://api.themoviedb.org/3/movie/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
                 JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
@@ -118,6 +121,7 @@ namespace Flexx.Media.Utilities
                 Parallel.ForEach(results, result =>
                 {
                     if (result["id"] != null && MovieLibraryModel.Instance.GetMovieByTMDB(result["id"].ToString()) == null)
+                    {
                         try
                         {
                             MovieLibraryModel.Instance.AddMedia(new MovieModel(result["id"].ToString(), category));
@@ -126,13 +130,17 @@ namespace Flexx.Media.Utilities
                         {
                             log.Error("Issue with Prefetching Remote Movies", e);
                         }
+                    }
                 });
             }
 
             log.Warn($"Done Prefetching Movies");
         }
-        #endregion
+
+        #endregion Movies
+
         #region TV
+
         public static void ForTV()
         {
             log.Info("Scanning for TV Shows");
@@ -238,7 +246,11 @@ namespace Flexx.Media.Utilities
             });
             foreach (DiscoveryCategory category in Enum.GetValues(typeof(DiscoveryCategory)))
             {
-                if (category == DiscoveryCategory.None) continue;
+                if (category == DiscoveryCategory.None)
+                {
+                    continue;
+                }
+
                 log.Debug($"Prefetching {category} TV Shows");
                 string url = $"https://api.themoviedb.org/3/tv/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
                 JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
@@ -260,15 +272,17 @@ namespace Flexx.Media.Utilities
                             log.Error("Issue with Prefetching Remote TV Shows", e);
                         }
                         if (model != null)
+                        {
                             TvLibraryModel.Instance.AddMedia(model);
+                        }
                     }
                 });
-
             }
 
             log.Warn($"Done Prefetching TV Shows");
         }
-        #endregion
+
+        #endregion TV
 
         /// <summary>
         /// Splits an array into several smaller arrays.

@@ -66,11 +66,15 @@ namespace Flexx.Media.Objects.Libraries
             TVShows.AddRange(shows);
         }
 
-        public SeriesObject[] GetLocalList(User user) => GetList(user).Where(t => t.Added).ToArray();
+        public SeriesObject[] GetLocalList(User user)
+        {
+            return GetList(user).Where(t => t.Added).ToArray();
+        }
+
         public SeriesObject[] GetList(User user)
         {
             List<SeriesObject> model = new();
-            foreach (var show in TVShows)
+            foreach (TVModel show in TVShows)
             {
                 model.Add(new(show, user));
             }
@@ -143,7 +147,6 @@ namespace Flexx.Media.Objects.Libraries
                 JObject json = null;
                 if (show == null)
                 {
-
                     Parallel.ForEach(TVShows.Where(t => t.Category == DiscoveryCategory.None), tvModel =>
                         {
                             try
@@ -194,7 +197,6 @@ namespace Flexx.Media.Objects.Libraries
                 }
                 else
                 {
-
                     try
                     {
                         json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{show.TMDB}?api_key={TMDB_API}"));

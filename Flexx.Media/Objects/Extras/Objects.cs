@@ -148,14 +148,13 @@ namespace Flexx.Media.Objects.Extras
             Watched = false;
             Added = TvLibraryModel.Instance.GetShowByTMDB(ID) != null && TvLibraryModel.Instance.GetShowByTMDB(ID).Added;
             Rating = result["vote_average"].ToString();
-            foreach (var token in (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{ID}/content_ratings?api_key={TMDB_API}&language=en-US")))["results"])
+            foreach (JToken token in (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{ID}/content_ratings?api_key={TMDB_API}&language=en-US")))["results"])
             {
                 if (token["iso_3166_1"].ToString().Equals("US"))
                 {
                     MPAA = token["rating"].ToString();
                     break;
                 }
-
             }
 
             MainCast = new CastListModel("tv", ID).GetCast().Take(10).ToArray();
