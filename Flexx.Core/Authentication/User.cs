@@ -64,7 +64,6 @@ namespace Flexx.Core.Authentication
 
         internal User(string username)
         {
-            log.Debug($"Loading Data for user {username}");
             Username = username;
 #if DEBUG
             userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"), false, "FlexxTV");
@@ -85,7 +84,6 @@ namespace Flexx.Core.Authentication
             {
                 if (config.Key.EndsWith("-watched_duration"))
                 {
-                    log.Debug($"Loading Watch Duration for {config.Key.Substring(0, config.Key.LastIndexOf("-") - 1)}");
                     if (config.Value is ushort)
                     {
                         WatchedDuration.Add(config.Key, config.Value);
@@ -93,7 +91,6 @@ namespace Flexx.Core.Authentication
                 }
                 else if (config.Key.EndsWith("-watched"))
                 {
-                    log.Debug($"Loading Watch Status for {config.Key.Substring(0, config.Key.LastIndexOf("-") - 1)}");
                     if (config.Value is bool)
                     {
                         HasWatched.Add(config.Key, config.Value);
@@ -128,7 +125,6 @@ namespace Flexx.Core.Authentication
         public bool GetHasWatched(string title)
         {
             string key = $"{title}-watched";
-            log.Debug($"Looking for user {Username}'s Watched Status for {title}");
             if (HasWatched.TryGetValue(key, out bool watched))
             {
                 return watched;
@@ -171,7 +167,6 @@ namespace Flexx.Core.Authentication
 
         public ushort GetWatchedDuration(string title)
         {
-            log.Debug($"Looking for user {Username}'s Watched Duration for {title}");
             string key = $"{title}-watched_duration";
             if (WatchedDuration.TryGetValue(key, out ushort duration))
             {
