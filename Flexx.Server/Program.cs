@@ -16,13 +16,13 @@ namespace Flexx.Server
         {
             Directory.Delete(Paths.TempData, true);
             config = new();
-            FFMpegUtil.Init();
+            Transcoder.Init();
             Task.Run(() => MovieLibraryModel.Instance.Initialize()).ContinueWith(a => log.Warn("Done Loading Movies"));
             Task.Run(() => TvLibraryModel.Instance.Initialize()).ContinueWith(a => log.Warn("Done Loading TV Shows"));
             _ = Users.Instance;
             AppDomain.CurrentDomain.ProcessExit += (s, e) =>
             {
-                foreach (System.Diagnostics.Process process in FFMpegUtil.Instance.ActiveTranscodingProcess)
+                foreach (System.Diagnostics.Process process in Transcoder.Instance.ActiveTranscodingProcess)
                 {
                     process.Kill();
                 }

@@ -42,7 +42,7 @@ namespace Flexx.Media.Objects
                     string path = Path.Combine(Metadata_Directory, "poster.jpg");
                     string tmp = Path.Combine(Paths.TempData, $"mp_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
-                    FFMpegUtil.OptimizePoster(tmp, path);
+                    Transcoder.OptimizePoster(tmp, path);
                 }
                 catch
                 {
@@ -70,7 +70,7 @@ namespace Flexx.Media.Objects
                     string path = Path.Combine(Metadata_Directory, "cover.jpg");
                     string tmp = Path.Combine(Paths.TempData, $"mc_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
-                    FFMpegUtil.OptimizeCover(tmp, path);
+                    Transcoder.OptimizeCover(tmp, path);
                 }
                 catch { }
             }
@@ -96,7 +96,7 @@ namespace Flexx.Media.Objects
                     string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
                     string tmp = Path.Combine(Paths.TempData, $"mcl_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
-                    FFMpegUtil.OptimizeCover(tmp, path);
+                    Transcoder.OptimizeCover(tmp, path);
                 }
                 catch { }
             }
@@ -117,7 +117,7 @@ namespace Flexx.Media.Objects
                     string path = Path.Combine(Metadata_Directory, "logo.png");
                     string tmp = Path.Combine(Paths.TempData, $"ml_{TMDB}.png");
                     new System.Net.WebClient().DownloadFile(value, tmp);
-                    FFMpegUtil.OptimizeLogo(tmp, path);
+                    Transcoder.OptimizeLogo(tmp, path);
                 }
                 catch { }
             }
