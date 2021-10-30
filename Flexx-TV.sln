@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.810.9
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flexx.Server", "Flexx.Server\Flexx.Server.csproj", "{C8E33CC6-7216-4FF7-A32B-806BC18D270E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flexx.Server", "Flexx.Server\Flexx.Server.csproj", "{C8E33CC6-7216-4FF7-A32B-806BC18D270E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flexx.Core", "Flexx.Core\Flexx.Core.csproj", "{1D80C613-98BD-4A7E-85ED-632FD970C6BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flexx.Core", "Flexx.Core\Flexx.Core.csproj", "{1D80C613-98BD-4A7E-85ED-632FD970C6BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flexx.Media", "Flexx.Media\Flexx.Media.csproj", "{9FFE799E-0C81-483A-B591-563CCC258A38}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flexx.Media", "Flexx.Media\Flexx.Media.csproj", "{9FFE799E-0C81-483A-B591-563CCC258A38}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
