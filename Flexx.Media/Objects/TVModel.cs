@@ -153,7 +153,7 @@ namespace Flexx.Media.Objects
         {
             Metadata = metadata;
             Seasons = new();
-            Category = Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object cat) ? (DiscoveryCategory)cat : DiscoveryCategory.None;
+            Category = Metadata.GetConfigByKey("category") != null ? (Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object cat) ? (DiscoveryCategory)cat : DiscoveryCategory.None) : DiscoveryCategory.None;
             if (Metadata.GetConfigByKey("id") == null)
             {
                 UpdateMetaData();
@@ -241,7 +241,8 @@ namespace Flexx.Media.Objects
             Rating = json["vote_average"].ToString();
             try
             {
-                foreach (JToken token in (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/content_ratings?api_key={TMDB_API}")))["results"])
+                string j = new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/content_ratings?api_key={TMDB_API}");
+                foreach (JToken token in (JArray)((JObject)JsonConvert.DeserializeObject(j))["results"])
                 {
                     if (token["iso_3166_1"].ToString().Equals("US"))
                     {
@@ -269,8 +270,10 @@ namespace Flexx.Media.Objects
                 StartDate = DateTime.Parse(json["first_air_date"].ToString());
             }
             catch { }
-            PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
-            CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
+            if (json["poster_path"] != null && !string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
+                PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
+            if (json["backdrop_path"] != null && !string.IsNullOrWhiteSpace(json["backdrop_path"].ToString()))
+                CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
 
             Metadata.Add("id", TMDB);
             Metadata.Add("title", Title);
@@ -545,6 +548,7 @@ namespace Flexx.Media.Objects
 
         private void LoadMetaData()
         {
+            TMDB = Season.Series.TMDB;
             if (Metadata.Size() == 0 || Metadata.GetConfigByKey("title") == null || Metadata.GetConfigByKey("plot") == null)
             {
                 UpdateMetaData();
@@ -563,6 +567,10 @@ namespace Flexx.Media.Objects
                     ScannedDate = DateTime.Parse(Metadata.GetConfigByKey("scanned_date").Value);
                 }
             }
+
+            Downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
+            if (Downloaded)
+                FullDuration = $"{MediaInfo.Duration.Hours}h {MediaInfo.Duration.Minutes}m";
         }
 
         public override void UpdateMetaData()
@@ -573,7 +581,7 @@ namespace Flexx.Media.Objects
                 JObject json = null;
                 try
                 {
-                    string url = $"https://api.themoviedb.org/3/tv/{Season.Series.TMDB}/season/{Season.Season_Number}/episode/{Episode_Number}?api_key={TMDB_API}";
+                    string url = $"https://api.themoviedb.org/3/tv/{TMDB}/season/{Season.Season_Number}/episode/{Episode_Number}?api_key={TMDB_API}";
                     json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url));
                 }
                 catch

@@ -237,7 +237,11 @@ namespace Flexx.Media.Utilities
             {
                 try
                 {
-                    TvLibraryModel.Instance.AddMedia(new TVModel(new ChaseLabs.CLConfiguration.List.ConfigManager(file)));
+                    var data = new ChaseLabs.CLConfiguration.List.ConfigManager(file);
+                    if (data.GetConfigByKey("id") != null)
+                        TvLibraryModel.Instance.AddMedia(new TVModel(data));
+                    else
+                        File.Delete(file);
                 }
                 catch (Exception e)
                 {
@@ -260,7 +264,7 @@ namespace Flexx.Media.Utilities
                 }
                 Parallel.ForEach(results, result =>
                 {
-                    if (result["id"] != null && TvLibraryModel.Instance.GetShowByTMDB(result["id"].ToString()) == null)
+                    if (result["id"] != null && !string.IsNullOrWhiteSpace(result["id"].ToString()) && TvLibraryModel.Instance.GetShowByTMDB(result["id"].ToString()) == null)
                     {
                         TVModel model = null;
                         try

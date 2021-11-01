@@ -48,9 +48,12 @@ namespace Flexx.Media.Objects.Extras
         public CastModel(string Name, string Role, string ProfileImage, string Job)
         {
             this.Name = Name;
-            this.Role = Role;
-            this.ProfileImage = $"https://image.tmdb.org/t/p/original{ProfileImage}";
-            this.Job = Job;
+            if (!string.IsNullOrWhiteSpace(Role))
+                this.Role = Role;
+            if (!string.IsNullOrWhiteSpace(ProfileImage))
+                this.ProfileImage = $"https://image.tmdb.org/t/p/original{ProfileImage}";
+            if (!string.IsNullOrWhiteSpace(Job))
+                this.Job = Job;
         }
     }
 }

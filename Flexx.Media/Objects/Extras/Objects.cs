@@ -22,6 +22,7 @@ namespace Flexx.Media.Objects.Extras
         public string Cover { get; }
         public bool Watched { get; }
         public ushort WatchedDuration { get; }
+        public string FullDuration { get; }
         public CastModel[] MainCast { get; }
         public DiscoveryCategory Category { get; }
 
@@ -36,8 +37,9 @@ namespace Flexx.Media.Objects.Extras
             Year = (ushort)movie.ReleaseDate.Year;
             Watched = user.GetHasWatched(movie.Title);
             WatchedDuration = user.GetWatchedDuration(movie.Title);
-            MainCast = movie.Cast.GetCast().Take(10).ToArray();
+            MainCast = movie.Cast.GetCast().ToArray();
             Category = movie.Category;
+            FullDuration = movie.FullDuration;
         }
 
         public MovieObject(string json)
@@ -74,7 +76,7 @@ namespace Flexx.Media.Objects.Extras
                 }
             }
 
-            MainCast = new CastListModel("movie", ID).GetCast().Take(10).ToArray();
+            MainCast = new CastListModel("movie", ID).GetCast().ToArray();
         }
     }
 

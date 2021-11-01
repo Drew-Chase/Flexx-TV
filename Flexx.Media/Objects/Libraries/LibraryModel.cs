@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
@@ -19,13 +21,14 @@ namespace Flexx.Media.Objects.Libraries
 
         public virtual MediaBase GetMediaByName(string name)
         {
-            name = name.ToLower();
-            foreach (MediaBase media in medias)
+            try
             {
-                if (media.Title.ToLower().Equals(name) || media.FileName.ToLower().Equals(name))
-                {
-                    return media;
-                }
+                if (string.IsNullOrWhiteSpace(name)) return null;
+                return medias.Where(m => m.Title.ToLower().Equals(name.ToLower())).FirstOrDefault();
+            }
+            catch (Exception e)
+            {
+                log.Error($"Had trouble trying to Get Media object by the provided Name {name}", e);
             }
             return null;
         }
@@ -47,9 +50,9 @@ namespace Flexx.Media.Objects.Libraries
         {
             foreach (MediaBase media in medias)
             {
-                if (media != null)
+                if (media != null && !string.IsNullOrWhiteSpace(media.Title))
                 {
-                    if (GetMediaByName(media.Title) == null)
+                    if (GetMediaByName(media.Title) == null && !string.IsNullOrWhiteSpace(media.TMDB))
                     {
                         log.Debug($"Adding \"{media.Title}\"");
                         this.medias.Add(media);

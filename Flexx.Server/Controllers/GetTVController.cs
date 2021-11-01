@@ -86,12 +86,14 @@ namespace Flexx.Server.Controllers
                 JArray json = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/images?api_key={TMDB_API}")))["posters"];
                 if (json.Any())
                 {
-                    return new RedirectResult($"https://image.tmdb.org/t/p/original/{json[0]["file_path"]}");
+                    if (json[0]["file_path"] != null && !string.IsNullOrWhiteSpace(json[0]["file_path"].ToString()))
+                        return new RedirectResult($"https://image.tmdb.org/t/p/original/{json[0]["file_path"]}");
                 }
 
-                return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
             }
-            return File(new FileStream(show.PosterImage, FileMode.Open), "image/jpg");
+            if (!string.IsNullOrWhiteSpace(show.PosterImage) && System.IO.File.Exists(show.PosterImage))
+                return File(new FileStream(show.PosterImage, FileMode.Open), "image/jpg");
+            return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
         }
 
         [HttpGet("{tmdb}/images/cover")]
@@ -111,7 +113,9 @@ namespace Flexx.Server.Controllers
                 JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}?api_key={TMDB_API}"));
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["backdrop_path"]}");
             }
-            return File(new FileStream(show.CoverImage, FileMode.Open), "image/jpg");
+            if (System.IO.File.Exists(show.CoverImage))
+                return File(new FileStream(show.CoverImage, FileMode.Open), "image/jpg");
+            return new NotFoundResult();
         }
 
         [HttpGet("{tmdb}/images/logo")]
@@ -128,12 +132,9 @@ namespace Flexx.Server.Controllers
 
                 return new NotFoundResult();
             }
-            if (string.IsNullOrWhiteSpace(show.LogoImage) || !System.IO.File.Exists(show.LogoImage))
-            {
-                return new NotFoundResult();
-            }
-
-            return File(new FileStream(show.LogoImage, FileMode.Open), "image/png");
+            if (!string.IsNullOrWhiteSpace(show.LogoImage) && System.IO.File.Exists(show.LogoImage))
+                return File(new FileStream(show.LogoImage, FileMode.Open), "image/png");
+            return new NotFoundResult();
         }
 
         #endregion TV
@@ -145,7 +146,7 @@ namespace Flexx.Server.Controllers
         {
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
             List<object> json = new();
-            if (show == null)
+            if (show == null || !show.Added)
             {
                 foreach (JToken token in (JArray)((JToken)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}?api_key={TMDB_API}")))["seasons"])
                 {
@@ -187,7 +188,10 @@ namespace Flexx.Server.Controllers
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["poster_path"]}");
             }
             SeasonModel season = show.GetSeasonByNumber(season_number);
-            return File(new FileStream(season.PosterImage, FileMode.Open), "image/jpg");
+
+            if (!string.IsNullOrWhiteSpace(season.PosterImage) && System.IO.File.Exists(season.PosterImage))
+                return File(new FileStream(season.PosterImage, FileMode.Open), "image/jpg");
+            return new NotFoundResult();
         }
 
         #endregion Season
@@ -199,7 +203,7 @@ namespace Flexx.Server.Controllers
         {
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
             List<object> json = new();
-            if (show == null)
+            if (show == null || !show.Added)
             {
                 Parallel.ForEach((JArray)((JToken)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/season/{season_number}?api_key={TMDB_API}")))["episodes"], token =>
                 {
@@ -258,7 +262,10 @@ namespace Flexx.Server.Controllers
             }
             SeasonModel season = show.GetSeasonByNumber(season_number);
             EpisodeModel episode = season.GetEpisodeByNumber(episode_number);
-            return File(new FileStream(episode.PosterImage, FileMode.Open), "image/jpg");
+
+            if (!string.IsNullOrWhiteSpace(episode.PosterImage) && System.IO.File.Exists(episode.PosterImage))
+                return File(new FileStream(episode.PosterImage, FileMode.Open), "image/jpg");
+            return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
         }
 
         [HttpGet("{tmdb}/{user}/{season_number}/{episode_number}/video")]
@@ -284,7 +291,7 @@ namespace Flexx.Server.Controllers
 
             if (resolution.HasValue && bitrate.HasValue)
             {
-                return File(FFMpegUtil.GetTranscodedStream(user, episode, resolution.Value, bitrate.Value), "application/x-mpegURL", true);
+                //return File(Transcoder.GetTranscodedStream(user, episode, resolution.Value, bitrate.Value), "application/x-mpegURL", true);
             }
 
             return File(episode.Stream, "video/mp4", true);

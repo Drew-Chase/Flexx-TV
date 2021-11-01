@@ -8,6 +8,7 @@ namespace Flexx.Media.Objects
 {
     public abstract class MediaBase
     {
+        public string TMDB { get; protected set; }
         public string PATH { get; set; }
         public virtual string FileName => string.IsNullOrWhiteSpace(PATH) ? "" : new FileInfo(PATH).Name;
         public string Title { get; set; }
@@ -21,10 +22,13 @@ namespace Flexx.Media.Objects
         public DateTime ScannedDate { get; set; }
         public ConfigManager Metadata { get; set; }
         public virtual IMediaInfo MediaInfo => string.IsNullOrWhiteSpace(PATH) ? null : FFmpeg.GetMediaInfo(PATH).Result;
+        public string FullDuration;
         public virtual FileStream Stream => string.IsNullOrWhiteSpace(PATH) ? null : new(PATH, FileMode.Open, FileAccess.Read);
         public CastListModel Cast { get; set; }
-        public bool Downloaded => !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
-
+        public bool Downloaded;
+        protected MediaBase()
+        {
+        }
         public virtual void UpdateMetaData()
         {
         }

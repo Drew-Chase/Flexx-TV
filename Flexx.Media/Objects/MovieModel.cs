@@ -19,7 +19,6 @@ namespace Flexx.Media.Objects
     {
         public string TrailerUrl { get; private set; }
         public bool HasTrailer { get; private set; }
-        public string TMDB { get; private set; }
         public DiscoveryCategory Category { get; private set; }
 
         public override string PosterImage
@@ -137,7 +136,7 @@ namespace Flexx.Media.Objects
             }
         }
 
-        public MovieModel(string TMDB, DiscoveryCategory Category)
+        public MovieModel(string TMDB, DiscoveryCategory Category) : base()
         {
 #if DEBUG
             Metadata = new(Path.Combine(Paths.MovieData, TMDB, "prefetch.metadata"), false, "FlexxTV");
@@ -162,6 +161,9 @@ namespace Flexx.Media.Objects
             else
             {
                 PATH = initializer.ToString();
+                Downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
+                if (Downloaded)
+                    FullDuration = $"{MediaInfo.Duration.Hours}h {MediaInfo.Duration.Minutes}m";
                 Torrent torrent = new(FileName);
                 string query = torrent.Name.Replace($".{torrent.Container}", "").Replace($"({torrent.Year})", "");
                 string url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}&year={torrent.Year}";

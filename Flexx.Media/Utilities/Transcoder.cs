@@ -94,15 +94,53 @@ namespace Flexx.Media.Utilities
             process.Start();
         }
 
-        public static DashEncodeResult GetTranscodedStream(string requestedUser, MediaBase media, int targetWidth, int targetHeight, int targetBitRate)
+        public static FileStream GetTranscodedStream(string requestedUser, MediaBase media, int targetResolution, int targetBitRate)
         {
             if (string.IsNullOrWhiteSpace(media.PATH))
             {
                 return null;
             }
-            Encoder encoder = new(Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0], Directory.GetFiles(Paths.FFMpeg, "ffprobe*", SearchOption.AllDirectories)[0], "", output => log.Debug(output), output => log.Error(output), Paths.TranscodedData(requestedUser));
-            encoder.EnableStreamCopying = true;
-            return encoder.GenerateDash(media.PATH, Path.Combine(Paths.TranscodedData(requestedUser), $"{media.Title}"), 24, 24, Quality.GenerateDefaultQualities(DefaultQuality.medium, "medium"), outDirectory: Paths.TranscodedData(requestedUser));
+
+            string fileOutput = Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.TempData, $"stream_{requestedUser}")).FullName, $"v_{requestedUser}_{media.FileName}.m3u8");
+            File.Create(fileOutput).Close();
+            Thread.Sleep(500);
+            string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
+            string arguments = $" -i \"{media.PATH}\" -vf scale=w=-1:h={targetResolution}:force_original_aspect_ratio=decrease -vf format=yuv420p -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -sc_threshold 0 -g 48 -keyint_min 48 -hls_time 4 -bit_rate {targetBitRate}k -bufsize 7500k -b:a 192k -hls_segment_filename \"{fileOutput}-{targetResolution}-{targetBitRate}_%d.ts\" -hls_list_size 10 -f hls hls_master_name \"{fileOutput}-{targetResolution}.m3u8\"";
+            Process process = new()
+            {
+                StartInfo = new()
+                {
+                    FileName = exe,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                },
+                EnableRaisingEvents = true,
+            };
+            process.Exited += (s, e) =>
+            {
+                Instance.ActiveTranscodingProcess.Remove(process);
+                string dir = new FileInfo(fileOutput).Directory.FullName;
+                bool issue = false;
+                foreach (string file in Directory.GetFiles(dir))
+                {
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch
+                    {
+                        issue = true;
+                        continue;
+                    }
+                }
+                if (!issue)
+                {
+                    Directory.Delete(dir, true);
+                }
+            };
+            process.Start();
+            Instance.ActiveTranscodingProcess.Add(process);
+            return new(fileOutput, FileMode.Open);
         }
     }
 }

@@ -127,7 +127,9 @@ namespace Flexx.Server.Controllers
                     JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
                     return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["backdrop_path"]}");
                 }
-                return File(new FileStream(language.GetValueOrDefault() && !string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage) ? movie.CoverImageWithLanguage : movie.CoverImage, FileMode.Open), "image/jpg");
+                string path = language.GetValueOrDefault() && !string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage) ? movie.CoverImageWithLanguage : movie.CoverImage;
+                if (System.IO.File.Exists(path))
+                    return File(new FileStream(path, FileMode.Open), "image/jpg");
             }
             catch (Exception e)
             {
@@ -152,12 +154,10 @@ namespace Flexx.Server.Controllers
 
                     return new NotFoundResult();
                 }
-                if (string.IsNullOrWhiteSpace(movie.LogoImage))
+                if (!string.IsNullOrWhiteSpace(movie.LogoImage) && System.IO.File.Exists(movie.LogoImage))
                 {
-                    return new NotFoundResult();
+                    return File(new FileStream(movie.LogoImage, FileMode.Open), "image/jpg");
                 }
-
-                return File(new FileStream(movie.LogoImage, FileMode.Open), "image/jpg");
             }
             catch (Exception e)
             {
@@ -213,12 +213,9 @@ namespace Flexx.Server.Controllers
         public IActionResult GetMovieStream(string tmdb, string user, int? resolution, int? bitrate)
         {
             MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
-            if (resolution.HasValue && bitrate.HasValue)
-            {
-                return File(FFMpegUtil.GetTranscodedStream(user, movie, resolution.Value, bitrate.Value), "application/x-mpegURL", true);
-            }
-
-            return File(movie.Stream, "video/mp4", true);
+            FileStreamResult value = resolution.HasValue && bitrate.HasValue ? File(movie.Stream, "video/mp4", true) : File(Transcoder.GetTranscodedStream(user, movie, resolution.Value, bitrate.Value), "application/x-mpegURL", true);
+            value.EnableRangeProcessing = true;
+            return value;
         }
 
         #endregion Movies
