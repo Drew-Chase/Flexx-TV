@@ -23,7 +23,11 @@ namespace Flexx.Media.Objects.Libraries
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(name)) return null;
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    return null;
+                }
+
                 return medias.Where(m => m.Title.ToLower().Equals(name.ToLower())).FirstOrDefault();
             }
             catch (Exception e)

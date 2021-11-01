@@ -36,7 +36,12 @@ namespace Flexx.Core.Data
             public static string UserData => Directory.CreateDirectory(Path.Combine(Resources, "UserData")).FullName;
             public static string FFMpeg => Directory.CreateDirectory(Path.Combine(Resources, "FFMpeg")).FullName;
             public static string TempData => Directory.CreateDirectory(Path.Combine(Resources, ".tmp")).FullName;
-            public static string TranscodedData(string username) => Directory.CreateDirectory(Path.Combine(TempData, "transcoded", username)).FullName;
+
+            public static string TranscodedData(string username)
+            {
+                return Directory.CreateDirectory(Path.Combine(TempData, "transcoded", username)).FullName;
+            }
+
             public static string MetaData => Directory.CreateDirectory(Path.Combine(Resources, "Metadata")).FullName;
             public static string MovieData => Directory.CreateDirectory(Path.Combine(MetaData, "Movies")).FullName;
             public static string TVData => Directory.CreateDirectory(Path.Combine(MetaData, "TV")).FullName;

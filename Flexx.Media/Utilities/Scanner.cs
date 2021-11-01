@@ -237,11 +237,15 @@ namespace Flexx.Media.Utilities
             {
                 try
                 {
-                    var data = new ChaseLabs.CLConfiguration.List.ConfigManager(file);
+                    ChaseLabs.CLConfiguration.List.ConfigManager data = new ChaseLabs.CLConfiguration.List.ConfigManager(file);
                     if (data.GetConfigByKey("id") != null)
+                    {
                         TvLibraryModel.Instance.AddMedia(new TVModel(data));
+                    }
                     else
+                    {
                         File.Delete(file);
+                    }
                 }
                 catch (Exception e)
                 {

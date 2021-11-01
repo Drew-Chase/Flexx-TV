@@ -2,7 +2,6 @@
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
-using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -87,12 +86,16 @@ namespace Flexx.Server.Controllers
                 if (json.Any())
                 {
                     if (json[0]["file_path"] != null && !string.IsNullOrWhiteSpace(json[0]["file_path"].ToString()))
+                    {
                         return new RedirectResult($"https://image.tmdb.org/t/p/original/{json[0]["file_path"]}");
+                    }
                 }
-
             }
             if (!string.IsNullOrWhiteSpace(show.PosterImage) && System.IO.File.Exists(show.PosterImage))
+            {
                 return File(new FileStream(show.PosterImage, FileMode.Open), "image/jpg");
+            }
+
             return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
         }
 
@@ -114,7 +117,10 @@ namespace Flexx.Server.Controllers
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["backdrop_path"]}");
             }
             if (System.IO.File.Exists(show.CoverImage))
+            {
                 return File(new FileStream(show.CoverImage, FileMode.Open), "image/jpg");
+            }
+
             return new NotFoundResult();
         }
 
@@ -133,7 +139,10 @@ namespace Flexx.Server.Controllers
                 return new NotFoundResult();
             }
             if (!string.IsNullOrWhiteSpace(show.LogoImage) && System.IO.File.Exists(show.LogoImage))
+            {
                 return File(new FileStream(show.LogoImage, FileMode.Open), "image/png");
+            }
+
             return new NotFoundResult();
         }
 
@@ -190,7 +199,10 @@ namespace Flexx.Server.Controllers
             SeasonModel season = show.GetSeasonByNumber(season_number);
 
             if (!string.IsNullOrWhiteSpace(season.PosterImage) && System.IO.File.Exists(season.PosterImage))
+            {
                 return File(new FileStream(season.PosterImage, FileMode.Open), "image/jpg");
+            }
+
             return new NotFoundResult();
         }
 
@@ -264,7 +276,10 @@ namespace Flexx.Server.Controllers
             EpisodeModel episode = season.GetEpisodeByNumber(episode_number);
 
             if (!string.IsNullOrWhiteSpace(episode.PosterImage) && System.IO.File.Exists(episode.PosterImage))
+            {
                 return File(new FileStream(episode.PosterImage, FileMode.Open), "image/jpg");
+            }
+
             return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
         }
 

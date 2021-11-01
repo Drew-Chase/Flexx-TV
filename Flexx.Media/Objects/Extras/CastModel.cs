@@ -49,11 +49,19 @@ namespace Flexx.Media.Objects.Extras
         {
             this.Name = Name;
             if (!string.IsNullOrWhiteSpace(Role))
+            {
                 this.Role = Role;
+            }
+
             if (!string.IsNullOrWhiteSpace(ProfileImage))
+            {
                 this.ProfileImage = $"https://image.tmdb.org/t/p/original{ProfileImage}";
+            }
+
             if (!string.IsNullOrWhiteSpace(Job))
+            {
                 this.Job = Job;
+            }
         }
     }
 }

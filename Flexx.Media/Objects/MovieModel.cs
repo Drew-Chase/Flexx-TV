@@ -163,7 +163,10 @@ namespace Flexx.Media.Objects
                 PATH = initializer.ToString();
                 Downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
                 if (Downloaded)
+                {
                     FullDuration = $"{MediaInfo.Duration.Hours}h {MediaInfo.Duration.Minutes}m";
+                }
+
                 Torrent torrent = new(FileName);
                 string query = torrent.Name.Replace($".{torrent.Container}", "").Replace($"({torrent.Year})", "");
                 string url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}&year={torrent.Year}";

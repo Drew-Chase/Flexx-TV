@@ -26,9 +26,11 @@ namespace Flexx.Media.Objects
         public virtual FileStream Stream => string.IsNullOrWhiteSpace(PATH) ? null : new(PATH, FileMode.Open, FileAccess.Read);
         public CastListModel Cast { get; set; }
         public bool Downloaded;
+
         protected MediaBase()
         {
         }
+
         public virtual void UpdateMetaData()
         {
         }

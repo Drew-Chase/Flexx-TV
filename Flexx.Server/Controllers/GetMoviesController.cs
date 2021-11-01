@@ -129,7 +129,9 @@ namespace Flexx.Server.Controllers
                 }
                 string path = language.GetValueOrDefault() && !string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage) ? movie.CoverImageWithLanguage : movie.CoverImage;
                 if (System.IO.File.Exists(path))
+                {
                     return File(new FileStream(path, FileMode.Open), "image/jpg");
+                }
             }
             catch (Exception e)
             {

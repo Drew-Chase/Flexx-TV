@@ -271,9 +271,14 @@ namespace Flexx.Media.Objects
             }
             catch { }
             if (json["poster_path"] != null && !string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
+            {
                 PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
+            }
+
             if (json["backdrop_path"] != null && !string.IsNullOrWhiteSpace(json["backdrop_path"].ToString()))
+            {
                 CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
+            }
 
             Metadata.Add("id", TMDB);
             Metadata.Add("title", Title);
@@ -570,7 +575,9 @@ namespace Flexx.Media.Objects
 
             Downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
             if (Downloaded)
+            {
                 FullDuration = $"{MediaInfo.Duration.Hours}h {MediaInfo.Duration.Minutes}m";
+            }
         }
 
         public override void UpdateMetaData()
