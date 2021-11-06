@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Flexx.Media.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -68,6 +69,12 @@ namespace Flexx.Media.Objects.Libraries
                 }
             }
         }
+
+        public MediaBase[] GetMediaItems()
+        {
+            return medias.ToArray();
+        }
+
 
         public virtual void RemoveMedia(params MediaBase[] medias)
         {
