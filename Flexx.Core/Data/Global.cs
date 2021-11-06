@@ -58,10 +58,30 @@ namespace Flexx.Core.Data
                     return path;
                 }
             }
+            public static string GetVersionPath(string metadata_directory, string title, int resolution, int bitrate) => Path.Combine(Directory.CreateDirectory(Path.Combine(metadata_directory, "versions")).FullName, $"{title}-{resolution}-{bitrate}K.mp4");
         }
 
         public static class Functions
         {
+            public static bool IsFileLocked(FileInfo file)
+            {
+                try
+                {
+                    using FileStream stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.None);
+                    stream.Close();
+                }
+                catch (IOException)
+                {
+                    //the file is unavailable because it is:
+                    //still being written to
+                    //or being processed by another thread
+                    //or does not exist (has already been processed)
+                    return true;
+                }
+
+                //file is not locked
+                return false;
+            }
             public static IEnumerable<T[]> SplitArray<T>(T[] fullArray, int size)
             {
                 for (int i = 0; i < fullArray.Length; i += size)
