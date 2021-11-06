@@ -54,7 +54,6 @@ namespace Flexx.Media.Utilities
         {
             log.Info("Scanning for Movies");
             List<MovieModel> model = new();
-            log.Warn(config.MovieLibraryPath);
             string[] files = Directory.GetFiles(config.MovieLibraryPath, "*.*", SearchOption.AllDirectories)
                 .Where(f =>
                 {
@@ -70,10 +69,17 @@ namespace Flexx.Media.Utilities
                     }
                     return false;
                 }).ToArray();
-            Parallel.ForEach(files, file =>
-            {
-                MovieLibraryModel.Instance.AddMedia(PopulateMovieAsync(file).Result);
-            });
+            Parallel.ForEach(files, new() { MaxDegreeOfParallelism = 24 }, file =>
+              {
+                  try
+                  {
+                      MovieLibraryModel.Instance.AddMedia(PopulateMovieAsync(file).Result);
+                  }
+                  catch (Exception e)
+                  {
+                      log.Error($"Had trouble loading file \"{file}\"", e);
+                  }
+              });
             Task.Run(() => PrefetchMovies()).ContinueWith(a =>
             {
                 Task.Run(() => MovieLibraryModel.Instance.FetchAllTrailers());
@@ -93,7 +99,7 @@ namespace Flexx.Media.Utilities
         private static void PrefetchMovies()
         {
             log.Info($"Prefetching Movies");
-            Parallel.ForEach(Directory.GetFiles(Paths.MovieData, "prefetch.metadata", SearchOption.AllDirectories), file =>
+            Parallel.ForEach(Directory.GetFiles(Directory.CreateDirectory(Path.Combine(Paths.MovieData, "Prefetch")).FullName, "prefetch.metadata", SearchOption.AllDirectories), file =>
             {
                 try
                 {
@@ -233,25 +239,25 @@ namespace Flexx.Media.Utilities
         private static void PrefetchTV()
         {
             log.Info($"Prefetching TV Shows");
-            Parallel.ForEach(Directory.GetFiles(Paths.TVData, "prefetch.metadata", SearchOption.AllDirectories), file =>
-            {
-                try
-                {
-                    ChaseLabs.CLConfiguration.List.ConfigManager data = new ChaseLabs.CLConfiguration.List.ConfigManager(file);
-                    if (data.GetConfigByKey("id") != null)
-                    {
-                        TvLibraryModel.Instance.AddMedia(new TVModel(data));
-                    }
-                    else
-                    {
-                        File.Delete(file);
-                    }
-                }
-                catch (Exception e)
-                {
-                    log.Error("Issue with Prefetching Local TV Shows", e);
-                }
-            });
+            Parallel.ForEach(Directory.GetFiles(Directory.CreateDirectory(Path.Combine(Paths.TVData, "Prefetch")).FullName, "prefetch.metadata", SearchOption.AllDirectories), file =>
+           {
+               try
+               {
+                   ChaseLabs.CLConfiguration.List.ConfigManager data = new ChaseLabs.CLConfiguration.List.ConfigManager(file);
+                   if (data.GetConfigByKey("id") != null)
+                   {
+                       TvLibraryModel.Instance.AddMedia(new TVModel(data));
+                   }
+                   else
+                   {
+                       File.Delete(file);
+                   }
+               }
+               catch (Exception e)
+               {
+                   log.Error("Issue with Prefetching Local TV Shows", e);
+               }
+           });
             foreach (DiscoveryCategory category in Enum.GetValues(typeof(DiscoveryCategory)))
             {
                 if (category == DiscoveryCategory.None)

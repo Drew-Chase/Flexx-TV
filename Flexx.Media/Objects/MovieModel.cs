@@ -127,6 +127,7 @@ namespace Flexx.Media.Objects
         public MovieModel(ConfigManager metadata)
         {
             Metadata = metadata;
+            Metadata_Directory = Directory.GetParent(metadata.PATH).FullName;
             if (metadata.GetConfigByKey("id") != null && metadata.GetConfigByKey("category") != null)
             {
                 if (Enum.TryParse(typeof(DiscoveryCategory), metadata.GetConfigByKey("category").Value, out object category))
@@ -139,14 +140,15 @@ namespace Flexx.Media.Objects
         public MovieModel(string TMDB, DiscoveryCategory Category) : base()
         {
 #if DEBUG
-            Metadata = new(Path.Combine(Paths.MovieData, TMDB, "prefetch.metadata"), false, "FlexxTV");
+            Metadata = new(Path.Combine(Path.Combine(Paths.MovieData, "Prefetch"), TMDB, "prefetch.metadata"), false, "FlexxTV");
 #else
-            Metadata = new(Path.Combine(Paths.MovieData, TMDB, "prefetch.metadata"), true, "FlexxTV");
+            Metadata = new(Path.Combine(Path.Combine(Paths.MovieData, "Prefetch"), TMDB, "prefetch.metadata"), true, "FlexxTV");
 #endif
+            Metadata_Directory = Path.Combine(Paths.MovieData, "Prefetch", TMDB);
             Init(TMDB, true, Category);
         }
 
-        public MovieModel(string Initializer, bool IsTMDB = false)
+        public MovieModel(string Initializer, bool IsTMDB = false) : base()
         {
             Init(Initializer, IsTMDB, DiscoveryCategory.None);
         }
@@ -209,9 +211,9 @@ namespace Flexx.Media.Objects
                     return;
                 }
             }
-            Metadata_Directory = Path.Combine(Paths.MovieData, TMDB);
             if (Metadata == null)
             {
+                Metadata_Directory = Path.Combine(Paths.MovieData, TMDB);
                 try
                 {
 #if DEBUG
@@ -230,6 +232,8 @@ namespace Flexx.Media.Objects
             }
             LoadMetaData();
             Cast = new("movie", TMDB);
+            if (Downloaded)
+                AlternativeVersions = Transcoder.CreateVersion(this);
         }
 
         private void LoadMetaData()

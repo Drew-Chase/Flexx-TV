@@ -119,7 +119,7 @@ namespace Flexx.Media.Objects
 
         public ConfigManager Metadata { get; set; }
 
-        public string Metadata_Directory => Path.Combine(Paths.TVData, TMDB);
+        public string Metadata_Directory;
         public DiscoveryCategory Category { get; set; }
 
         public TVModel(string tmdb, DiscoveryCategory category = DiscoveryCategory.None)
@@ -129,6 +129,7 @@ namespace Flexx.Media.Objects
             Category = category;
             if (category == DiscoveryCategory.None)
             {
+                Metadata_Directory = Path.Combine(Paths.TVData, TMDB);
 #if DEBUG
                 Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false, "FlexxTV");
 #else
@@ -138,6 +139,7 @@ namespace Flexx.Media.Objects
             }
             else
             {
+                Metadata_Directory = Path.Combine(Paths.TVData, "Prefetch", TMDB);
 #if DEBUG
                 Metadata = new(Path.Combine(Metadata_Directory, "prefetch.metadata"), false, "FlexxTV");
 #else
@@ -152,6 +154,7 @@ namespace Flexx.Media.Objects
         public TVModel(ConfigManager metadata)
         {
             Metadata = metadata;
+            Metadata_Directory = Directory.GetParent(metadata.PATH).FullName;
             Seasons = new();
             Category = Metadata.GetConfigByKey("category") != null ? (Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object cat) ? (DiscoveryCategory)cat : DiscoveryCategory.None) : DiscoveryCategory.None;
             if (Metadata.GetConfigByKey("id") == null)
@@ -534,7 +537,7 @@ namespace Flexx.Media.Objects
         public string FriendlyName => $"S{(Season.Season_Number < 10 ? "0" + Season.Season_Number : Season.Season_Number)}E{(Episode_Number < 10 ? "0" + Episode_Number : Episode_Number)}";
         public string Metadata_Directory => Path.Combine(Season.Metadata_Directory, Episode_Number.ToString());
 
-        public EpisodeModel(int number, SeasonModel season)
+        public EpisodeModel(int number, SeasonModel season) : base()
         {
             Season = season;
             Episode_Number = number;
@@ -542,7 +545,7 @@ namespace Flexx.Media.Objects
             LoadMetaData();
         }
 
-        public EpisodeModel(string path, int number, SeasonModel season)
+        public EpisodeModel(string path, int number, SeasonModel season) : base()
         {
             PATH = path;
             Season = season;
