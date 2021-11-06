@@ -8,6 +8,7 @@
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <Optimize>true</Optimize>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,6 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="bloomtom.DEnc" Version="1.4.2" />
+    <PackageReference Include="Xabe.FFmpeg" Version="5.0.2" />
     <PackageReference Include="Xabe.FFmpeg.Downloader" Version="5.0.2" />
     <PackageReference Include="TorrentTitleParser" Version="1.0.3" />
     <PackageReference Include="YoutubeExplode" Version="6.0.5" />
