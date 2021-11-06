@@ -7,9 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Timers;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using static Flexx.Core.Data.Global;
@@ -38,7 +41,7 @@ namespace Flexx.Server.Controllers
                 {
                     try
                     {
-                        MovieObject model = new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
+                        MovieObject model = new(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
                         return new JsonResult(new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}")));
                     }
                     catch
@@ -212,12 +215,80 @@ namespace Flexx.Server.Controllers
         }
 
         [HttpGet("{tmdb}/{user}/video")]
-        public IActionResult GetMovieStream(string tmdb, string user, int? resolution, int? bitrate)
+        public IActionResult GetMovieStream(string tmdb, string user, string resolution)
         {
             MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
-            FileStreamResult value = resolution.HasValue && bitrate.HasValue ? File(movie.Stream, "video/mp4", true) : File(Transcoder.GetTranscodedStream(user, movie, resolution.Value, bitrate.Value), "application/x-mpegURL", true);
-            value.EnableRangeProcessing = true;
-            return value;
+            if (movie == null) return new NotFoundResult();
+            if (!string.IsNullOrWhiteSpace(resolution))
+            {
+                MediaVersion version = movie.AlternativeVersions.FirstOrDefault(d => d.DisplayName.Equals(resolution));
+                string version_file = Paths.GetVersionPath(Directory.GetParent(movie.Metadata.PATH).FullName, movie.Title, version.Width, version.BitRate);
+                if (System.IO.File.Exists(version_file))
+                {
+                    string dir = Directory.CreateDirectory(Path.Combine(Paths.TempData, $"m{tmdb}_{resolution}")).FullName;
+                    string[] files = Directory.GetFiles(dir, "*.mp4", SearchOption.TopDirectoryOnly);
+                    string tempFile = "";
+                    foreach (string file in files)
+                    {
+                        if (!Functions.IsFileLocked(new FileInfo(file)))
+                        {
+                            tempFile = file;
+                        }
+                    }
+                    if (string.IsNullOrEmpty(tempFile))
+                    {
+                        tempFile = Path.Combine(dir, $"{files.Length}.mp4");
+                        System.IO.File.Copy(version_file, tempFile);
+                    }
+                    return File(System.IO.File.Open(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read), "mp4/video", true);
+                }
+            }
+            return File(movie.Stream, "video/mp4", true);
+        }
+
+        public Dictionary<User, Timer> activeStreams = new();
+
+        [HttpGet("{tmdb}/{user}/video/transcoded")]
+        public IActionResult GetMovieStream(string tmdb, string user, int resolution, int bitrate)
+        {
+            MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+            if (movie == null) return new NotFoundResult();
+            var (transcoded, process) = Transcoder.GetTranscodedStream(user, movie, resolution, bitrate);
+            Timer timer = new(10 * 1000)
+            {
+                AutoReset = true,
+                Enabled = true,
+            };
+            timer.Elapsed += (s, e) =>
+            {
+                process.Kill();
+            };
+            long fileSize = new FileInfo(movie.PATH).Length;
+            log.Fatal($"Content-Length: {fileSize}");
+            log.Fatal(fileSize.ToString());
+            int duration = (int)Math.Ceiling(movie.MediaInfo.Duration.TotalSeconds);
+            Response.Headers.Clear();
+            Response.ContentLength = fileSize;
+            Response.Headers.Add("Accept-Ranges", $"bytes");
+            Response.Headers.Add("Content-Range", $"bytes {0}-{fileSize}/{fileSize}");
+            activeStreams.Add(Users.Instance.Get(user), timer);
+            return File(transcoded, "application/x-mpegURL", true);
+            //return RedirectPermanent("http://127.0.0.1:1234");
+        }
+
+        [HttpGet("{tmdb}/{user}/video/transcoded/stillwatching")]
+        public IActionResult MarkAsStillWatching(string tmdb, string user)
+        {
+            MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+            if (movie == null) return new NotFoundResult();
+            if (activeStreams.TryGetValue(Users.Instance.Get(user), out Timer value))
+            {
+                double interval = value.Interval;
+                value.Stop();
+                value.Interval = interval;
+                value.Start();
+            }
+            return new OkResult();
         }
 
         #endregion Movies
