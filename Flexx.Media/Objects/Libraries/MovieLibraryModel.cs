@@ -29,7 +29,6 @@ namespace Flexx.Media.Objects.Libraries
             catch (Exception e)
             {
                 log.Fatal("Unhandled Exception was found while trying to initialize Movies Library", e);
-                Environment.Exit(0);
             }
             base.Initialize();
         }
@@ -110,7 +109,7 @@ namespace Flexx.Media.Objects.Libraries
             List<MovieObject> list = new();
             foreach (MovieModel movie in medias.ToArray())
             {
-                if (movie.Downloaded)
+                if (movie.Downloaded && !string.IsNullOrWhiteSpace(movie.PATH) && movie.MediaInfo.Size > 0)
                 {
                     list.Add(new(movie, user));
                 }
