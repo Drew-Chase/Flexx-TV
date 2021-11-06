@@ -26,6 +26,7 @@ namespace Flexx.Server
                 {
                     process.Kill();
                 }
+                Directory.Delete(Paths.TempData, true);
             };
             log.Info("Server is Launching");
             CreateHostBuilder(args).Build().Run();
