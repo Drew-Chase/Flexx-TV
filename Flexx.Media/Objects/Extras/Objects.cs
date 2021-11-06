@@ -25,6 +25,7 @@ namespace Flexx.Media.Objects.Extras
         public string FullDuration { get; }
         public CastModel[] MainCast { get; }
         public DiscoveryCategory Category { get; }
+        public MediaVersion[] Versions { get; }
 
         public MovieObject(MovieModel movie, User user)
         {
@@ -40,6 +41,7 @@ namespace Flexx.Media.Objects.Extras
             MainCast = movie.Cast.GetCast().ToArray();
             Category = movie.Category;
             FullDuration = movie.FullDuration;
+            Versions = movie.AlternativeVersions;
         }
 
         public MovieObject(string json)

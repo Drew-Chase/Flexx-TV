@@ -7,6 +7,9 @@ using System.Threading;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
 using static Flexx.Core.Data.Global;
+using System.Linq;
+using System.Threading.Tasks;
+using Flexx.Media.Objects.Extras;
 
 namespace Flexx.Media.Utilities
 {
@@ -93,53 +96,137 @@ namespace Flexx.Media.Utilities
             process.Start();
         }
 
-        public static FileStream GetTranscodedStream(string requestedUser, MediaBase media, int targetResolution, int targetBitRate)
+        static readonly List<MediaVersion> AllResolutions = new()
+        {
+            // Resolution(Width), Bitrate(Kbps)
+            //4K
+            new("4K High", 3840, 34000),  //High
+            new("4K Medium", 3840, 20000), //Medium
+            new("4K Low", 3840, 13000), //Low
+                                        //1080p
+                                        //new(1920, 8000),  //High
+            new("1080p High", 1920, 6000), //Medium
+            new("1080p Low", 1920, 4500), //Low
+            //720p
+            //new(1280, 4000),  //High
+            new("720p Medium", 1280, 2250), //Medium
+            new("720p Low", 1280, 1500), //Low
+            //480p
+            //new(854, 1500),  //High
+            //new(854, 1000), //Medium
+            new("480p Low", 854, 500), //Low
+            //360p
+            //new(640, 1000),  //High
+            //new(640, 750), //Medium
+            new("360p Low", 640, 400), //Low
+            //240p
+            //new(426, 700),  //High
+            //new(426, 400), //Medium
+            new("240p Low", 426, 300), //Low
+        };
+        public static MediaVersion[] CreateVersion(MediaBase media, bool force = false)
+        {
+            List<MediaVersion> Versions = new();
+            try
+            {
+                IVideoStream videoStream = media.MediaInfo.VideoStreams.ToArray()[0];
+                log.Warn($"Original File = Title: {media.Title}, Resolution: {videoStream.Width}x{videoStream.Height}, Bitrate: {videoStream.Bitrate / 1000}Kbps");
+                foreach (MediaVersion resolution in AllResolutions)
+                {
+                    if (videoStream.Width >= resolution.Width - 100 && videoStream.Bitrate / 1000 >= resolution.BitRate)
+                        Versions.Add(resolution);
+                }
+            }
+            catch (Exception e)
+            {
+                log.Error("Had issue while fetching resolution data for PreTranscoding Alternative versions", e);
+            }
+            Versions.Reverse();
+            Parallel.ForEach(Versions, new() { MaxDegreeOfParallelism = 2 }, res =>
+            {
+                try
+                {
+                    string directoryOutput = Directory.CreateDirectory(Path.Combine(Directory.GetParent(media.Metadata.PATH).FullName, "versions")).FullName;
+                    string fileOutput = Paths.GetVersionPath(Directory.GetParent(media.Metadata.PATH).FullName, media.Title, res.Width, res.BitRate);
+                    if (force || !File.Exists(fileOutput))
+                    {
+                        string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
+                        string arguments = $"-y -i \"{media.PATH}\" -vf scale={res.Width}:-2 -preset ultrafast -pix_fmt p010le -map_metadata 0 -c:v libx264 -b:v {res.BitRate}K -c:a aac -b:a 384k -movflags +faststart -movflags use_metadata_tags \"{fileOutput}\"";
+                        Process process = new()
+                        {
+                            StartInfo = new()
+                            {
+                                FileName = exe,
+                                Arguments = arguments,
+                                UseShellExecute = true,
+                                WindowStyle = ProcessWindowStyle.Hidden,
+                            },
+                            EnableRaisingEvents = true,
+                        };
+                        process.Exited += (s, e) =>
+                        {
+                            log.Info($"Finished Creating Version file for \"{media.Title}\", Width={res.Width}, Bitrate={res.BitRate}Kbps");
+                            Instance.ActiveTranscodingProcess.Remove(process);
+                            if (!File.Exists(fileOutput))
+                            {
+                                log.Debug($"ffmpeg {arguments}");
+                                log.Error($"Version file was corrupted \"{media.Title}\", Width={res.Width}, Bitrate={res.BitRate}Kbps");
+                            }
+                            else if (new FileInfo(fileOutput).Length < 1000)
+                            {
+                                log.Debug($"ffmpeg {arguments}");
+                                File.Delete(fileOutput);
+                                log.Error($"Version file was corrupted \"{media.Title}\", Width={res.Width}, Bitrate={res.BitRate}Kbps");
+                            }
+                        };
+                        Instance.ActiveTranscodingProcess.Add(process);
+                        process.Start();
+                        log.Warn($"Creating Version file for \"{media.Title}\", Width={res.Width}, Bitrate={res.BitRate}Kbps");
+
+                        process.WaitForExit();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Versions.Remove(res);
+                    log.Error($"Had issue while running the conversion process for alternative version Width={res.Width}, Bitrate={res.BitRate}Kbps", e);
+                }
+            });
+            return Versions.ToArray();
+        }
+
+        public static (FileStream, Process) GetTranscodedStream(string requestedUser, MediaBase media, int targetResolution, int targetBitRate)
         {
             if (string.IsNullOrWhiteSpace(media.PATH))
             {
-                return null;
+                return (null, null);
             }
-
-            string fileOutput = Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.TempData, $"stream_{requestedUser}")).FullName, $"v_{requestedUser}_{media.FileName}.m3u8");
+            string directoryOutput = Directory.CreateDirectory(Path.Combine(Paths.TempData, $"stream_{requestedUser}")).FullName;
+            string fileOutput = Path.Combine(directoryOutput, $"v_t{media.Title}-r{targetResolution}.m3u8");
+            if (File.Exists(fileOutput))
+                File.Delete(fileOutput);
             File.Create(fileOutput).Close();
-            Thread.Sleep(500);
             string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
-            string arguments = $" -i \"{media.PATH}\" -vf scale=w=-1:h={targetResolution}:force_original_aspect_ratio=decrease -vf format=yuv420p -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -sc_threshold 0 -g 48 -keyint_min 48 -hls_time 4 -bit_rate {targetBitRate}k -bufsize 7500k -b:a 192k -hls_segment_filename \"{fileOutput}-{targetResolution}-{targetBitRate}_%d.ts\" -hls_list_size 10 -f hls hls_master_name \"{fileOutput}-{targetResolution}.m3u8\"";
+            string arguments = $"-i \"{media.PATH}\" -bitrate {targetBitRate}k -preset ultrafast -vcodec libx264 -f rtsp \"rtsp://127.0.0.1:1234\" -rtsp_transport http";
+            //string arguments = $"-i \"{media.PATH}\" -bitrate {targetBitRate}k -f hls -hls_time 2 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename \"{Path.Combine(directoryOutput, $"stream_t{media.Title}-r{targetResolution}%02d.ts")}\" \"{fileOutput}\"";
             Process process = new()
             {
                 StartInfo = new()
                 {
                     FileName = exe,
                     Arguments = arguments,
-                    RedirectStandardOutput = true,
+                    UseShellExecute = true,
+                    //WindowStyle = ProcessWindowStyle.Hidden,
                 },
                 EnableRaisingEvents = true,
             };
             process.Exited += (s, e) =>
             {
                 Instance.ActiveTranscodingProcess.Remove(process);
-                string dir = new FileInfo(fileOutput).Directory.FullName;
-                bool issue = false;
-                foreach (string file in Directory.GetFiles(dir))
-                {
-                    try
-                    {
-                        File.Delete(file);
-                    }
-                    catch
-                    {
-                        issue = true;
-                        continue;
-                    }
-                }
-                if (!issue)
-                {
-                    Directory.Delete(dir, true);
-                }
             };
             process.Start();
             Instance.ActiveTranscodingProcess.Add(process);
-            return new(fileOutput, FileMode.Open);
+            return (new(fileOutput, FileMode.Open), process);
         }
     }
 }
