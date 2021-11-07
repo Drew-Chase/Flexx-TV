@@ -27,7 +27,7 @@ namespace Flexx.Server.Controllers
             return new JsonResult(TvLibraryModel.Instance.GetLocalList(Users.Instance.Get(username)));
         }
 
-        [HttpGet("{username}/discover/{category}")]
+        [HttpGet("discover/{category}")]
         public IActionResult GetShowsDiscoveryList(DiscoveryCategory category, string username)
         {
             SeriesObject[] results = TvLibraryModel.Instance.DiscoverShows(Users.Instance.Get(username), category);
@@ -39,7 +39,7 @@ namespace Flexx.Server.Controllers
             return new JsonResult(results);
         }
 
-        [HttpGet("discover/search/{query}")]
+        [HttpGet("discover/search")]
         public IActionResult GetShowsDiscoveryFromQuery(string query, int? year)
         {
             object[] results = TvLibraryModel.Instance.SearchForShows(query, year.HasValue ? year.Value : -1);
@@ -51,16 +51,16 @@ namespace Flexx.Server.Controllers
             return new JsonResult(results);
         }
 
-        [HttpGet("recently-added/{username}")]
+        [HttpGet("recently-added")]
         public IActionResult GetRecentlyAddedTv(string username)
         {
             return new JsonResult(TvLibraryModel.Instance.GetRecentlyAddedList(Users.Instance.Get(username)));
         }
 
-        [HttpGet("continue-watching/{user}")]
-        public IActionResult GetContinueWatchingTv(string user)
+        [HttpGet("continue-watching")]
+        public IActionResult GetContinueWatchingTv(string username)
         {
-            return new JsonResult(TvLibraryModel.Instance.GetContinueWatchingList(Users.Instance.Get(user)));
+            return new JsonResult(TvLibraryModel.Instance.GetContinueWatchingList(Users.Instance.Get(username)));
         }
 
         [HttpGet("{tmdb}/{username}")]
@@ -75,14 +75,14 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new SeriesObject(show, Users.Instance.Get(username)));
         }
 
-        [HttpGet("{tmdb}/images/poster")]
-        public IActionResult GetShowPoster(string tmdb)
+        [HttpGet("images/poster")]
+        public IActionResult GetShowPoster(string id)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
 
             if (show == null)
             {
-                JArray json = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/images?api_key={TMDB_API}")))["posters"];
+                JArray json = (JArray)((JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/images?api_key={TMDB_API}"))["posters"];
                 if (json.Any())
                 {
                     if (json[0]["file_path"] != null && !string.IsNullOrWhiteSpace(json[0]["file_path"].ToString()))
@@ -99,21 +99,21 @@ namespace Flexx.Server.Controllers
             return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
         }
 
-        [HttpGet("{tmdb}/images/cover")]
-        public IActionResult GetShowCover(string tmdb, bool? language)
+        [HttpGet("images/cover")]
+        public IActionResult GetShowCover(string id, bool? language)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null)
             {
                 if (language.GetValueOrDefault())
                 {
-                    JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/images?api_key={TMDB_API}&include_image_language=en"));
+                    JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/images?api_key={TMDB_API}&include_image_language=en");
                     if (imagesJson["backdrops"].Any())
                     {
                         return new RedirectResult($"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}");
                     }
                 }
-                JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}?api_key={TMDB_API}"));
+                JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}?api_key={TMDB_API}");
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["backdrop_path"]}");
             }
             if (System.IO.File.Exists(show.CoverImage))
@@ -124,13 +124,13 @@ namespace Flexx.Server.Controllers
             return new NotFoundResult();
         }
 
-        [HttpGet("{tmdb}/images/logo")]
-        public IActionResult GetShowLogo(string tmdb)
+        [HttpGet("images/logo")]
+        public IActionResult GetShowLogo(string id)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null)
             {
-                JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/images?api_key={TMDB_API}&include_image_language=en"));
+                JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/images?api_key={TMDB_API}&include_image_language=en");
                 if (imagesJson["logos"].Any())
                 {
                     return new RedirectResult($"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}");
@@ -150,14 +150,14 @@ namespace Flexx.Server.Controllers
 
         #region Season
 
-        [HttpGet("{tmdb}/{username}/seasons")]
-        public IActionResult GetSeasons(string tmdb, string username)
+        [HttpGet("seasons")]
+        public IActionResult GetSeasons(string id, string username)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             List<object> json = new();
             if (show == null || !show.Added)
             {
-                foreach (JToken token in (JArray)((JToken)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}?api_key={TMDB_API}")))["seasons"])
+                foreach (JToken token in (JArray)((JToken)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}?api_key={TMDB_API}"))["seasons"])
                 {
                     json.Add(new SeasonObject(JsonConvert.SerializeObject(token)));
                 }
@@ -171,24 +171,24 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new { seasons = json.ToArray() });
         }
 
-        [HttpGet("{tmdb}/{username}/{season_number}")]
-        public IActionResult GetSeason(string tmdb, string username, int season_number)
+        [HttpGet("{season_number}")]
+        public IActionResult GetSeason(string id, string username, int season_number)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null || show.GetSeasonByNumber(season_number) == null)
             {
-                return new JsonResult(new SeasonObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/season/{season_number}?api_key={TMDB_API}")));
+                return new JsonResult(new SeasonObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}?api_key={TMDB_API}")));
             }
             return new JsonResult(new SeasonObject(show.GetSeasonByNumber(season_number), Users.Instance.Get(username)));
         }
 
-        [HttpGet("{tmdb}/{season_number}/poster")]
-        public IActionResult GetSeasonPoster(string tmdb, int season_number)
+        [HttpGet("{season_number}/poster")]
+        public IActionResult GetSeasonPoster(string id, int season_number)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null || show.GetSeasonByNumber(season_number) == null)
             {
-                JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/season/{season_number}?api_key={TMDB_API}"));
+                JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}?api_key={TMDB_API}");
                 if (json["poster_path"] == null || string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
                 {
                     return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
@@ -210,14 +210,14 @@ namespace Flexx.Server.Controllers
 
         #region Episodes
 
-        [HttpGet("{tmdb}/{username}/{season_number}/episodes")]
-        public IActionResult GetEpisodes(string tmdb, string username, int season_number)
+        [HttpGet("{season_number}/episodes")]
+        public IActionResult GetEpisodes(string id, string username, int season_number)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             List<object> json = new();
             if (show == null || !show.Added)
             {
-                Parallel.ForEach((JArray)((JToken)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/season/{season_number}?api_key={TMDB_API}")))["episodes"], token =>
+                Parallel.ForEach((JArray)((JToken)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}?api_key={TMDB_API}"))["episodes"], token =>
                 {
                     EpisodeObject episode = new EpisodeObject(JsonConvert.SerializeObject(token));
                     if (episode.ReleaseDate <= DateTime.Now)
@@ -240,14 +240,14 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new { episodes = json.ToArray() });
         }
 
-        [HttpGet("{tmdb}/{username}/{season_number}/{episode_number}")]
-        public IActionResult GetEpisode(string tmdb, string username, int season_number, int episode_number)
+        [HttpGet("{season_number}/{episode_number}")]
+        public IActionResult GetEpisode(string id, string username, int season_number, int episode_number)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
 
             if (show == null || show.GetSeasonByNumber(season_number) == null || show.GetSeasonByNumber(season_number).GetEpisodeByNumber(episode_number) == null)
             {
-                JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/season/{season_number}/episode/{episode_number}?api_key={TMDB_API}"));
+                JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}/episode/{episode_number}?api_key={TMDB_API}");
 
                 return new JsonResult(new EpisodeObject(JsonConvert.SerializeObject(json)));
             }
@@ -257,17 +257,17 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new EpisodeObject(episode, user));
         }
 
-        [HttpGet("{tmdb}/{season_number}/{episode_number}/poster")]
-        public IActionResult GetEpisodeStill(string tmdb, int season_number, int episode_number)
+        [HttpGet("{season_number}/{episode_number}/poster")]
+        public IActionResult GetEpisodeStill(string id, int season_number, int episode_number)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
 
             if (show == null || show.GetSeasonByNumber(season_number) == null || show.GetSeasonByNumber(season_number).GetEpisodeByNumber(episode_number) == null)
             {
-                JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}/season/{season_number}/episode/{episode_number}?api_key={TMDB_API}"));
+                JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}/episode/{episode_number}?api_key={TMDB_API}");
                 if (json["still_path"] == null || string.IsNullOrWhiteSpace(json["still_path"].ToString()))
                 {
-                    log.Debug($"https://api.themoviedb.org/3/tv/{tmdb}/season/{season_number}/episode/{episode_number}?api_key={TMDB_API}");
+                    log.Debug($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}/episode/{episode_number}?api_key={TMDB_API}");
                     return new JsonResult(json);
                 }
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["still_path"]}");
@@ -283,25 +283,25 @@ namespace Flexx.Server.Controllers
             return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
         }
 
-        [HttpGet("{tmdb}/{user}/{season_number}/{episode_number}/video")]
-        public IActionResult GetEpisodeStream(string tmdb, int season_number, int episode_number, string user, int? resolution, int? bitrate)
+        [HttpGet("{season_number}/{episode_number}/video")]
+        public IActionResult GetEpisodeStream(string id, int season_number, int episode_number, int? resolution, int? bitrate)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null)
             {
-                return new JsonResult(new { message = $"Show with ID of \"{tmdb}\" not found" });
+                return new JsonResult(new { message = $"Show with ID of \"{id}\" not found" });
             }
 
             SeasonModel season = show.GetSeasonByNumber(season_number);
             if (season == null)
             {
-                return new JsonResult(new { message = $"Show with ID of \"{tmdb}\" doesn't contain a season numbered {season_number}" });
+                return new JsonResult(new { message = $"Show with ID of \"{id}\" doesn't contain a season numbered {season_number}" });
             }
 
             EpisodeModel episode = season.GetEpisodeByNumber(episode_number);
             if (episode == null)
             {
-                return new JsonResult(new { message = $"Show with ID of \"{tmdb}\" and season #{season_number} doesn't contain episode numbered {episode_number}" });
+                return new JsonResult(new { message = $"Show with ID of \"{id}\" and season #{season_number} doesn't contain episode numbered {episode_number}" });
             }
 
             if (resolution.HasValue && bitrate.HasValue)

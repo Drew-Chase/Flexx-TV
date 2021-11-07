@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Xabe.FFmpeg;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Objects
@@ -214,7 +215,7 @@ namespace Flexx.Media.Objects
             JObject json = null;
             try
             {
-                json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}?api_key={TMDB_API}"));
+                json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{TMDB}?api_key={TMDB_API}");
             }
             catch (Exception e)
             {
@@ -223,7 +224,7 @@ namespace Flexx.Media.Objects
             }
             try
             {
-                JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/images?api_key={TMDB_API}&include_image_language=en"));
+                JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{TMDB}/images?api_key={TMDB_API}&include_image_language=en");
                 if (imagesJson["backdrops"].Any())
                 {
                     CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
@@ -451,7 +452,7 @@ namespace Flexx.Media.Objects
                 JObject json = null;
                 try
                 {
-                    json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{Series.TMDB}/season/{Season_Number}?api_key={TMDB_API}"));
+                    json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{Series.TMDB}/season/{Season_Number}?api_key={TMDB_API}");
                 }
                 catch
                 {
@@ -579,6 +580,7 @@ namespace Flexx.Media.Objects
             Downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
             if (Downloaded)
             {
+                MediaInfo = FFmpeg.GetMediaInfo(PATH).Result;
                 FullDuration = $"{MediaInfo.Duration.Hours}h {MediaInfo.Duration.Minutes}m";
             }
         }
@@ -592,7 +594,7 @@ namespace Flexx.Media.Objects
                 try
                 {
                     string url = $"https://api.themoviedb.org/3/tv/{TMDB}/season/{Season.Season_Number}/episode/{Episode_Number}?api_key={TMDB_API}";
-                    json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url));
+                    json = (JObject)Functions.GetJsonObjectFromURL(url);
                 }
                 catch
                 {

@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
-using System.Net;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Objects.Extras
@@ -22,6 +21,7 @@ namespace Flexx.Media.Objects.Extras
         public string Cover { get; }
         public bool Watched { get; }
         public ushort WatchedDuration { get; }
+        public byte WatchedPercentage { get; }
         public string FullDuration { get; }
         public CastModel[] MainCast { get; }
         public DiscoveryCategory Category { get; }
@@ -38,6 +38,8 @@ namespace Flexx.Media.Objects.Extras
             Year = (ushort)movie.ReleaseDate.Year;
             Watched = user.GetHasWatched(movie.Title);
             WatchedDuration = user.GetWatchedDuration(movie.Title);
+            if (movie.Downloaded)
+                WatchedPercentage = (byte)Math.Floor(WatchedDuration / movie.MediaInfo.Duration.TotalSeconds * 100);
             MainCast = movie.Cast.GetCast().ToArray();
             Category = movie.Category;
             FullDuration = movie.FullDuration;
@@ -62,20 +64,27 @@ namespace Flexx.Media.Objects.Extras
             Watched = false;
             WatchedDuration = 0;
             Category = DiscoveryCategory.None;
-
-            foreach (JToken child in ((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{ID}/release_dates?api_key={TMDB_API}")))["results"].Children().ToList())
+            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{ID}/release_dates?api_key={TMDB_API}");
+            if (jresult != null)
             {
-                try
+                foreach (JToken child in ((JObject)jresult)["results"].Children().ToList())
                 {
-                    if (child["iso_3166_1"].ToString().ToLower().Equals("us"))
+                    try
                     {
-                        MPAA = child["release_dates"][0]["certification"].ToString();
+                        if (child["iso_3166_1"].ToString().ToLower().Equals("us"))
+                        {
+                            MPAA = child["release_dates"][0]["certification"].ToString();
+                        }
+                    }
+                    catch
+                    {
+                        continue;
                     }
                 }
-                catch
-                {
-                    continue;
-                }
+            }
+            else
+            {
+                MPAA = "NR";
             }
 
             MainCast = new CastListModel("movie", ID).GetCast().ToArray();
@@ -152,13 +161,21 @@ namespace Flexx.Media.Objects.Extras
             Watched = false;
             Added = TvLibraryModel.Instance.GetShowByTMDB(ID) != null && TvLibraryModel.Instance.GetShowByTMDB(ID).Added;
             Rating = result["vote_average"].ToString();
-            foreach (JToken token in (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{ID}/content_ratings?api_key={TMDB_API}&language=en-US")))["results"])
+            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{ID}/content_ratings?api_key={TMDB_API}&language=en-US");
+            if (jresult != null)
             {
-                if (token["iso_3166_1"].ToString().Equals("US"))
+                foreach (JToken token in (JArray)((JObject)jresult)["results"])
                 {
-                    MPAA = token["rating"].ToString();
-                    break;
+                    if (token["iso_3166_1"].ToString().Equals("US"))
+                    {
+                        MPAA = token["rating"].ToString();
+                        break;
+                    }
                 }
+            }
+            else
+            {
+                MPAA = "NR";
             }
 
             MainCast = new CastListModel("tv", ID).GetCast().Take(10).ToArray();

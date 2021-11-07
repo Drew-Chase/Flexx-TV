@@ -21,14 +21,16 @@ namespace Flexx.Media.Objects
         public DateTime ReleaseDate { get; set; }
         public DateTime ScannedDate { get; set; }
         public ConfigManager Metadata { get; set; }
-        public virtual IMediaInfo MediaInfo => string.IsNullOrWhiteSpace(PATH) ? null : FFmpeg.GetMediaInfo(PATH).Result;
-        public string FullDuration;
+        public virtual IMediaInfo MediaInfo { get; protected set; }
+        public string FullDuration { get; protected set; }
         public virtual FileStream Stream => string.IsNullOrWhiteSpace(PATH) ? null : new(PATH, FileMode.Open, FileAccess.Read);
         public CastListModel Cast { get; set; }
-        public bool Downloaded;
+        public bool Downloaded { get; protected set; }
+        public MediaVersion[] AlternativeVersions { get; protected set; }
 
         protected MediaBase()
         {
+            //AlternativeVersions = Transcoder.CreateVersion(this);
         }
 
         public virtual void UpdateMetaData()

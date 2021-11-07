@@ -1,5 +1,6 @@
 ﻿using ChaseLabs.CLLogger;
 using ChaseLabs.CLLogger.Interfaces;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -58,6 +59,7 @@ namespace Flexx.Core.Data
                     return path;
                 }
             }
+
             public static string GetVersionPath(string metadata_directory, string title, int resolution, int bitrate) => Path.Combine(Directory.CreateDirectory(Path.Combine(metadata_directory, "versions")).FullName, $"{title}-{resolution}-{bitrate}K.mp4");
         }
 
@@ -82,6 +84,30 @@ namespace Flexx.Core.Data
                 //file is not locked
                 return false;
             }
+
+            public static object GetJsonObjectFromURL(string url)
+            {
+                string json = "";
+                using (System.Net.WebClient client = new())
+                {
+                    try
+                    {
+                        json = client.DownloadString(url);
+                    }
+                    catch (System.Net.WebException e)
+                    {
+                        log.Error($"Unable to fetch Json from url \"{url}\"", e);
+                        return null;
+                    }
+                }
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    log.Error($"Unable to fetch Json from url \"{url}\"");
+                    return null;
+                }
+                return JsonConvert.DeserializeObject(json);
+            }
+
             public static IEnumerable<T[]> SplitArray<T>(T[] fullArray, int size)
             {
                 for (int i = 0; i < fullArray.Length; i += size)

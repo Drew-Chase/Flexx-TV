@@ -1,15 +1,15 @@
 ﻿using Flexx.Media.Objects;
+using Flexx.Media.Objects.Extras;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
 using static Flexx.Core.Data.Global;
-using System.Linq;
-using System.Threading.Tasks;
-using Flexx.Media.Objects.Extras;
 
 namespace Flexx.Media.Utilities
 {
@@ -77,6 +77,11 @@ namespace Flexx.Media.Utilities
             string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
             if (File.Exists(output))
             {
+                if (Functions.IsFileLocked(new FileInfo(output)))
+                {
+                    Thread.Sleep(500);
+                    OptimizeImage(input, output, scale);
+                }
                 File.Delete(output);
             }
 
@@ -96,7 +101,7 @@ namespace Flexx.Media.Utilities
             process.Start();
         }
 
-        static readonly List<MediaVersion> AllResolutions = new()
+        private static readonly List<MediaVersion> AllResolutions = new()
         {
             // Resolution(Width), Bitrate(Kbps)
             //4K
@@ -124,6 +129,7 @@ namespace Flexx.Media.Utilities
             //new(426, 400), //Medium
             new("240p Low", 426, 300), //Low
         };
+
         public static MediaVersion[] CreateVersion(MediaBase media, bool force = false)
         {
             List<MediaVersion> Versions = new();

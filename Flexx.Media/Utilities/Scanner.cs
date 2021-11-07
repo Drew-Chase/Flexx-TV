@@ -119,7 +119,7 @@ namespace Flexx.Media.Utilities
 
                 log.Debug($"Prefetching {category} Movies");
                 string url = $"https://api.themoviedb.org/3/movie/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
-                JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
+                JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                 if (results == null || !results.Any())
                 {
                     continue;
@@ -267,7 +267,7 @@ namespace Flexx.Media.Utilities
 
                 log.Debug($"Prefetching {category} TV Shows");
                 string url = $"https://api.themoviedb.org/3/tv/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
-                JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
+                JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                 if (results == null || !results.Any())
                 {
                     continue;

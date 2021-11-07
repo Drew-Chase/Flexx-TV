@@ -4,7 +4,6 @@ using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
@@ -14,7 +13,6 @@ namespace Flexx.Server
     {
         public static void Main(string[] args)
         {
-            Directory.Delete(Paths.TempData, true);
             config = new();
             Transcoder.Init();
             Task.Run(() => MovieLibraryModel.Instance.Initialize()).ContinueWith(a => log.Warn("Done Loading Movies"));
@@ -26,7 +24,6 @@ namespace Flexx.Server
                 {
                     process.Kill();
                 }
-                Directory.Delete(Paths.TempData, true);
             };
             log.Info("Server is Launching");
             CreateHostBuilder(args).Build().Run();

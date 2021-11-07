@@ -1,8 +1,6 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
@@ -15,7 +13,9 @@ namespace Flexx.Media.Objects.Extras
         public CastListModel(string media_type, string tmdb)
         {
             List<CastModel> cast = new();
-            JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/{media_type}/{tmdb}/credits?api_key={TMDB_API}"));
+            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{media_type}/{tmdb}/credits?api_key={TMDB_API}");
+            if (jresult == null) return;
+            JObject json = (JObject)jresult);
             Parallel.ForEach((JArray)json["cast"], token =>
             {
                 cast.Add(new(token["name"].ToString(), token["character"].ToString(), token["profile_path"].ToString(), "Actor"));

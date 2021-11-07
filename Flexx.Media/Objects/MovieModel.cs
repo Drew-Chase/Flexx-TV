@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using TorrentTitleParser;
+using Xabe.FFmpeg;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using static Flexx.Core.Data.Global;
@@ -166,13 +167,14 @@ namespace Flexx.Media.Objects
                 Downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
                 if (Downloaded)
                 {
+                    MediaInfo = FFmpeg.GetMediaInfo(PATH).Result;
                     FullDuration = $"{MediaInfo.Duration.Hours}h {MediaInfo.Duration.Minutes}m";
                 }
 
                 Torrent torrent = new(FileName);
                 string query = torrent.Name.Replace($".{torrent.Container}", "").Replace($"({torrent.Year})", "");
                 string url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}&year={torrent.Year}";
-                JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString(url)))["results"];
+                JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                 if (results.Children().Any())
                 {
                     TMDB = results[0]["id"].ToString();
@@ -180,7 +182,7 @@ namespace Flexx.Media.Objects
                 else
                 {
                     url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}";
-                    results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString(url)))["results"];
+                    results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                     if (results.Children().Any())
                     {
                         TMDB = results[0]["id"].ToString();
@@ -188,7 +190,7 @@ namespace Flexx.Media.Objects
                     else
                     {
                         url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}&year={torrent.Year}";
-                        results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString(url)))["results"];
+                        results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                         if (results.Children().Any())
                         {
                             TMDB = results[0]["id"].ToString();
@@ -196,7 +198,7 @@ namespace Flexx.Media.Objects
                         else
                         {
                             url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}";
-                            results = (JArray)((JObject)JsonConvert.DeserializeObject(new System.Net.WebClient().DownloadString(url)))["results"];
+                            results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                             if (results.Children().Any())
                             {
                                 TMDB = results[0]["id"].ToString();
@@ -275,50 +277,47 @@ namespace Flexx.Media.Objects
         {
             log.Debug($"Getting metadata for {TMDB}");
             ScannedDate = DateTime.Now;
-            using (System.Net.WebClient client = new())
+            JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}?api_key={TMDB_API}");
+            JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}/images?api_key={TMDB_API}&include_image_language=en");
+            if (imagesJson["backdrops"].Any())
             {
-                JObject json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}?api_key={TMDB_API}"));
-                JObject imagesJson = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/images?api_key={TMDB_API}&include_image_language=en"));
-                if (imagesJson["backdrops"].Any())
-                {
-                    CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
-                }
+                CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
+            }
 
-                if (imagesJson["logos"].Any())
-                {
-                    LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
-                }
+            if (imagesJson["logos"].Any())
+            {
+                LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
+            }
 
-                PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
-                CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
+            PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
+            CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
 
-                if (DateTime.TryParse(json["release_date"].ToString(), out DateTime tmp))
-                {
-                    ReleaseDate = tmp;
-                }
+            if (DateTime.TryParse(json["release_date"].ToString(), out DateTime tmp))
+            {
+                ReleaseDate = tmp;
+            }
 
-                Title = json["title"].ToString();
-                Plot = json["overview"].ToString();
+            Title = json["title"].ToString();
+            Plot = json["overview"].ToString();
+            try
+            {
+                Rating = (sbyte)(decimal.Parse(json["vote_average"].ToString()) * 10);
+            }
+            catch
+            {
+            }
+            foreach (JToken child in ((JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}/release_dates?api_key={TMDB_API}"))["results"].Children().ToList())
+            {
                 try
                 {
-                    Rating = (sbyte)(decimal.Parse(json["vote_average"].ToString()) * 10);
+                    if (child["iso_3166_1"].ToString().ToLower().Equals("us"))
+                    {
+                        MPAA = child["release_dates"][0]["certification"].ToString();
+                    }
                 }
                 catch
                 {
-                }
-                foreach (JToken child in ((JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/release_dates?api_key={TMDB_API}")))["results"].Children().ToList())
-                {
-                    try
-                    {
-                        if (child["iso_3166_1"].ToString().ToLower().Equals("us"))
-                        {
-                            MPAA = child["release_dates"][0]["certification"].ToString();
-                        }
-                    }
-                    catch
-                    {
-                        continue;
-                    }
+                    continue;
                 }
             }
             Metadata.Add("id", TMDB);

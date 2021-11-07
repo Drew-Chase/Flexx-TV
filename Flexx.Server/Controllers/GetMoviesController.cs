@@ -2,17 +2,12 @@
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
-using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Timers;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using static Flexx.Core.Data.Global;
@@ -58,7 +53,7 @@ namespace Flexx.Server.Controllers
             return new NotFoundResult();
         }
 
-        [HttpGet("{username}/discover/{category}")]
+        [HttpGet("discover/{category}")]
         public IActionResult GetMovieDiscoveryList(DiscoveryCategory category, string username)
         {
             object[] results = MovieLibraryModel.Instance.DiscoverMovies(Users.Instance.Get(username), category);
@@ -70,7 +65,19 @@ namespace Flexx.Server.Controllers
             return new JsonResult(results);
         }
 
-        [HttpGet("discover/search/{query}")]
+        [HttpGet("discover/simular")]
+        public IActionResult GetMovieDiscoveryFromSimularRequest(string id, string username)
+        {
+            object[] results = MovieLibraryModel.Instance.FindSimilar(id);
+            if (results == null)
+            {
+                return this.GetMovieDiscoveryList(DiscoveryCategory.Popular, username);
+            }
+
+            return new JsonResult(results);
+        }
+
+        [HttpGet("discover/search")]
         public IActionResult GetMovieDiscoveryFromQuery(string query, int? year)
         {
             object[] results = MovieLibraryModel.Instance.SearchForMovies(query, year ?? -1);
@@ -82,25 +89,25 @@ namespace Flexx.Server.Controllers
             return new JsonResult(results);
         }
 
-        [HttpGet("recently-added/{username}")]
+        [HttpGet("recently-added")]
         public IActionResult GetRecentlyAddedMovies(string username)
         {
             return new JsonResult(MovieLibraryModel.Instance.GetRecentlyAddedList(Users.Instance.Get(username)));
         }
 
-        [HttpGet("continue-watching/{username}")]
+        [HttpGet("continue-watching")]
         public IActionResult GetContinueWatchingMovies(string username)
         {
             return new JsonResult(MovieLibraryModel.Instance.GetContinueWatchingList(Users.Instance.Get(username)));
         }
 
-        [HttpGet("{tmdb}/images/poster")]
-        public IActionResult GetMoviePoster(string tmdb)
+        [HttpGet("images/poster")]
+        public IActionResult GetMoviePoster(string id)
         {
-            MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+            MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
             if (movie == null)
             {
-                JArray json = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/images?api_key={TMDB_API}")))["posters"];
+                JArray json = (JArray)((JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/images?api_key={TMDB_API}"))["posters"];
                 if (json.Any())
                 {
                     return new RedirectResult($"https://image.tmdb.org/t/p/original{json[0]["file_path"]}");
@@ -110,24 +117,24 @@ namespace Flexx.Server.Controllers
             return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open), "image/jpg");
         }
 
-        [HttpGet("{tmdb}/images/cover")]
-        public IActionResult GetMovieCover(string tmdb, bool? language)
+        [HttpGet("images/cover")]
+        public IActionResult GetMovieCover(string id, bool? language)
         {
             try
             {
-                MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+                MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
                 if (movie == null)
                 {
                     if (language.GetValueOrDefault())
                     {
-                        JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/images?api_key={TMDB_API}&include_image_language=en"));
+                        JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/images?api_key={TMDB_API}&include_image_language=en");
                         if (imagesJson["backdrops"].Any())
                         {
                             return new RedirectResult($"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}");
                         }
                     }
 
-                    JObject json = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
+                    JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}?api_key={TMDB_API}");
                     return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["backdrop_path"]}");
                 }
                 string path = language.GetValueOrDefault() && !string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage) ? movie.CoverImageWithLanguage : movie.CoverImage;
@@ -138,20 +145,20 @@ namespace Flexx.Server.Controllers
             }
             catch (Exception e)
             {
-                log.Error($"Something went wrong while trying to get information on movie with TMDB ID of {tmdb}", e);
+                log.Error($"Something went wrong while trying to get information on movie with TMDB ID of {id}", e);
             }
             return new NotFoundResult();
         }
 
-        [HttpGet("{tmdb}/images/logo")]
-        public IActionResult GetMovieLogo(string tmdb)
+        [HttpGet("images/logo")]
+        public IActionResult GetMovieLogo(string id)
         {
             try
             {
-                MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+                MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
                 if (movie == null)
                 {
-                    JObject imagesJson = (JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/images?api_key={TMDB_API}&include_image_language=en"));
+                    JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/images?api_key={TMDB_API}&include_image_language=en");
                     if (imagesJson["logos"].Any())
                     {
                         return new RedirectResult($"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}");
@@ -166,19 +173,21 @@ namespace Flexx.Server.Controllers
             }
             catch (Exception e)
             {
-                log.Error($"Something went wrong while trying to get information on movie with TMDB ID of {tmdb}", e);
+                log.Error($"Something went wrong while trying to get information on movie with TMDB ID of {id}", e);
             }
             return new NotFoundResult();
         }
 
-        [HttpGet("{tmdb}/trailer")]
-        public IActionResult GetMovieTrailer(string tmdb)
+        [HttpGet("trailer")]
+        public IActionResult GetMovieTrailer(string id)
         {
-            MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+            MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
             string trailerURL = string.Empty;
             if (movie == null)
             {
-                JToken results = ((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}/videos?api_key={TMDB_API}")))["results"];
+                object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/videos?api_key={TMDB_API}");
+                if (jresult == null) return BadRequest();
+                JToken results = ((JObject)jresult)["results"];
                 if (results.Any())
                 {
                     JToken keyObject = results[0]["key"];
@@ -214,10 +223,10 @@ namespace Flexx.Server.Controllers
             return RedirectPermanent(trailerURL);
         }
 
-        [HttpGet("{tmdb}/{user}/video")]
-        public IActionResult GetMovieStream(string tmdb, string user, string resolution)
+        [HttpGet("video")]
+        public IActionResult GetMovieStream(string id, string resolution)
         {
-            MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+            MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
             if (movie == null) return new NotFoundResult();
             if (!string.IsNullOrWhiteSpace(resolution))
             {
@@ -225,7 +234,7 @@ namespace Flexx.Server.Controllers
                 string version_file = Paths.GetVersionPath(Directory.GetParent(movie.Metadata.PATH).FullName, movie.Title, version.Width, version.BitRate);
                 if (System.IO.File.Exists(version_file))
                 {
-                    string dir = Directory.CreateDirectory(Path.Combine(Paths.TempData, $"m{tmdb}_{resolution}")).FullName;
+                    string dir = Directory.CreateDirectory(Path.Combine(Paths.TempData, $"m{id}_{resolution}")).FullName;
                     string[] files = Directory.GetFiles(dir, "*.mp4", SearchOption.TopDirectoryOnly);
                     string tempFile = "";
                     foreach (string file in files)
@@ -246,50 +255,48 @@ namespace Flexx.Server.Controllers
             return File(movie.Stream, "video/mp4", true);
         }
 
-        public Dictionary<User, Timer> activeStreams = new();
+        //[HttpGet("{tmdb}/{user}/video/transcoded")]
+        //public IActionResult GetMovieStream(string tmdb, string user, int resolution, int bitrate)
+        //{
+        //    MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+        //    if (movie == null) return new NotFoundResult();
+        //    var (transcoded, process) = Transcoder.GetTranscodedStream(user, movie, resolution, bitrate);
+        //    Timer timer = new(10 * 1000)
+        //    {
+        //        AutoReset = true,
+        //        Enabled = true,
+        //    };
+        //    timer.Elapsed += (s, e) =>
+        //    {
+        //        process.Kill();
+        //    };
+        //    long fileSize = new FileInfo(movie.PATH).Length;
+        //    log.Fatal($"Content-Length: {fileSize}");
+        //    log.Fatal(fileSize.ToString());
+        //    int duration = (int)Math.Ceiling(movie.MediaInfo.Duration.TotalSeconds);
+        //    Response.Headers.Clear();
+        //    Response.ContentLength = fileSize;
+        //    Response.Headers.Add("Accept-Ranges", $"bytes");
+        //    Response.Headers.Add("Content-Range", $"bytes {0}-{fileSize}/{fileSize}");
+        //    activeStreams.Add(Users.Instance.Get(user), timer);
+        //    return File(transcoded, "application/x-mpegURL", true);
+        //    //return RedirectPermanent("http://127.0.0.1:1234");
+        //}
 
-        [HttpGet("{tmdb}/{user}/video/transcoded")]
-        public IActionResult GetMovieStream(string tmdb, string user, int resolution, int bitrate)
-        {
-            MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
-            if (movie == null) return new NotFoundResult();
-            var (transcoded, process) = Transcoder.GetTranscodedStream(user, movie, resolution, bitrate);
-            Timer timer = new(10 * 1000)
-            {
-                AutoReset = true,
-                Enabled = true,
-            };
-            timer.Elapsed += (s, e) =>
-            {
-                process.Kill();
-            };
-            long fileSize = new FileInfo(movie.PATH).Length;
-            log.Fatal($"Content-Length: {fileSize}");
-            log.Fatal(fileSize.ToString());
-            int duration = (int)Math.Ceiling(movie.MediaInfo.Duration.TotalSeconds);
-            Response.Headers.Clear();
-            Response.ContentLength = fileSize;
-            Response.Headers.Add("Accept-Ranges", $"bytes");
-            Response.Headers.Add("Content-Range", $"bytes {0}-{fileSize}/{fileSize}");
-            activeStreams.Add(Users.Instance.Get(user), timer);
-            return File(transcoded, "application/x-mpegURL", true);
-            //return RedirectPermanent("http://127.0.0.1:1234");
-        }
-
-        [HttpGet("{tmdb}/{user}/video/transcoded/stillwatching")]
-        public IActionResult MarkAsStillWatching(string tmdb, string user)
-        {
-            MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
-            if (movie == null) return new NotFoundResult();
-            if (activeStreams.TryGetValue(Users.Instance.Get(user), out Timer value))
-            {
-                double interval = value.Interval;
-                value.Stop();
-                value.Interval = interval;
-                value.Start();
-            }
-            return new OkResult();
-        }
+        //[HttpGet("{tmdb}/{user}/video/transcoded/stillwatching")]
+        //public IActionResult MarkAsStillWatching(string tmdb, string user)
+        //{
+        //    MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+        //    if (movie == null) return new NotFoundResult();
+        //    if (activeStreams.TryGetValue(Users.Instance.Get(user), out Timer value))
+        //    {
+        //        double interval = value.Interval;
+        //        value.Stop();
+        //        value.Interval = interval;
+        //        value.Start();
+        //    }
+        //    return new OkResult();
+        //}
 
         #endregion Movies
     }

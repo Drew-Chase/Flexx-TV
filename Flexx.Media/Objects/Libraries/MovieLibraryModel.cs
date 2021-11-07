@@ -6,7 +6,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
@@ -76,9 +75,32 @@ namespace Flexx.Media.Objects.Libraries
             {
                 url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}";
             }
-
-            JArray results = (JArray)((JObject)JsonConvert.DeserializeObject(new WebClient().DownloadString(url)))["results"];
+            object jresult = Functions.GetJsonObjectFromURL(url);
             List<MovieObject> model = new();
+            if (jresult == null)
+                return model.ToArray();
+            JArray results = (JArray)((JObject)jresult)["results"];
+            if (results != null && results.Any())
+            {
+                foreach (JToken result in results)
+                {
+                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace(result["release_date"].ToString()))
+                    {
+                        continue;
+                    }
+
+                    model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
+                }
+            }
+            return model.ToArray();
+        }
+
+        public MovieObject[] FindSimilar(string id)
+        {
+            List<MovieObject> model = new();
+            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/similar?api_key={TMDB_API}");
+            if (jresult == null) return model.ToArray();
+            JArray results = (JArray)((JObject)jresult)["results"];
             if (results != null && results.Any())
             {
                 foreach (JToken result in results)
