@@ -63,23 +63,24 @@ namespace Flexx.Server.Controllers
             return new JsonResult(TvLibraryModel.Instance.GetContinueWatchingList(Users.Instance.Get(username)));
         }
 
-        [HttpGet("{tmdb}/{username}")]
-        public IActionResult GetShow(string tmdb, string username)
+        [HttpGet("{id}/{username}")]
+        public IActionResult GetShow(string id, string username)
         {
-            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(tmdb);
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
+            TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null)
             {
-                return new JsonResult(new SeriesObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{tmdb}?api_key={TMDB_API}")));
+                return new JsonResult(new SeriesObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{id}?api_key={TMDB_API}")));
             }
 
             return new JsonResult(new SeriesObject(show, Users.Instance.Get(username)));
         }
 
-        [HttpGet("images/poster")]
+        [HttpGet("{id}/images/poster")]
         public IActionResult GetShowPoster(string id)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
-
             if (show == null)
             {
                 JArray json = (JArray)((JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/images?api_key={TMDB_API}"))["posters"];
@@ -99,9 +100,10 @@ namespace Flexx.Server.Controllers
             return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
         }
 
-        [HttpGet("images/cover")]
+        [HttpGet("{id}/images/cover")]
         public IActionResult GetShowCover(string id, bool? language)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null)
             {
@@ -124,9 +126,10 @@ namespace Flexx.Server.Controllers
             return new NotFoundResult();
         }
 
-        [HttpGet("images/logo")]
+        [HttpGet("{id}/images/logo")]
         public IActionResult GetShowLogo(string id)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null)
             {
@@ -150,9 +153,10 @@ namespace Flexx.Server.Controllers
 
         #region Season
 
-        [HttpGet("seasons")]
+        [HttpGet("{id}/seasons")]
         public IActionResult GetSeasons(string id, string username)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             List<object> json = new();
             if (show == null || !show.Added)
@@ -171,7 +175,7 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new { seasons = json.ToArray() });
         }
 
-        [HttpGet("{season_number}")]
+        [HttpGet("{id}/{season_number}")]
         public IActionResult GetSeason(string id, string username, int season_number)
         {
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
@@ -182,13 +186,17 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new SeasonObject(show.GetSeasonByNumber(season_number), Users.Instance.Get(username)));
         }
 
-        [HttpGet("{season_number}/poster")]
+        [HttpGet("{id}/{season_number}/poster")]
         public IActionResult GetSeasonPoster(string id, int season_number)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
+
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null || show.GetSeasonByNumber(season_number) == null)
             {
-                JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}?api_key={TMDB_API}");
+                object jobj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}?api_key={TMDB_API}");
+                if (jobj == new { }) return BadRequest();
+                JObject json = (JObject)jobj;
                 if (json["poster_path"] == null || string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
                 {
                     return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
@@ -210,14 +218,16 @@ namespace Flexx.Server.Controllers
 
         #region Episodes
 
-        [HttpGet("{season_number}/episodes")]
+        [HttpGet("{id}/{season_number}/episodes")]
         public IActionResult GetEpisodes(string id, string username, int season_number)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             List<object> json = new();
             if (show == null || !show.Added)
             {
-                Parallel.ForEach((JArray)((JToken)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}?api_key={TMDB_API}"))["episodes"], token =>
+                object jobj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}?api_key={TMDB_API}");
+                Parallel.ForEach((JArray)((JToken)jobj)["episodes"], token =>
                 {
                     EpisodeObject episode = new EpisodeObject(JsonConvert.SerializeObject(token));
                     if (episode.ReleaseDate <= DateTime.Now)
@@ -240,9 +250,10 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new { episodes = json.ToArray() });
         }
 
-        [HttpGet("{season_number}/{episode_number}")]
+        [HttpGet("{id}/{season_number}/{episode_number}")]
         public IActionResult GetEpisode(string id, string username, int season_number, int episode_number)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
 
             if (show == null || show.GetSeasonByNumber(season_number) == null || show.GetSeasonByNumber(season_number).GetEpisodeByNumber(episode_number) == null)
@@ -257,9 +268,10 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new EpisodeObject(episode, user));
         }
 
-        [HttpGet("{season_number}/{episode_number}/poster")]
+        [HttpGet("{id}/{season_number}/{episode_number}/poster")]
         public IActionResult GetEpisodeStill(string id, int season_number, int episode_number)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
 
             if (show == null || show.GetSeasonByNumber(season_number) == null || show.GetSeasonByNumber(season_number).GetEpisodeByNumber(episode_number) == null)
@@ -283,9 +295,10 @@ namespace Flexx.Server.Controllers
             return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
         }
 
-        [HttpGet("{season_number}/{episode_number}/video")]
+        [HttpGet("{id}/{season_number}/{episode_number}/video")]
         public IActionResult GetEpisodeStream(string id, int season_number, int episode_number, int? resolution, int? bitrate)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null)
             {
