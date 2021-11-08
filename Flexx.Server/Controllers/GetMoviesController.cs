@@ -181,12 +181,13 @@ namespace Flexx.Server.Controllers
         [HttpGet("trailer")]
         public IActionResult GetMovieTrailer(string id)
         {
+            if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "ID cannot be empty" });
             MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
             string trailerURL = string.Empty;
             if (movie == null)
             {
                 object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/videos?api_key={TMDB_API}");
-                if (jresult == null) return BadRequest();
+                if (jresult == new { }) return BadRequest();
                 JToken results = ((JObject)jresult)["results"];
                 if (results.Any())
                 {

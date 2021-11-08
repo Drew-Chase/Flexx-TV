@@ -98,7 +98,7 @@ namespace Flexx.Media.Objects.Libraries
             }
             object jresult = Functions.GetJsonObjectFromURL(url);
             List<object> model = new();
-            if (jresult == null) return model.ToArray();
+            if (jresult == new { }) return model.ToArray();
             JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
             if (results == null)
             {

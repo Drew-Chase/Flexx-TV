@@ -97,13 +97,13 @@ namespace Flexx.Core.Data
                     catch (System.Net.WebException e)
                     {
                         log.Error($"Unable to fetch Json from url \"{url}\"", e);
-                        return null;
+                        return new { };
                     }
                 }
                 if (string.IsNullOrWhiteSpace(json))
                 {
                     log.Error($"Unable to fetch Json from url \"{url}\"");
-                    return null;
+                    return new { };
                 }
                 return JsonConvert.DeserializeObject(json);
             }

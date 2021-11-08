@@ -77,7 +77,7 @@ namespace Flexx.Media.Objects.Libraries
             }
             object jresult = Functions.GetJsonObjectFromURL(url);
             List<MovieObject> model = new();
-            if (jresult == null)
+            if (jresult == new { })
                 return model.ToArray();
             JArray results = (JArray)((JObject)jresult)["results"];
             if (results != null && results.Any())
@@ -99,7 +99,7 @@ namespace Flexx.Media.Objects.Libraries
         {
             List<MovieObject> model = new();
             object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/similar?api_key={TMDB_API}");
-            if (jresult == null) return model.ToArray();
+            if (jresult == new { }) return model.ToArray();
             JArray results = (JArray)((JObject)jresult)["results"];
             if (results != null && results.Any())
             {

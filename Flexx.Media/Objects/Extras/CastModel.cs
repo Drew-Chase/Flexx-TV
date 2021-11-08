@@ -14,8 +14,8 @@ namespace Flexx.Media.Objects.Extras
         {
             List<CastModel> cast = new();
             object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{media_type}/{tmdb}/credits?api_key={TMDB_API}");
-            if (jresult == null) return;
-            JObject json = (JObject)jresult);
+            if (jresult == new { }) return;
+            JObject json = (JObject)jresult;
             Parallel.ForEach((JArray)json["cast"], token =>
             {
                 cast.Add(new(token["name"].ToString(), token["character"].ToString(), token["profile_path"].ToString(), "Actor"));
