@@ -6,8 +6,9 @@ namespace Flexx.Core.Data
 {
     public class Configuration
     {
-        public string MovieLibraryPath => sysProfile.GetConfigByKey("movies").Value;
-        public string TVLibraryPath => sysProfile.GetConfigByKey("tv").Value;
+        public string MovieLibraryPath { get => sysProfile.GetConfigByKey("movies").Value; set => sysProfile.GetConfigByKey("movies").Value = value; }
+        public string TVLibraryPath { get => sysProfile.GetConfigByKey("tv").Value; set => sysProfile.GetConfigByKey("tv").Value = value; }
+        public string NextScheduledPrefetch { get => sysProfile.GetConfigByKey("next_scheduled_prefetch").Value; set => sysProfile.GetConfigByKey("next_scheduled_prefetch").Value = value; }
         private readonly ConfigManager sysProfile;
 
         public Configuration()
@@ -19,6 +20,7 @@ namespace Flexx.Core.Data
 #endif
             sysProfile.Add("movies", "");
             sysProfile.Add("tv", "");
+            sysProfile.Add("next_scheduled_prefetch", "");
         }
     }
 }

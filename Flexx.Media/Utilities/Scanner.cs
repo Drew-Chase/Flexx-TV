@@ -7,45 +7,24 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using TorrentTitleParser;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Utilities
 {
-    public enum ScanFrequency
-    {
-        Daily,
-        Weekly,
-        WeekDays,
-        WeekEnds,
-    }
-
     public class Scanner
     {
-        public static void ScheduleScannerTask(ScanFrequency frequency = ScanFrequency.Daily)
+        public static void ScheduleScannerTask()
         {
-            Timer scannerTask;
-            TimeSpan span = TimeSpan.FromHours(24);
-
-            switch (frequency)
+            if (!DateTime.TryParse(config.NextScheduledPrefetch, out DateTime time) || time > DateTime.Now)
             {
-                case ScanFrequency.Daily:
-                    span = TimeSpan.FromHours(24);
-                    break;
-
-                case ScanFrequency.Weekly:
-                    span = TimeSpan.FromDays(7);
-                    break;
+                ForMovies();
+                ForTV();
+                PrefetchMovies(true);
+                PrefetchTV(true);
+                config.NextScheduledPrefetch = DateTime.Now.AddHours(24).ToString("HH:mm:ss MM-dd-yyy");
             }
-            scannerTask = new(s =>
-            {
-                if (!((!(DateTime.Now.DayOfWeek.Equals(DayOfWeek.Saturday) || DateTime.Now.DayOfWeek.Equals(DayOfWeek.Sunday)) && frequency == ScanFrequency.WeekEnds) || ((DateTime.Now.DayOfWeek.Equals(DayOfWeek.Saturday) || DateTime.Now.DayOfWeek.Equals(DayOfWeek.Sunday)) && frequency == ScanFrequency.WeekDays)))
-                {
-                    ForMovies();
-                }
-            }, null, TimeSpan.Zero, span);
         }
 
         #region Movies
@@ -96,10 +75,16 @@ namespace Flexx.Media.Utilities
             return new(file);
         }
 
-        private static void PrefetchMovies()
+        private static void PrefetchMovies(bool force = false)
         {
             log.Info($"Prefetching Movies");
-            Parallel.ForEach(Directory.GetFiles(Directory.CreateDirectory(Path.Combine(Paths.MovieData, "Prefetch")).FullName, "prefetch.metadata", SearchOption.AllDirectories), file =>
+            string prefetch_dir = Directory.CreateDirectory(Path.Combine(Paths.MovieData, "Prefetch")).FullName;
+            if (force)
+            {
+                Directory.Delete(prefetch_dir, true);
+                Directory.CreateDirectory(prefetch_dir);
+            }
+            Parallel.ForEach(Directory.GetFiles(prefetch_dir, "prefetch.metadata", SearchOption.AllDirectories), file =>
             {
                 try
                 {
@@ -236,10 +221,16 @@ namespace Flexx.Media.Utilities
             return models.ToArray();
         }
 
-        private static void PrefetchTV()
+        private static void PrefetchTV(bool force = false)
         {
             log.Info($"Prefetching TV Shows");
-            Parallel.ForEach(Directory.GetFiles(Directory.CreateDirectory(Path.Combine(Paths.TVData, "Prefetch")).FullName, "prefetch.metadata", SearchOption.AllDirectories), file =>
+            string prefetch_dir = Directory.CreateDirectory(Path.Combine(Paths.TVData, "Prefetch")).FullName;
+            if (force)
+            {
+                Directory.Delete(prefetch_dir, true);
+                Directory.CreateDirectory(prefetch_dir);
+            }
+            Parallel.ForEach(Directory.GetFiles(prefetch_dir, "prefetch.metadata", SearchOption.AllDirectories), file =>
            {
                try
                {
@@ -266,7 +257,11 @@ namespace Flexx.Media.Utilities
                 }
 
                 log.Debug($"Prefetching {category} TV Shows");
-                string url = $"https://api.themoviedb.org/3/tv/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
+                string url = "";
+                if (category == DiscoveryCategory.Upcoming)
+                    url = $"https://api.themoviedb.org/3/tv/airing_today?api_key={TMDB_API}&language=en-US";
+                else
+                    url = $"https://api.themoviedb.org/3/tv/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
                 JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                 if (results == null || !results.Any())
                 {
