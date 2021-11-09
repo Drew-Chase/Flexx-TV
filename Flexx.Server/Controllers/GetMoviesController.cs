@@ -26,18 +26,18 @@ namespace Flexx.Server.Controllers
             return new JsonResult(MovieLibraryModel.Instance.GetLocalList(Users.Instance.Get(username)));
         }
 
-        [HttpGet("{tmdb}/{username}")]
-        public IActionResult GetMovie(string tmdb, string username)
+        [HttpGet("{id}/{username}")]
+        public IActionResult GetMovie(string id, string username)
         {
             try
             {
-                MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
+                MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
                 if (movie == null)
                 {
                     try
                     {
-                        MovieObject model = new(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}"));
-                        return new JsonResult(new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{tmdb}?api_key={TMDB_API}")));
+                        MovieObject model = new(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{id}?api_key={TMDB_API}"));
+                        return new JsonResult(new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{id}?api_key={TMDB_API}")));
                     }
                     catch
                     {
@@ -48,7 +48,7 @@ namespace Flexx.Server.Controllers
             }
             catch (Exception e)
             {
-                log.Error($"Something went wrong while trying to get information on movie with TMDB ID of {tmdb}", e);
+                log.Error($"Something went wrong while trying to get information on movie with TMDB ID of {id}", e);
             }
             return new NotFoundResult();
         }
@@ -101,7 +101,7 @@ namespace Flexx.Server.Controllers
             return new JsonResult(MovieLibraryModel.Instance.GetContinueWatchingList(Users.Instance.Get(username)));
         }
 
-        [HttpGet("images/poster")]
+        [HttpGet("{id}/images/poster")]
         public IActionResult GetMoviePoster(string id)
         {
             MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
@@ -112,12 +112,13 @@ namespace Flexx.Server.Controllers
                 {
                     return new RedirectResult($"https://image.tmdb.org/t/p/original{json[0]["file_path"]}");
                 }
-                return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
             }
-            return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open), "image/jpg");
+            if (!string.IsNullOrWhiteSpace(movie.PosterImage) && System.IO.File.Exists(movie.PosterImage))
+                return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
+            return new FileStreamResult(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
         }
 
-        [HttpGet("images/cover")]
+        [HttpGet("{id}/images/cover")]
         public IActionResult GetMovieCover(string id, bool? language)
         {
             try
@@ -132,6 +133,7 @@ namespace Flexx.Server.Controllers
                         {
                             return new RedirectResult($"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}");
                         }
+                        return new FileStreamResult(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
                     }
 
                     JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}?api_key={TMDB_API}");
@@ -140,7 +142,7 @@ namespace Flexx.Server.Controllers
                 string path = language.GetValueOrDefault() && !string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage) ? movie.CoverImageWithLanguage : movie.CoverImage;
                 if (System.IO.File.Exists(path))
                 {
-                    return File(new FileStream(path, FileMode.Open), "image/jpg");
+                    return File(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
                 }
             }
             catch (Exception e)
@@ -150,7 +152,7 @@ namespace Flexx.Server.Controllers
             return new NotFoundResult();
         }
 
-        [HttpGet("images/logo")]
+        [HttpGet("{id}/images/logo")]
         public IActionResult GetMovieLogo(string id)
         {
             try
@@ -168,7 +170,7 @@ namespace Flexx.Server.Controllers
                 }
                 if (!string.IsNullOrWhiteSpace(movie.LogoImage) && System.IO.File.Exists(movie.LogoImage))
                 {
-                    return File(new FileStream(movie.LogoImage, FileMode.Open), "image/jpg");
+                    return File(new FileStream(movie.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
                 }
             }
             catch (Exception e)
@@ -178,7 +180,7 @@ namespace Flexx.Server.Controllers
             return new NotFoundResult();
         }
 
-        [HttpGet("trailer")]
+        [HttpGet("{id}/trailer")]
         public IActionResult GetMovieTrailer(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "ID cannot be empty" });
@@ -224,7 +226,7 @@ namespace Flexx.Server.Controllers
             return RedirectPermanent(trailerURL);
         }
 
-        [HttpGet("video")]
+        [HttpGet("{id}/video")]
         public IActionResult GetMovieStream(string id, string resolution)
         {
             MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
@@ -235,22 +237,22 @@ namespace Flexx.Server.Controllers
                 string version_file = Paths.GetVersionPath(Directory.GetParent(movie.Metadata.PATH).FullName, movie.Title, version.Width, version.BitRate);
                 if (System.IO.File.Exists(version_file))
                 {
-                    string dir = Directory.CreateDirectory(Path.Combine(Paths.TempData, $"m{id}_{resolution}")).FullName;
-                    string[] files = Directory.GetFiles(dir, "*.mp4", SearchOption.TopDirectoryOnly);
-                    string tempFile = "";
-                    foreach (string file in files)
-                    {
-                        if (!Functions.IsFileLocked(new FileInfo(file)))
-                        {
-                            tempFile = file;
-                        }
-                    }
-                    if (string.IsNullOrEmpty(tempFile))
-                    {
-                        tempFile = Path.Combine(dir, $"{files.Length}.mp4");
-                        System.IO.File.Copy(version_file, tempFile);
-                    }
-                    return File(System.IO.File.Open(tempFile, FileMode.Open, FileAccess.Read, FileShare.Read), "mp4/video", true);
+                    //string dir = Directory.CreateDirectory(Path.Combine(Paths.TempData, $"m{id}_{resolution}")).FullName;
+                    //string[] files = Directory.GetFiles(dir, "*.mp4", SearchOption.TopDirectoryOnly);
+                    //string tempFile = "";
+                    //foreach (string file in files)
+                    //{
+                    //    if (!Functions.IsFileLocked(new FileInfo(file)))
+                    //    {
+                    //        tempFile = file;
+                    //    }
+                    //}
+                    //if (string.IsNullOrEmpty(tempFile))
+                    //{
+                    //    tempFile = Path.Combine(dir, $"{files.Length}.mp4");
+                    //    System.IO.File.Copy(version_file, tempFile);
+                    //}
+                    return File(System.IO.File.Open(version_file, FileMode.Open, FileAccess.Read, FileShare.Read), "mp4/video", true);
                 }
             }
             return File(movie.Stream, "video/mp4", true);
