@@ -51,10 +51,23 @@ namespace Flexx.Core.Data
             {
                 get
                 {
-                    string path = Path.Combine(MetaData, "missing.jpg");
+                    string path = Path.Combine(MetaData, "missing_poster.jpg");
                     if (!File.Exists(path))
                     {
-                        new System.Net.WebClient().DownloadFile($"https://flexx-tv.tk/assets/images/MissingArtwork.jpg", path);
+                        new System.Net.WebClient().DownloadFile($"https://flexx-tv.tk/assets/images/missing_poster.jpg", path);
+                    }
+                    return path;
+                }
+            }
+
+            public static string MissingCover
+            {
+                get
+                {
+                    string path = Path.Combine(MetaData, "missing_cover.jpg");
+                    if (!File.Exists(path))
+                    {
+                        new System.Net.WebClient().DownloadFile($"https://flexx-tv.tk/assets/images/missing_cover.jpg", path);
                     }
                     return path;
                 }
@@ -94,7 +107,7 @@ namespace Flexx.Core.Data
                     {
                         json = client.DownloadString(url);
                     }
-                    catch (System.Net.WebException e)
+                    catch (Exception e)
                     {
                         log.Error($"Unable to fetch Json from url \"{url}\"", e);
                         return new { };
