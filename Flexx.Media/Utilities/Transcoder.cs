@@ -103,30 +103,23 @@ namespace Flexx.Media.Utilities
 
         private static readonly List<MediaVersion> AllResolutions = new()
         {
-            // Resolution(Width), Bitrate(Kbps)
             //4K
             new("4K High", 3840, 34000),  //High
             new("4K Medium", 3840, 20000), //Medium
             new("4K Low", 3840, 13000), //Low
-                                        //1080p
-                                        //new(1920, 8000),  //High
-            new("1080p High", 1920, 6000), //Medium
+            //1080p
+            new("1080p High", 1920, 8000),  //High
+            new("1080p Medium", 1920, 6000), //Medium
             new("1080p Low", 1920, 4500), //Low
             //720p
-            //new(1280, 4000),  //High
+            new("720p High", 1280, 4000),  //High
             new("720p Medium", 1280, 2250), //Medium
             new("720p Low", 1280, 1500), //Low
             //480p
-            //new(854, 1500),  //High
-            //new(854, 1000), //Medium
             new("480p Low", 854, 500), //Low
             //360p
-            //new(640, 1000),  //High
-            //new(640, 750), //Medium
             new("360p Low", 640, 400), //Low
             //240p
-            //new(426, 700),  //High
-            //new(426, 400), //Medium
             new("240p Low", 426, 300), //Low
         };
 

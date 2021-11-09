@@ -26,11 +26,10 @@ namespace Flexx.Media.Objects
         public virtual FileStream Stream => string.IsNullOrWhiteSpace(PATH) ? null : new(PATH, FileMode.Open, FileAccess.Read);
         public CastListModel Cast { get; set; }
         public bool Downloaded { get; protected set; }
-        public MediaVersion[] AlternativeVersions { get; protected set; }
+        public MediaVersion[] AlternativeVersions { get; set; }
 
         protected MediaBase()
         {
-            //AlternativeVersions = Transcoder.CreateVersion(this);
         }
 
         public virtual void UpdateMetaData()

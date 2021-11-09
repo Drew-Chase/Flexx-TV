@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Flexx.Media.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,6 +18,10 @@ namespace Flexx.Media.Objects.Libraries
 
         public virtual void Initialize()
         {
+            foreach (var item in medias)
+            {
+                item.AlternativeVersions = Transcoder.CreateVersion(item);
+            }
         }
 
         public virtual MediaBase GetMediaByName(string name)

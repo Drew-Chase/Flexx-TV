@@ -234,8 +234,6 @@ namespace Flexx.Media.Objects
             }
             LoadMetaData();
             Cast = new("movie", TMDB);
-            if (Downloaded)
-                AlternativeVersions = Transcoder.CreateVersion(this);
         }
 
         private void LoadMetaData()
