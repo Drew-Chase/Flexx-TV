@@ -29,18 +29,16 @@ namespace Flexx.Server
             CreateHostBuilder(args).Build().Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args)
-        {
-            return Host.CreateDefaultBuilder(args)
-.ConfigureWebHostDefaults(webBuilder =>
-{
-    webBuilder.UseKestrel(options =>
-    {
-        options.ListenAnyIP(3208);
-    });
-    webBuilder.UseStartup<Startup>();
-    log.Info("Server is Now Active");
-});
-        }
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(webBuilder =>
+            {
+                webBuilder.UseKestrel(options =>
+                {
+                    options.ListenAnyIP(3208);
+                });
+                webBuilder.UseStartup<Startup>();
+                log.Info("Server is Now Active");
+            });
     }
 }
