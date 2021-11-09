@@ -289,8 +289,13 @@ namespace Flexx.Media.Objects
                 LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
             }
 
-            PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
-            CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
+            if (!string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
+            {
+                PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(json["backdrop_path"].ToString()))
+                CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
 
             if (DateTime.TryParse(json["release_date"].ToString(), out DateTime tmp))
             {

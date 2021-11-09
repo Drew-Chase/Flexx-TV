@@ -465,16 +465,14 @@ namespace Flexx.Media.Objects
                 {
                     Title = json["name"].ToString();
                     Plot = json["overview"].ToString();
-                    try
-                    {
+                    if (!string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
                         PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
-                        StartDate = DateTime.Parse(json["air_date"].ToString());
-                    }
-                    catch
-                    {
-                        StartDate = Series.StartDate;
+                    else
                         PosterImage = Series.PosterImage;
-                    }
+                    if (json["air_date"] != null && !string.IsNullOrWhiteSpace(json["air_date"].ToString()))
+                        StartDate = DateTime.Parse(json["air_date"].ToString());
+                    else
+                        StartDate = Series.StartDate;
                 }
             }
             catch

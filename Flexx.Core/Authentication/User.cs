@@ -1,4 +1,5 @@
 ﻿using ChaseLabs.CLConfiguration.List;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -144,25 +145,28 @@ namespace Flexx.Core.Authentication
 
         public void SetWatchedDuration(string title, ushort duration)
         {
-            string key = $"{title}-watched_duration";
-            ChaseLabs.CLConfiguration.Object.Config cfg = userProfile.GetConfigByKey(key);
-            if (cfg == null)
+            try
             {
-                userProfile.Add(key, duration);
-            }
-            else
-            {
-                cfg.Value = duration;
-            }
 
-            if (WatchedDuration.ContainsKey(key))
-            {
-                WatchedDuration[key] = duration;
+                string key = $"{title}-watched_duration";
+                ChaseLabs.CLConfiguration.Object.Config cfg = userProfile.GetConfigByKey(key);
+                if (cfg == null)
+                {
+                    userProfile.Add(key, duration);
+                    cfg = userProfile.GetConfigByKey(key);
+                }
+                cfg.Value = duration;
+
+                if (WatchedDuration.ContainsKey(key))
+                {
+                    WatchedDuration[key] = duration;
+                }
+                else
+                {
+                    WatchedDuration.Add(key, duration);
+                }
             }
-            else
-            {
-                WatchedDuration.Add(key, duration);
-            }
+            catch (Exception e) { log.Error(e); }
         }
 
         public ushort GetWatchedDuration(string title)

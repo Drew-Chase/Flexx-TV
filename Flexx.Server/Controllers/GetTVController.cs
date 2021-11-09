@@ -70,7 +70,15 @@ namespace Flexx.Server.Controllers
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null)
             {
-                return new JsonResult(new SeriesObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{id}?api_key={TMDB_API}")));
+                try
+                {
+
+                    return new JsonResult(new SeriesObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{id}?api_key={TMDB_API}")));
+                }
+                catch
+                {
+                    return BadRequest();
+                }
             }
 
             return new JsonResult(new SeriesObject(show, Users.Instance.Get(username)));
@@ -83,21 +91,26 @@ namespace Flexx.Server.Controllers
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null)
             {
-                JArray json = (JArray)((JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/images?api_key={TMDB_API}"))["posters"];
-                if (json.Any())
+                var j = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/images?api_key={TMDB_API}");
+                if (j != new { })
                 {
-                    if (json[0]["file_path"] != null && !string.IsNullOrWhiteSpace(json[0]["file_path"].ToString()))
+
+                    JArray json = (JArray)((JObject)j)["posters"];
+                    if (json.Any())
                     {
-                        return new RedirectResult($"https://image.tmdb.org/t/p/original/{json[0]["file_path"]}");
+                        if (json[0]["file_path"] != null && !string.IsNullOrWhiteSpace(json[0]["file_path"].ToString()))
+                        {
+                            return new RedirectResult($"https://image.tmdb.org/t/p/original/{json[0]["file_path"]}");
+                        }
                     }
                 }
             }
             if (!string.IsNullOrWhiteSpace(show.PosterImage) && System.IO.File.Exists(show.PosterImage))
             {
-                return File(new FileStream(show.PosterImage, FileMode.Open), "image/jpg");
+                return File(new FileStream(show.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
             }
 
-            return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
+            return new FileStreamResult(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
         }
 
         [HttpGet("{id}/images/cover")]
@@ -118,12 +131,13 @@ namespace Flexx.Server.Controllers
                 JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}?api_key={TMDB_API}");
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["backdrop_path"]}");
             }
-            if (System.IO.File.Exists(show.CoverImage))
+            if (!string.IsNullOrWhiteSpace(show.CoverImage) && System.IO.File.Exists(show.CoverImage))
             {
-                return File(new FileStream(show.CoverImage, FileMode.Open), "image/jpg");
+                return File(new FileStream(show.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
             }
 
-            return new NotFoundResult();
+            return new FileStreamResult(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
+
         }
 
         [HttpGet("{id}/images/logo")]
@@ -143,7 +157,7 @@ namespace Flexx.Server.Controllers
             }
             if (!string.IsNullOrWhiteSpace(show.LogoImage) && System.IO.File.Exists(show.LogoImage))
             {
-                return File(new FileStream(show.LogoImage, FileMode.Open), "image/png");
+                return File(new FileStream(show.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
             }
 
             return new NotFoundResult();
@@ -153,7 +167,7 @@ namespace Flexx.Server.Controllers
 
         #region Season
 
-        [HttpGet("{id}/seasons")]
+        [HttpGet("{id}/{username}/seasons")]
         public IActionResult GetSeasons(string id, string username)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
@@ -175,7 +189,7 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new { seasons = json.ToArray() });
         }
 
-        [HttpGet("{id}/{season_number}")]
+        [HttpGet("{id}/{username}/{season_number}")]
         public IActionResult GetSeason(string id, string username, int season_number)
         {
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
@@ -199,7 +213,7 @@ namespace Flexx.Server.Controllers
                 JObject json = (JObject)jobj;
                 if (json["poster_path"] == null || string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
                 {
-                    return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
+                    return new FileStreamResult(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
                 }
 
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["poster_path"]}");
@@ -208,17 +222,17 @@ namespace Flexx.Server.Controllers
 
             if (!string.IsNullOrWhiteSpace(season.PosterImage) && System.IO.File.Exists(season.PosterImage))
             {
-                return File(new FileStream(season.PosterImage, FileMode.Open), "image/jpg");
+                return File(new FileStream(season.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
             }
 
-            return new NotFoundResult();
+            return new FileStreamResult(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
         }
 
         #endregion Season
 
         #region Episodes
 
-        [HttpGet("{id}/{season_number}/episodes")]
+        [HttpGet("{id}/{username}/{season_number}/episodes")]
         public IActionResult GetEpisodes(string id, string username, int season_number)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
@@ -238,7 +252,6 @@ namespace Flexx.Server.Controllers
             }
             else
             {
-                log.Info($"Getting Episodes for \"{show.Title}\" season {season_number} for user {username}");
                 EpisodeModel[] episodes = show.GetSeasonByNumber(season_number).Episodes.ToArray();
                 User user = Users.Instance.Get(username);
                 Parallel.ForEach(episodes, episode =>
@@ -250,7 +263,7 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new { episodes = json.ToArray() });
         }
 
-        [HttpGet("{id}/{season_number}/{episode_number}")]
+        [HttpGet("{id}/{username}/{season_number}/{episode_number}")]
         public IActionResult GetEpisode(string id, string username, int season_number, int episode_number)
         {
             if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "The id cannot be empty" });
@@ -279,20 +292,23 @@ namespace Flexx.Server.Controllers
                 JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}/episode/{episode_number}?api_key={TMDB_API}");
                 if (json["still_path"] == null || string.IsNullOrWhiteSpace(json["still_path"].ToString()))
                 {
-                    log.Debug($"https://api.themoviedb.org/3/tv/{id}/season/{season_number}/episode/{episode_number}?api_key={TMDB_API}");
                     return new JsonResult(json);
                 }
-                return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["still_path"]}");
+                if (json["still_path"] != null && !string.IsNullOrWhiteSpace(json["still_path"].ToString()))
+                    return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["still_path"]}");
             }
-            SeasonModel season = show.GetSeasonByNumber(season_number);
-            EpisodeModel episode = season.GetEpisodeByNumber(episode_number);
-
-            if (!string.IsNullOrWhiteSpace(episode.PosterImage) && System.IO.File.Exists(episode.PosterImage))
+            else
             {
-                return File(new FileStream(episode.PosterImage, FileMode.Open), "image/jpg");
+                SeasonModel season = show.GetSeasonByNumber(season_number);
+                EpisodeModel episode = season.GetEpisodeByNumber(episode_number);
+
+                if (!string.IsNullOrWhiteSpace(episode.PosterImage) && System.IO.File.Exists(episode.PosterImage))
+                {
+                    return File(new FileStream(episode.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
+                }
             }
 
-            return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
+            return new FileStreamResult(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
         }
 
         [HttpGet("{id}/{season_number}/{episode_number}/video")]
