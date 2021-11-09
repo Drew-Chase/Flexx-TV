@@ -11,12 +11,6 @@ namespace Flexx.Server.Controllers
     [Route("/api/get/")]
     public class GetController : ControllerBase
     {
-        [HttpGet("images/missing-artwork")]
-        public IActionResult GetMissingArtworkPoster()
-        {
-            return File(new FileStream(Paths.MissingPoster, FileMode.Open), "image/jpg");
-        }
-
         [HttpGet("{username}/notifications")]
         public IActionResult GetUsersNotifications(string username)
         {
