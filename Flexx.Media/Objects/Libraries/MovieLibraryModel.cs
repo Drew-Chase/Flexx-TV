@@ -1,4 +1,4 @@
-﻿using Flexx.Core.Authentication;
+﻿using Flexx.Authentication;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
@@ -13,10 +13,15 @@ namespace Flexx.Media.Objects.Libraries
 {
     public class MovieLibraryModel : LibraryModel
     {
-        public static MovieLibraryModel Instance = Instance ?? new MovieLibraryModel();
 
-        protected MovieLibraryModel() : base()
+        private static MovieLibraryModel _instance = null;
+        public static MovieLibraryModel Instance
         {
+            get
+            {
+                if (_instance == null) _instance = new MovieLibraryModel();
+                return _instance;
+            }
         }
 
         public override void Initialize()

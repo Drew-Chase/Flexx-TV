@@ -1,4 +1,4 @@
-﻿using Flexx.Core.Authentication;
+﻿using Flexx.Authentication;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Utilities;
 using Newtonsoft.Json;
@@ -13,13 +13,16 @@ namespace Flexx.Media.Objects.Libraries
 {
     public class TvLibraryModel : LibraryModel
     {
-        public static TvLibraryModel Instance = Instance ?? new TvLibraryModel();
-        public List<TVModel> TVShows { get; private set; }
-
-        protected TvLibraryModel() : base()
+        private static TvLibraryModel _instance = null;
+        public static TvLibraryModel Instance
         {
-            Instance = this;
+            get
+            {
+                if (_instance == null) _instance = new TvLibraryModel();
+                return _instance;
+            }
         }
+        public List<TVModel> TVShows { get; private set; }
 
         public override void Initialize()
         {
@@ -33,7 +36,7 @@ namespace Flexx.Media.Objects.Libraries
                 log.Fatal("Unhandled Exception was found while trying to initialize TV Shows Library", e);
                 Environment.Exit(0);
             }
-            //base.Initialize();
+            base.Initialize();
         }
 
         public TVModel GetTVShowByName(string name)
@@ -50,12 +53,20 @@ namespace Flexx.Media.Objects.Libraries
 
         public TVModel GetShowByTMDB(string tmdb)
         {
-            foreach (TVModel model in TVShows)
+            try
             {
-                if (model.TMDB.Equals(tmdb))
+                if (TVShows == null) log.Fatal($"TVShows are NULL?");
+                foreach (TVModel model in TVShows)
                 {
-                    return model;
+                    if (model.TMDB.Equals(tmdb))
+                    {
+                        return model;
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                log.Error($"Something went wrong while trying to GetShowByTMDB: {tmdb}", e);
             }
             return null;
         }
@@ -147,7 +158,7 @@ namespace Flexx.Media.Objects.Libraries
                 JObject json = null;
                 if (show == null)
                 {
-                    Parallel.ForEach(TVShows.Where(t => t.Category == DiscoveryCategory.None), tvModel =>
+                    Parallel.ForEach(TVShows.Where(t => t.Category == DiscoveryCategory.None && t.Added), tvModel =>
                         {
                             try
                             {
