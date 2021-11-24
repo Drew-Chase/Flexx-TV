@@ -28,6 +28,7 @@
     <Folder Include="Views\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Flexx.Authentication\Flexx.Authentication.csproj" />
     <ProjectReference Include="..\Flexx.Core\Flexx.Core.csproj">
       <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
     </ProjectReference>

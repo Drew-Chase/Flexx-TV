@@ -26,7 +26,6 @@
   <ItemGroup>
     <Folder Include="Data\" />
     <Folder Include="Utilities\" />
-    <Folder Include="Networking\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ChaseLabs.Configuration" Version="0.1.1" />

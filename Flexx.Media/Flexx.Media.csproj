@@ -29,7 +29,9 @@
     <Folder Include="Objects\Libraries\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Flexx.Authentication\Flexx.Authentication.csproj" />
     <ProjectReference Include="..\Flexx.Core\Flexx.Core.csproj" />
+    <ProjectReference Include="..\Flexx.Networking\Flexx.Networking.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="bloomtom.DEnc" Version="1.4.2" />

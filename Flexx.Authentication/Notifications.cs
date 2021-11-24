@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using static Flexx.Core.Data.Global;
 
-namespace Flexx.Core.Authentication
+namespace Flexx.Authentication
 {
     public enum NotificationType
     {

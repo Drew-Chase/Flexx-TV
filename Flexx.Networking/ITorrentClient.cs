@@ -1,4 +1,4 @@
-﻿namespace Flexx.Core.Networking
+﻿namespace Flexx.Networking
 {
     public interface ITorrentClient
     {
