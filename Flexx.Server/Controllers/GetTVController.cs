@@ -1,4 +1,4 @@
-﻿using Flexx.Core.Authentication;
+﻿using Flexx.Authentication;
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
@@ -120,7 +120,7 @@ namespace Flexx.Server.Controllers
             TVModel show = TvLibraryModel.Instance.GetShowByTMDB(id);
             if (show == null)
             {
-                if (language.GetValueOrDefault())
+                if (language.GetValueOrDefault(false))
                 {
                     JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/images?api_key={TMDB_API}&include_image_language=en");
                     if (imagesJson["backdrops"].Any())
@@ -131,9 +131,16 @@ namespace Flexx.Server.Controllers
                 JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}?api_key={TMDB_API}");
                 return new RedirectResult($"https://image.tmdb.org/t/p/original/{json["backdrop_path"]}");
             }
-            if (!string.IsNullOrWhiteSpace(show.CoverImage) && System.IO.File.Exists(show.CoverImage))
+            if (language.GetValueOrDefault(false) && !string.IsNullOrWhiteSpace(show.CoverImageWithLanguage) && System.IO.File.Exists(show.CoverImageWithLanguage))
             {
-                return File(new FileStream(show.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
+                return File(new FileStream(show.CoverImageWithLanguage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(show.CoverImage) && System.IO.File.Exists(show.CoverImage))
+                {
+                    return File(new FileStream(show.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
+                }
             }
 
             return new FileStreamResult(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");

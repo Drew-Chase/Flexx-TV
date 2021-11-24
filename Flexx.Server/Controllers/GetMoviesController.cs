@@ -1,13 +1,16 @@
-﻿using Flexx.Core.Authentication;
+﻿using Flexx.Authentication;
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
+using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Timers;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using static Flexx.Core.Data.Global;
@@ -36,8 +39,7 @@ namespace Flexx.Server.Controllers
                 {
                     try
                     {
-                        MovieObject model = new(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{id}?api_key={TMDB_API}"));
-                        return new JsonResult(new MovieObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{id}?api_key={TMDB_API}")));
+                        return new JsonResult(new MovieObject(new HttpClient().GetAsync($"https://api.themoviedb.org/3/movie/{id}?api_key={TMDB_API}").Result.Content.ReadAsStringAsync().Result));
                     }
                     catch
                     {
@@ -113,8 +115,13 @@ namespace Flexx.Server.Controllers
                     return new RedirectResult($"https://image.tmdb.org/t/p/original{json[0]["file_path"]}");
                 }
             }
-            if (!string.IsNullOrWhiteSpace(movie.PosterImage) && System.IO.File.Exists(movie.PosterImage))
-                return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(movie.PosterImage) && System.IO.File.Exists(movie.PosterImage))
+                {
+                    return new FileStreamResult(new FileStream(movie.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
+                }
+            }
             return new FileStreamResult(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
         }
 
@@ -225,81 +232,6 @@ namespace Flexx.Server.Controllers
 
             return RedirectPermanent(trailerURL);
         }
-
-        [HttpGet("{id}/video")]
-        public IActionResult GetMovieStream(string id, string resolution)
-        {
-            MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
-            if (movie == null) return new NotFoundResult();
-            if (!string.IsNullOrWhiteSpace(resolution))
-            {
-                MediaVersion version = movie.AlternativeVersions.FirstOrDefault(d => d.DisplayName.Equals(resolution));
-                string version_file = Paths.GetVersionPath(Directory.GetParent(movie.Metadata.PATH).FullName, movie.Title, version.Width, version.BitRate);
-                if (System.IO.File.Exists(version_file))
-                {
-                    //string dir = Directory.CreateDirectory(Path.Combine(Paths.TempData, $"m{id}_{resolution}")).FullName;
-                    //string[] files = Directory.GetFiles(dir, "*.mp4", SearchOption.TopDirectoryOnly);
-                    //string tempFile = "";
-                    //foreach (string file in files)
-                    //{
-                    //    if (!Functions.IsFileLocked(new FileInfo(file)))
-                    //    {
-                    //        tempFile = file;
-                    //    }
-                    //}
-                    //if (string.IsNullOrEmpty(tempFile))
-                    //{
-                    //    tempFile = Path.Combine(dir, $"{files.Length}.mp4");
-                    //    System.IO.File.Copy(version_file, tempFile);
-                    //}
-                    return File(System.IO.File.Open(version_file, FileMode.Open, FileAccess.Read, FileShare.Read), "mp4/video", true);
-                }
-            }
-            return File(movie.Stream, "video/mp4", true);
-        }
-
-        //[HttpGet("{tmdb}/{user}/video/transcoded")]
-        //public IActionResult GetMovieStream(string tmdb, string user, int resolution, int bitrate)
-        //{
-        //    MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
-        //    if (movie == null) return new NotFoundResult();
-        //    var (transcoded, process) = Transcoder.GetTranscodedStream(user, movie, resolution, bitrate);
-        //    Timer timer = new(10 * 1000)
-        //    {
-        //        AutoReset = true,
-        //        Enabled = true,
-        //    };
-        //    timer.Elapsed += (s, e) =>
-        //    {
-        //        process.Kill();
-        //    };
-        //    long fileSize = new FileInfo(movie.PATH).Length;
-        //    log.Fatal($"Content-Length: {fileSize}");
-        //    log.Fatal(fileSize.ToString());
-        //    int duration = (int)Math.Ceiling(movie.MediaInfo.Duration.TotalSeconds);
-        //    Response.Headers.Clear();
-        //    Response.ContentLength = fileSize;
-        //    Response.Headers.Add("Accept-Ranges", $"bytes");
-        //    Response.Headers.Add("Content-Range", $"bytes {0}-{fileSize}/{fileSize}");
-        //    activeStreams.Add(Users.Instance.Get(user), timer);
-        //    return File(transcoded, "application/x-mpegURL", true);
-        //    //return RedirectPermanent("http://127.0.0.1:1234");
-        //}
-
-        //[HttpGet("{tmdb}/{user}/video/transcoded/stillwatching")]
-        //public IActionResult MarkAsStillWatching(string tmdb, string user)
-        //{
-        //    MediaBase movie = MovieLibraryModel.Instance.GetMovieByTMDB(tmdb);
-        //    if (movie == null) return new NotFoundResult();
-        //    if (activeStreams.TryGetValue(Users.Instance.Get(user), out Timer value))
-        //    {
-        //        double interval = value.Interval;
-        //        value.Stop();
-        //        value.Interval = interval;
-        //        value.Start();
-        //    }
-        //    return new OkResult();
-        //}
 
         #endregion Movies
     }
