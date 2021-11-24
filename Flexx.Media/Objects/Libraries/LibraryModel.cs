@@ -18,9 +18,19 @@ namespace Flexx.Media.Objects.Libraries
 
         public virtual void Initialize()
         {
-            foreach (var item in medias)
+        }
+
+        public void PostInitializationEvent()
+        {
+            if (config.UseVersionFile)
             {
-                item.AlternativeVersions = Transcoder.CreateVersion(item);
+                Task.Run(() =>
+                {
+                    foreach (var item in medias)
+                    {
+                        item.AlternativeVersions = Transcoder.CreateVersion(item);
+                    }
+                });
             }
         }
 
@@ -32,8 +42,11 @@ namespace Flexx.Media.Objects.Libraries
                 {
                     return null;
                 }
-
-                return medias.Where(m => m.Title.ToLower().Equals(name.ToLower())).FirstOrDefault();
+                foreach (MediaBase media in medias)
+                {
+                    if (media.Title.ToLower() == name.ToLower())
+                        return media;
+                }
             }
             catch (Exception e)
             {
