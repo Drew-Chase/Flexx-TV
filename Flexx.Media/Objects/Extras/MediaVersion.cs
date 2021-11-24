@@ -3,13 +3,13 @@
     public struct MediaVersion
     {
         public string DisplayName { get; }
-        public int Width { get; }
+        public int Height { get; }
         public int BitRate { get; }
 
         public MediaVersion(string DisplayName, int Width, int BitRate)
         {
             this.DisplayName = DisplayName;
-            this.Width = Width;
+            this.Height = Width;
             this.BitRate = BitRate;
         }
     }
