@@ -13,6 +13,7 @@ using Xabe.FFmpeg.Downloader;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Utilities;
+
 public class Transcoder
 {
     public static Transcoder Instance = null;

@@ -72,7 +72,6 @@ namespace Flexx.Server.Controllers
             {
                 try
                 {
-
                     return new JsonResult(new SeriesObject(new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{id}?api_key={TMDB_API}")));
                 }
                 catch
@@ -94,7 +93,6 @@ namespace Flexx.Server.Controllers
                 var j = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/images?api_key={TMDB_API}");
                 if (j != new { })
                 {
-
                     JArray json = (JArray)((JObject)j)["posters"];
                     if (json.Any())
                     {
@@ -144,7 +142,6 @@ namespace Flexx.Server.Controllers
             }
 
             return new FileStreamResult(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/jpg");
-
         }
 
         [HttpGet("{id}/images/logo")]

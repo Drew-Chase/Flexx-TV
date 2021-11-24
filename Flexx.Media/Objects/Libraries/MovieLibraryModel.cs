@@ -13,8 +13,8 @@ namespace Flexx.Media.Objects.Libraries
 {
     public class MovieLibraryModel : LibraryModel
     {
-
         private static MovieLibraryModel _instance = null;
+
         public static MovieLibraryModel Instance
         {
             get

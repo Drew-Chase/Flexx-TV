@@ -1,7 +1,7 @@
 ﻿using ChaseLabs.CLConfiguration.List;
-using Flexx.Core.Networking;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
+using Flexx.Networking;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -233,6 +233,10 @@ namespace Flexx.Media.Objects
                 }
             }
             LoadMetaData();
+            if (Downloaded)
+            {
+                AlternativeVersions = Transcoder.GetAcceptableVersions(this);
+            }
             Cast = new("movie", TMDB);
         }
 

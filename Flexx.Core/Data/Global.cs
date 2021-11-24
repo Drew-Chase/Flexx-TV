@@ -2,12 +2,11 @@
 using ChaseLabs.CLLogger.Interfaces;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 
 namespace Flexx.Core.Data;
+
 public static class Global
 {
     public static string TMDB_API => "378ae44c6e7f5dde094cd8c8456378e0";

@@ -1,11 +1,8 @@
 ﻿using ChaseLabs.CLConfiguration.List;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Authentication;
+
 public class Users
 {
     public static Users Instance = Instance ?? new Users();
@@ -154,7 +151,6 @@ public class User
     {
         try
         {
-
             string key = $"{title}-watched_duration";
             ChaseLabs.CLConfiguration.Object.Config cfg = userProfile.GetConfigByKey(key);
             if (cfg == null)
@@ -208,6 +204,7 @@ public class User
             activeStreams.Add(media, process);
         }
     }
+
     public void RemoveActiveStream(string media)
     {
         if (activeStreams.ContainsKey(media))

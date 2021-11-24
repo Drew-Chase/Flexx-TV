@@ -14,6 +14,7 @@ namespace Flexx.Media.Objects.Libraries
     public class TvLibraryModel : LibraryModel
     {
         private static TvLibraryModel _instance = null;
+
         public static TvLibraryModel Instance
         {
             get
@@ -22,6 +23,7 @@ namespace Flexx.Media.Objects.Libraries
                 return _instance;
             }
         }
+
         public List<TVModel> TVShows { get; private set; }
 
         public override void Initialize()

@@ -2,15 +2,12 @@
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
-using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Timers;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
 using static Flexx.Core.Data.Global;

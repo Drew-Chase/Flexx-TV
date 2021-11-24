@@ -1,9 +1,7 @@
-﻿using Flexx.Core.Authentication;
+﻿using Flexx.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.IO;
 using System.Linq;
-using static Flexx.Core.Data.Global;
 
 namespace Flexx.Server.Controllers
 {

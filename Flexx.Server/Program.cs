@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Server;
+
 public class Program
 {
     public static void Main(string[] args)

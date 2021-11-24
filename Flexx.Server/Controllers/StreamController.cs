@@ -1,21 +1,19 @@
 ﻿using Flexx.Authentication;
 using Flexx.Media.Objects;
+using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using static Flexx.Core.Data.Global;
-using Flexx.Media.Objects.Extras;
 using System.IO;
+using System.Linq;
+using static Flexx.Core.Data.Global;
 
 namespace Flexx.Server.Controllers;
+
 [ApiController]
 [Route("/api/stream/")]
 public class StreamController : ControllerBase
 {
-
     [HttpGet("get/version")]
     public FileStreamResult GetVideoStream(string id, string username, string library, string version, int? season, int? episode, int? start_time)
     {
@@ -53,7 +51,6 @@ public class StreamController : ControllerBase
             currentPosition = ts == 0 ? 0 : ts * 10,
             maxPosition = media.MediaInfo.Duration.TotalSeconds,
         });
-
     }
 
     [HttpPost("remove")]

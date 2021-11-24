@@ -1,9 +1,5 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using ChaseLabs.CLConfiguration.Object;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Authentication
