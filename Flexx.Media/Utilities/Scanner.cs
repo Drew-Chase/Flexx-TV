@@ -157,7 +157,7 @@ namespace Flexx.Media.Utilities
             }
             Task.Run(() => PrefetchTV()).ContinueWith(a =>
             {
-                Task.Run(() => TvLibraryModel.Instance.AddGhostEpisodes());
+                Task.Run(() => TvLibraryModel.Instance.AddGhostEpisodes()).ContinueWith(t => log.Warn($"Done Processing Ghost Episodes... Ohhhsoshshsh.. Ghossts"));
             });
         }
 
