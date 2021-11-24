@@ -1,4 +1,4 @@
-﻿using Flexx.Core.Authentication;
+﻿using Flexx.Authentication;
 using Flexx.Media.Objects.Libraries;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -109,6 +109,7 @@ namespace Flexx.Media.Objects.Extras
 
         public SeriesObject(TVModel show, User user)
         {
+            if (show == null) return;
             ID = show.TMDB;
             Title = show.Title;
             Plot = show.Plot;
