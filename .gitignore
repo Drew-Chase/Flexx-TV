@@ -357,4 +357,4 @@ MigrationBackup/
 /FlexxTV.app
 /publish-mac.command
 /mac-build.txt
-/Flexx.Server/hls_master_name
+*.sh
