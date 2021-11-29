@@ -285,8 +285,7 @@ public class Transcoder
     //    string fileName = $"{id}_{user}_{version}";
     //    double startPosition = segment * 10;
 
-    //    MediaBase media = 
-
+    //    MediaBase media =
 
     //    string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
     //    StringBuilder builder = FFmpegArgumentBuilder(media.PATH, file, height: version.Height, video_bitrate: version.BitRate, start_duration: start_time);

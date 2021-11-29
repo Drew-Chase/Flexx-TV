@@ -309,7 +309,7 @@ namespace Flexx.Media.Objects.Extras
             Title = result["name"].ToString();
             Season = int.TryParse(result["season_number"].ToString(), out int season) ? season : 0;
             Episode = int.TryParse(result["episode_number"].ToString(), out int episode) ? episode : 0;
-            Name = $"S{(Season < 10 ? "0" + Season : Season)}E{(Episode < 10 ? "0" + Episode : Episode)}"; 
+            Name = $"S{(Season < 10 ? "0" + Season : Season)}E{(Episode < 10 ? "0" + Episode : Episode)}";
             Plot = result["overview"].ToString();
             if (DateTime.TryParse(result["air_date"].ToString(), out DateTime date))
             {

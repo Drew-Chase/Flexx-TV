@@ -19,6 +19,7 @@ namespace Flexx.Media.Objects.Extras
         {
             return a.Equals(b);
         }
+
         public static bool operator !=(MediaVersion a, MediaVersion b)
         {
             return !(a == b);

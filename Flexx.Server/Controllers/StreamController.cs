@@ -4,11 +4,9 @@ using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Server.Controllers;
@@ -28,7 +26,6 @@ public class StreamController : ControllerBase
             UUID = stream.StartTime.ToString(),
         });
     }
-
 
     [HttpGet("get/version")]
     public FileStreamResult GetVideoStream(string id, string username, string library, string version, int? season, int? episode, int? start_time, long? startTick)
@@ -68,6 +65,7 @@ public class StreamController : ControllerBase
             return BadRequest();
         }
     }
+
     [HttpGet("get/stream_info")]
     public JsonResult GetStreamInfo(string id, string username, string library, long startTime, string version, int? season, int? episode)
     {

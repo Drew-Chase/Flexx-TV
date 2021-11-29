@@ -47,7 +47,6 @@ public class Program
             }).Build().Run();
         });
 
-
     private static Dictionary<string, string> command_helper = new()
     {
         { "help", "Displays this message." },
@@ -56,7 +55,6 @@ public class Program
         { "list-movies", "Will list all downloaded and added movies." },
         { "list-tv", "Will list all downloaded and added tv shows." },
     };
-
 
     private static Dictionary<string, Action> commands = new()
     {
@@ -89,7 +87,6 @@ public class Program
             }
         }
     };
-
 
     private static void CommandManager()
     {

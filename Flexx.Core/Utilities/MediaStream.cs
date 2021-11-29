@@ -1,14 +1,13 @@
 ﻿using Flexx.Authentication;
-using static Flexx.Core.Data.Global;
 using Flexx.Media.Objects.Extras;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static Flexx.Core.Data.Global;
 
 namespace Flexx.Media.Utilities
 {
@@ -28,6 +27,7 @@ namespace Flexx.Media.Utilities
             streams.Add(stream);
             return stream;
         }
+
         public MediaStream Get(string working_directory)
         {
             foreach (MediaStream stream in streams)
@@ -37,6 +37,7 @@ namespace Flexx.Media.Utilities
             }
             return null;
         }
+
         public MediaStream[] Get(User user)
         {
             List<MediaStream> value = new();
@@ -53,6 +54,7 @@ namespace Flexx.Media.Utilities
 
             return value.ToArray();
         }
+
         public MediaStream[] Get(User user, MediaVersion version)
         {
             List<MediaStream> value = new();
@@ -69,6 +71,7 @@ namespace Flexx.Media.Utilities
 
             return value.ToArray();
         }
+
         public MediaStream Get(User user, MediaVersion version, long startTime)
         {
             if (user != null)
@@ -82,13 +85,14 @@ namespace Flexx.Media.Utilities
                 }
             }
             return null;
-
         }
+
         internal void RemoveStream(MediaStream stream)
         {
             streams.Remove(stream);
         }
     }
+
     public class MediaStream
     {
         public User User { get; init; }
@@ -99,6 +103,7 @@ namespace Flexx.Media.Utilities
         public FileStream FileStream { get; set; }
         public int StreamTimeout { get; init; }
         private System.Timers.Timer _timer;
+
         public MediaStream(User user, Process process, MediaVersion version, string working_directory, long start_time, FileStream fileStream, int timeout = 15000)
         {
             User = user;
@@ -110,6 +115,7 @@ namespace Flexx.Media.Utilities
             StreamTimeout = timeout;
             ResetTimeout();
         }
+
         public void ResetTimeout()
         {
             if (_timer != null)
@@ -124,6 +130,7 @@ namespace Flexx.Media.Utilities
             };
             _timer.Start();
         }
+
         public Task KillAsync() =>
              Task.Run(() =>
             {
@@ -149,7 +156,6 @@ namespace Flexx.Media.Utilities
 
                 try
                 {
-
                     Directory.Delete(WorkingDirectory, true);
                 }
                 catch
@@ -157,7 +163,6 @@ namespace Flexx.Media.Utilities
                     Thread.Sleep(1000);
                     try
                     {
-
                         Directory.Delete(WorkingDirectory, true);
                     }
                     catch
@@ -172,10 +177,8 @@ namespace Flexx.Media.Utilities
                             log.Error($"Unable to delete working directory! (\"{WorkingDirectory}\")");
                         }
                     }
-
                 }
                 ActiveStreams.Instance.RemoveStream(this);
             });
-
     }
 }
