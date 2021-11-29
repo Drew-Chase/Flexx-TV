@@ -584,6 +584,7 @@ namespace Flexx.Media.Objects
             {
                 MediaInfo = FFmpeg.GetMediaInfo(PATH).Result;
                 FullDuration = $"{MediaInfo.Duration.Hours}h {MediaInfo.Duration.Minutes}m";
+                AlternativeVersions = Transcoder.GetAcceptableVersions(this);
             }
         }
 

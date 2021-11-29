@@ -146,8 +146,16 @@ public class Transcoder
             log.Warn($"Original File = Title: {media.Title}, Resolution: {videoStream.Width}x{videoStream.Height}, Bitrate: {videoStream.Bitrate / 1000}Kbps");
             foreach (MediaVersion resolution in AllResolutions)
             {
-                if (videoStream.Width >= resolution.Height - 100 && videoStream.Bitrate / 1000 >= resolution.BitRate)
+                if (videoStream.Height >= (resolution.Height - 100) && (videoStream.Bitrate / 1000) >= resolution.BitRate)
                     Versions.Add(resolution);
+            }
+            if (!Versions.Any())
+            {
+                foreach (MediaVersion resolution in AllResolutions)
+                {
+                    if (videoStream.Height >= (resolution.Height - 100))
+                        Versions.Add(resolution);
+                }
             }
         }
         catch (Exception e)
