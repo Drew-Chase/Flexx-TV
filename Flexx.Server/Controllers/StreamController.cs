@@ -45,6 +45,7 @@ public class StreamController : ControllerBase
                 Inline = false,
             };
             Response.Headers.Add("Content-Disposition", cd.ToString());
+            if (stream.FileStream != null) stream.FileStream.Dispose();
             stream.FileStream = new(Directory.GetFiles(stream.WorkingDirectory, "*.m3u8")[0], FileMode.Open, FileAccess.Read);
             return File(stream.FileStream, "application/x-mpegURL", true);
         }
