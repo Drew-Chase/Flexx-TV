@@ -43,13 +43,13 @@ namespace Flexx.Media.Objects.Libraries
                 }
                 foreach (MediaBase media in medias)
                 {
-                    if (media.Title.ToLower() == name.ToLower())
+                    if (!string.IsNullOrWhiteSpace(media.Title) && media.Title.ToLower().Equals(name.ToLower()))
                         return media;
                 }
             }
             catch (Exception e)
             {
-                log.Error($"Had trouble trying to Get Media object by the provided Name {name}", e);
+                log.Error($"Had trouble trying to Get Media object by the provided Name \"{name}\"", e);
             }
             return null;
         }

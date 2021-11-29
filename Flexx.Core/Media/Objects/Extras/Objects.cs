@@ -106,6 +106,8 @@ namespace Flexx.Media.Objects.Extras
 
         public object UpNext { get; }
         public CastModel[] MainCast { get; }
+        public int Seasons { get; }
+        public int Episodes { get; }
 
         public SeriesObject(TVModel show, User user)
         {
@@ -141,6 +143,11 @@ namespace Flexx.Media.Objects.Extras
                     Episode = UnwatchedEpisode.Episode_Number,
                     Name = UnwatchedEpisode.FriendlyName,
                 };
+            }
+            Seasons = show.Seasons.Count;
+            foreach (var season in show.Seasons)
+            {
+                Episodes += season.Episodes.Count;
             }
             MPAA = show.MPAA;
             Rating = show.Rating;
@@ -262,6 +269,7 @@ namespace Flexx.Media.Objects.Extras
         public bool Watched { get; }
         public ushort WatchedDuration { get; }
         public object NextEpisode { get; }
+        public MediaVersion[] Versions { get; }
 
         public EpisodeObject(EpisodeModel episode, User user)
         {
@@ -291,6 +299,7 @@ namespace Flexx.Media.Objects.Extras
                     Name = next.FriendlyName,
                 };
             }
+            Versions = episode.AlternativeVersions;
         }
 
         public EpisodeObject(string json)
@@ -300,7 +309,7 @@ namespace Flexx.Media.Objects.Extras
             Title = result["name"].ToString();
             Season = int.TryParse(result["season_number"].ToString(), out int season) ? season : 0;
             Episode = int.TryParse(result["episode_number"].ToString(), out int episode) ? episode : 0;
-            Name = $"S{(Season < 10 ? "0" + Season : Season)}E{(Episode < 10 ? "0" + Episode : Episode)}";
+            Name = $"S{(Season < 10 ? "0" + Season : Season)}E{(Episode < 10 ? "0" + Episode : Episode)}"; 
             Plot = result["overview"].ToString();
             if (DateTime.TryParse(result["air_date"].ToString(), out DateTime date))
             {
@@ -311,6 +320,7 @@ namespace Flexx.Media.Objects.Extras
             Downloaded = false;
             Watched = false;
             WatchedDuration = 0;
+            Versions = null;
         }
     }
 }

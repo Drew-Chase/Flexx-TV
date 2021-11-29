@@ -31,7 +31,7 @@ namespace Flexx.Media.Utilities
 
         public static void ForMovies()
         {
-            log.Info("Scanning for Movies");
+            log.Warn("Scanning for Movies");
             List<MovieModel> model = new();
             string[] files = Directory.GetFiles(config.MovieLibraryPath, "*.*", SearchOption.AllDirectories)
                 .Where(f =>
@@ -77,7 +77,7 @@ namespace Flexx.Media.Utilities
 
         private static void PrefetchMovies(bool force = false)
         {
-            log.Info($"Prefetching Movies");
+            log.Warn($"Prefetching Movies");
             string prefetch_dir = Directory.CreateDirectory(Path.Combine(Paths.MovieData, "Prefetch")).FullName;
             if (force)
             {
@@ -125,7 +125,7 @@ namespace Flexx.Media.Utilities
                 });
             }
 
-            log.Warn($"Done Prefetching Movies");
+            log.Info($"Done Prefetching Movies");
         }
 
         #endregion Movies
@@ -134,7 +134,7 @@ namespace Flexx.Media.Utilities
 
         public static void ForTV()
         {
-            log.Info("Scanning for TV Shows");
+            log.Warn("Scanning for TV Shows");
 
             string[] files = Directory.GetFiles(config.TVLibraryPath, "*.*", SearchOption.AllDirectories)
                 .Where(f =>
@@ -157,7 +157,7 @@ namespace Flexx.Media.Utilities
             }
             Task.Run(() => PrefetchTV()).ContinueWith(a =>
             {
-                Task.Run(() => TvLibraryModel.Instance.AddGhostEpisodes()).ContinueWith(t => log.Warn($"Done Processing Ghost Episodes... Ohhhsoshshsh.. Ghossts"));
+                Task.Run(() => TvLibraryModel.Instance.AddGhostEpisodes()).ContinueWith(t => log.Info($"Done Processing Ghost Episodes... Ohhhsoshshsh.. Ghossts"));
             });
         }
 
@@ -223,18 +223,19 @@ namespace Flexx.Media.Utilities
 
         private static void PrefetchTV(bool force = false)
         {
-            log.Info($"Prefetching TV Shows");
+            log.Warn($"Prefetching TV Shows");
             string prefetch_dir = Directory.CreateDirectory(Path.Combine(Paths.TVData, "Prefetch")).FullName;
             if (force)
             {
                 Directory.Delete(prefetch_dir, true);
                 Directory.CreateDirectory(prefetch_dir);
             }
+            log.Warn($"Loading Cached Prefetched Data");
             Parallel.ForEach(Directory.GetFiles(prefetch_dir, "prefetch.metadata", SearchOption.AllDirectories), file =>
            {
                try
                {
-                   ChaseLabs.CLConfiguration.List.ConfigManager data = new ChaseLabs.CLConfiguration.List.ConfigManager(file);
+                   ChaseLabs.CLConfiguration.List.ConfigManager data = new(file);
                    if (data.GetConfigByKey("id") != null)
                    {
                        TvLibraryModel.Instance.AddMedia(new TVModel(data));
@@ -246,7 +247,7 @@ namespace Flexx.Media.Utilities
                }
                catch (Exception e)
                {
-                   log.Error("Issue with Prefetching Local TV Shows", e);
+                   log.Error("Issue with Loading TV Shows Cached Prefetches", e);
                }
            });
             foreach (DiscoveryCategory category in Enum.GetValues(typeof(DiscoveryCategory)))
@@ -288,7 +289,7 @@ namespace Flexx.Media.Utilities
                 });
             }
 
-            log.Warn($"Done Prefetching TV Shows");
+            log.Info($"Done Prefetching TV Shows");
         }
 
         #endregion TV

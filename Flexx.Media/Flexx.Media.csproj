@@ -19,17 +19,11 @@
     <None Remove="Interfaces\" />
     <None Remove="YoutubeExtractor" />
     <None Remove="Utilities\" />
-    <None Remove="Objects\Libraries\" />
-    <None Remove="Objects\Extras\" />
     <None Remove="LibVLCSharp" />
     <None Remove="YoutubeExplode" />
     <None Remove="FFMpegSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Objects\Libraries\" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Flexx.Authentication\Flexx.Authentication.csproj" />
     <ProjectReference Include="..\Flexx.Core\Flexx.Core.csproj" />
     <ProjectReference Include="..\Flexx.Networking\Flexx.Networking.csproj" />
   </ItemGroup>

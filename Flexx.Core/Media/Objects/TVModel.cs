@@ -416,7 +416,11 @@ namespace Flexx.Media.Objects
         {
             EpisodeModel model = new(episode, this);
             Episodes.Add(model);
-            Episodes = Episodes.OrderBy(e => e.Episode_Number).ToList();
+            Episodes.Sort(delegate (EpisodeModel x, EpisodeModel y)
+            {
+                return x.Episode_Number.CompareTo(y.Episode_Number);
+            });
+            //Episodes = Episodes.OrderBy(e => e.Episode_Number).ToList();
             return model;
         }
 

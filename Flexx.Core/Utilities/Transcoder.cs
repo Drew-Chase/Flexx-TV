@@ -1,4 +1,5 @@
-﻿using Flexx.Media.Objects;
+﻿using Flexx.Authentication;
+using Flexx.Media.Objects;
 using Flexx.Media.Objects.Extras;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,6 @@ namespace Flexx.Media.Utilities;
 public class Transcoder
 {
     public static Transcoder Instance = null;
-    public List<Process> ActiveTranscodingProcess;
 
     public enum EncoderPreset
     {
@@ -35,7 +35,6 @@ public class Transcoder
 
     private Transcoder()
     {
-        ActiveTranscodingProcess = new();
         log.Debug($"Initializing Transcoder");
         if (Directory.GetFiles(Paths.FFMpeg, "*ffmpeg*", SearchOption.AllDirectories).Length == 0)
         {
@@ -105,7 +104,7 @@ public class Transcoder
             StartInfo = new()
             {
                 FileName = exe,
-                Arguments = $"-i \"{input}\" -vf scale={scale}:-1 \"{output}\"",
+                Arguments = $"-i \"{input}\" -pix_fmt rgba -vf scale={scale}:-1 \"{output}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -155,7 +154,6 @@ public class Transcoder
         {
             log.Error("Had issue while fetching resolution data for PreTranscoding Alternative versions", e);
         }
-        Versions.Reverse();
         return Versions.ToArray();
     }
 
@@ -186,7 +184,6 @@ public class Transcoder
                     process.Exited += (s, e) =>
                     {
                         log.Info($"Finished Creating Version file for \"{media.Title}\", Width={res.Height}, Bitrate={res.BitRate}Kbps");
-                        Instance.ActiveTranscodingProcess.Remove(process);
                         if (!File.Exists(fileOutput))
                         {
                             log.Debug($"ffmpeg {arguments}");
@@ -199,7 +196,6 @@ public class Transcoder
                             log.Error($"Version file was corrupted \"{media.Title}\", Width={res.Height}, Bitrate={res.BitRate}Kbps");
                         }
                     };
-                    Instance.ActiveTranscodingProcess.Add(process);
                     process.Start();
                     log.Warn($"Creating Version file for \"{media.Title}\", Width={res.Height}, Bitrate={res.BitRate}Kbps");
 
@@ -215,46 +211,98 @@ public class Transcoder
         return Versions.ToArray();
     }
 
-    public static (Process, FileStream) GetTranscodedStream(string requestedUser, MediaBase media, MediaVersion targetResolution, int start_time)
+    public static MediaStream GetTranscodedStream(User requestedUser, MediaBase media, MediaVersion version, int start_time, long startTick)
     {
         if (string.IsNullOrWhiteSpace(media.PATH))
         {
-            return (null, null);
+            return null;
         }
-        string directoryOutput = Directory.CreateDirectory(Path.Combine(Paths.TempData, "streams", "hls", $"stream_{targetResolution.DisplayName}_{requestedUser}")).FullName;
-        string fileOutput = Path.Combine(directoryOutput, $"v_t{media.Title}-r{targetResolution.DisplayName}.m3u8");
-        if (File.Exists(fileOutput))
+        long startTime = startTick == 0 ? DateTime.Now.Ticks : startTick;
+        string directoryOutput = Directory.CreateDirectory(Path.Combine(Paths.TempData, "streams", $"{requestedUser}_{version}_{start_time}_{startTime}")).FullName;
+        string fileOutput = Path.Combine(directoryOutput, $"v_t{media.Title}-r{version.DisplayName}.m3u8");
+        if (!File.Exists(fileOutput))
         {
-            Directory.Delete(directoryOutput, true);
-            Directory.CreateDirectory(directoryOutput);
-        }
-        string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
-        StringBuilder arguments = FFmpegArgumentBuilder(media.PATH, fileOutput, height: targetResolution.Height, video_bitrate: targetResolution.BitRate);
-        arguments.Append($" -hls_list_size 0 -hls_time 10 -hls_playlist_type event -f hls \"{fileOutput}\"");
-        //string arguments = $"-re -i \"{media.PATH}\" -loglevel quiet -preset ultrafast -c:v libx264 -c:a aac -window_size 5 -extra_window_size 10 -use_timeline 1 -use_template 1 -adaptation_sets \"id=0,streams=v id=1,streams=a\" -keyint_min 123 -g 120 -f dash \"{fileOutput}\" ";
-        Process process = new()
-        {
-            StartInfo = new()
+            string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
+            StringBuilder arguments = FFmpegArgumentBuilder(media.PATH, fileOutput, height: version.Height, video_bitrate: version.BitRate, start_duration: start_time);
+            arguments.Append($" -hls_list_size 0 -hls_time 10 -hls_playlist_type event -f hls \"{fileOutput}\"");
+            Process process = new()
             {
-                FileName = exe,
-                Arguments = arguments.ToString(),
-                UseShellExecute = false,
-                WorkingDirectory = directoryOutput,
-            },
-            EnableRaisingEvents = true,
-        };
-        process.Exited += (s, e) =>
-        {
-            Directory.Delete(directoryOutput, true);
-            Instance.ActiveTranscodingProcess.Remove(process);
-        };
-        process.Start();
-        Instance.ActiveTranscodingProcess.Add(process);
-        while (!File.Exists(fileOutput))
-        {
+                StartInfo = new()
+                {
+                    FileName = exe,
+                    Arguments = arguments.ToString(),
+                    UseShellExecute = false,
+                    WorkingDirectory = directoryOutput,
+                },
+                EnableRaisingEvents = true,
+            };
+            process.Start();
+            while (!File.Exists(fileOutput))
+            {
+            }
+            Thread.Sleep(500);
+            return ActiveStreams.Instance.AddStream(new(requestedUser, process, version, directoryOutput, startTime, new(fileOutput, FileMode.Open, FileAccess.Read)));
         }
-        return (process, new(fileOutput, FileMode.Open, FileAccess.Read));
+        return ActiveStreams.Instance.Get(directoryOutput);
     }
+
+    //public static FileStream GetM3U8(User requestedUser, MediaBase media, MediaVersion version)
+    //{
+    //    string directoryOutput = Directory.CreateDirectory(Path.Combine(Paths.TempData, "streams", "hls", $"{requestedUser}", version.DisplayName)).FullName;
+    //    string fileName = $"{media.TMDB}_{requestedUser}_{version.DisplayName}";
+    //    string fileOutput = Path.Combine(directoryOutput, $"{fileName}.m3u8");
+    //    StringBuilder builder = new();
+    //    builder.Append("#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:EVENT\n");
+    //    int segments = (int)Math.Floor(media.MediaInfo.Duration.TotalSeconds / 10);
+    //    double lastDuration = ((media.MediaInfo.Duration.TotalSeconds / 10) - segments) * 10;
+    //    for (int i = 0; i < segments; i++)
+    //    {
+    //        builder.Append("#EXTINF:10,\n");
+    //        builder.Append($"{fileName}_{i}.ts\n");
+    //    }
+
+    //    builder.Append($"#EXTINF:{lastDuration},\n");
+    //    builder.Append($"{fileName}_{segments + 1}.ts\n");
+    //    builder.Append($"#EXT-X-ENDLIST");
+    //    using (TextWriter writer = new StreamWriter(fileOutput))
+    //    {
+    //        writer.Write(builder.ToString());
+    //        writer.Flush();
+    //        writer.Dispose();
+    //        writer.Close();
+    //    }
+    //    return new FileStream(fileOutput, FileMode.Open, FileAccess.Read);
+    //}
+
+    //public static FileStream GetTS(string file)
+    //{
+    //    string[] arguments = file.Split('_');
+    //    string id = arguments[0];
+    //    string user = arguments[1];
+    //    string version = arguments[2];
+    //    int segment = int.Parse(arguments[3]);
+    //    string directoryOutput = Directory.CreateDirectory(Path.Combine(Paths.TempData, "streams", "hls", user, version)).FullName;
+    //    string fileName = $"{id}_{user}_{version}";
+    //    double startPosition = segment * 10;
+
+    //    MediaBase media = 
+
+
+    //    string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
+    //    StringBuilder builder = FFmpegArgumentBuilder(media.PATH, file, height: version.Height, video_bitrate: version.BitRate, start_duration: start_time);
+    //    builder.Append($" \"{fileOutput}\"");
+    //    Process process = new()
+    //    {
+    //        StartInfo = new()
+    //        {
+    //            FileName = exe,
+    //            Arguments = builder.ToString(),
+    //            UseShellExecute = false,
+    //            WorkingDirectory = directoryOutput,
+    //        },
+    //        EnableRaisingEvents = true,
+    //    };
+    //}
 
     public static StringBuilder FFmpegArgumentBuilder(string input, string output, int start_duration = 0, int width = -2, int height = 720, string video_codec = "libx264", string audio_codec = "aac", int video_bitrate = 4500, int audio_bitrate = 380, bool UseHardwareAccel = false, EncoderPreset preset = EncoderPreset.ultrafast)
     {

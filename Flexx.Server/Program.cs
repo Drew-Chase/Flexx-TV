@@ -4,6 +4,7 @@ using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
@@ -15,38 +16,108 @@ public class Program
     {
         config = new();
         Transcoder.Init();
+        _ = Users.Instance;
         Task.Run(MovieLibraryModel.Instance.Initialize).ContinueWith(a =>
         {
-            log.Warn("Done Loading Movies");
+            log.Info("Done Loading Movies");
             MovieLibraryModel.Instance.PostInitializationEvent();
         });
         Task.Run(TvLibraryModel.Instance.Initialize).ContinueWith(a =>
         {
-            log.Warn("Done Loading TV Shows");
+            log.Info("Done Loading TV Shows");
             TvLibraryModel.Instance.PostInitializationEvent();
         });
-        _ = Users.Instance;
-        AppDomain.CurrentDomain.ProcessExit += (s, e) =>
-        {
-            foreach (System.Diagnostics.Process process in Transcoder.Instance.ActiveTranscodingProcess)
-            {
-                process.Kill();
-            }
-        };
-        log.Info("Server is Launching");
-
-        CreateHostBuilder(args).Build().Run();
+        StartHttpServer(args);
+        CommandManager();
     }
 
-    public static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
-        .ConfigureWebHostDefaults(webBuilder =>
+    public static Task StartHttpServer(string[] args) =>
+        Task.Run(() =>
         {
-            webBuilder.UseKestrel(options =>
+            log.Warn("Server is Starting...");
+            Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(webBuilder =>
             {
-                options.ListenAnyIP(3208);
-            });
-            webBuilder.UseStartup<Startup>();
-            log.Info("Server is Now Active");
+                webBuilder.UseKestrel(options =>
+                {
+                    options.ListenAnyIP(3208);
+                });
+                webBuilder.UseStartup<Startup>();
+                log.Info("Server is Now Active!!!");
+            }).Build().Run();
         });
+
+
+    private static Dictionary<string, string> command_helper = new()
+    {
+        { "help", "Displays this message." },
+        { "clear", "Clears console window." },
+        { "list-streams", "Will list all active streams along with their stream info." },
+        { "list-movies", "Will list all downloaded and added movies." },
+        { "list-tv", "Will list all downloaded and added tv shows." },
+    };
+
+
+    private static Dictionary<string, Action> commands = new()
+    {
+        {
+            "help",
+            () => CommandHelp()
+        },
+        {
+            "clear",
+            () => Console.Clear()
+        },
+        {
+            "list-movies",
+            () =>
+            {
+                foreach (var movie in MovieLibraryModel.Instance.GetLocalList(Users.Instance.GetGuestUser()))
+                {
+                    log.Debug($"{movie.Title} ({movie.Year}) -------------> {movie.Plot}");
+                }
+            }
+        },
+        {
+            "list-tv",
+            () =>
+            {
+                foreach (var show in TvLibraryModel.Instance.GetLocalList(Users.Instance.GetGuestUser()))
+                {
+                    log.Debug($"{show.Title} ({show.Year}) [{show.Seasons} Seasons | {show.Episodes} Episodes] -------------> {show.Plot}");
+                }
+            }
+        }
+    };
+
+
+    private static void CommandManager()
+    {
+        Console.Write(">>> ");
+        string command = Console.ReadLine().ToLower();
+        bool found = false;
+        foreach (var cmd in commands)
+        {
+            if (command.Equals(cmd.Key.ToLower()))
+            {
+                cmd.Value.Invoke();
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            log.Error($"Unkown command \"{command}\"");
+            CommandHelp();
+        }
+        CommandManager();
+    }
+
+    private static void CommandHelp()
+    {
+        foreach (var cmd in command_helper)
+        {
+            log.Debug($"{cmd.Key} -------------> {cmd.Value}");
+        }
+    }
 }

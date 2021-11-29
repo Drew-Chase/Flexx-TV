@@ -221,7 +221,7 @@ namespace Flexx.Media.Objects
 #if DEBUG
                     Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false, "FlexxTV");
 #else
-                    Metadata = new(Path.Combine(meta_directory, "metadata"), true, "FlexxTV");
+                    Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true, "FlexxTV");
 #endif
                 }
                 catch (Exception e)

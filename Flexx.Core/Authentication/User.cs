@@ -1,4 +1,8 @@
 ﻿using ChaseLabs.CLConfiguration.List;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Authentication;
@@ -39,9 +43,14 @@ public class Users
         return value ?? Add(username);
     }
 
+    public User GetGuestUser()
+    {
+        return Get("guest");
+    }
+
     private void LoadExisting()
     {
-        log.Info("Loading UserData");
+        log.Warn("Loading UserData");
         string[] files = Directory.GetFiles(Paths.UserData, "*.userdata", SearchOption.AllDirectories);
         Parallel.ForEach(files, file =>
         {
@@ -55,7 +64,6 @@ public class User
     private readonly Dictionary<string, ushort> WatchedDuration;
     private readonly Dictionary<string, bool> HasWatched;
     private readonly ConfigManager userProfile;
-    private readonly Dictionary<string, System.Diagnostics.Process> activeStreams;
     public string Username { get; }
     public bool IsAuthorized { get; private set; }
     public Notifications Notifications { get; }
@@ -68,7 +76,6 @@ public class User
 #else
             userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"), true, "FlexxTV");
 #endif
-        activeStreams = new();
         HasWatched = new();
         WatchedDuration = new();
         Notifications = new(this);
@@ -195,27 +202,5 @@ public class User
     public override string ToString()
     {
         return Username;
-    }
-
-    public void AddActiveStream(string media, System.Diagnostics.Process process)
-    {
-        if (!activeStreams.ContainsKey(media))
-        {
-            activeStreams.Add(media, process);
-        }
-    }
-
-    public void RemoveActiveStream(string media)
-    {
-        if (activeStreams.ContainsKey(media))
-        {
-            var process = activeStreams[media];
-            if (process != null && !process.HasExited)
-            {
-                process.Kill();
-                process.Dispose();
-                activeStreams.Remove(media);
-            }
-        }
     }
 }

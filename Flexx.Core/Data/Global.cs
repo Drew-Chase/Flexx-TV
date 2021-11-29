@@ -11,12 +11,12 @@ public static class Global
 {
     public static string TMDB_API => "378ae44c6e7f5dde094cd8c8456378e0";
 #if DEBUG
-    public static ILog log => LogManager.Init().SetLogDirectory(Path.Combine(Paths.Log, "latest.log")).SetDumpMethod(DumpType.NoDump).SetMinimumLogType(Lists.LogTypes.All);
+    public static ILog log => LogManager.Singleton.SetLogDirectory(Path.Combine(Paths.Log, "latest.log")).SetDumpMethod(DumpType.NoDump).SetMinimumLogType(Lists.LogTypes.All);
 #else
         public static ILog log => LogManager.Init().SetLogDirectory(Path.Combine(Paths.Log, "latest.log")).SetDumpMethod(3000).SetMinimumLogType(Lists.LogTypes.Info);
 #endif
     public static Configuration config = new();
-    public static string[] Media_Extensions = new string[] { "mpegg", "mpeg", "mp4", "mkv", "m4a", "m4v", "f4v", "f4a", "m4b", "m4r", "f4b", "mov", "3gp", "3gp2", "3g2", "3gpp", "3gpp2", "ogg", "oga", "ogv", "ogx", "wmv", "wma", "flv", "avi" };
+    public static string[] Media_Extensions => new string[] { "mpegg", "mpeg", "mp4", "mkv", "m4a", "m4v", "f4v", "f4a", "m4b", "m4r", "f4b", "mov", "3gp", "3gp2", "3g2", "3gpp", "3gpp2", "ogg", "oga", "ogv", "ogx", "wmv", "wma", "flv", "avi" };
 
     public enum DiscoveryCategory
     {
@@ -57,7 +57,7 @@ public static class Global
                     using HttpResponseMessage response = client.GetAsync($"https://flexx-tv.tk/assets/images/missing_poster.jpg").Result;
                     if (response.IsSuccessStatusCode)
                     {
-                        using FileStream fs = new(path, FileMode.CreateNew, FileAccess.ReadWrite);
+                        using FileStream fs = new(Path.Combine(TempData, "poster.jpg"), FileMode.CreateNew, FileAccess.ReadWrite);
                         response.Content.CopyToAsync(fs).Wait();
                     }
                 }

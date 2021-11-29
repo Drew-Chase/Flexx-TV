@@ -75,7 +75,10 @@ namespace Flexx.Media.Objects.Libraries
 
         public void AddMedia(params TVModel[] shows)
         {
-            TVShows.AddRange(shows);
+            foreach (var show in shows)
+            {
+                TVShows.Add(show);
+            }
         }
 
         public SeriesObject[] GetLocalList(User user)

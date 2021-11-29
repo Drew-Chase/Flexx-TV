@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -17,8 +18,11 @@ namespace Flexx.Server
             });
             services.AddCors(options =>
             {
-                options.AddPolicy("debug", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-                options.AddPolicy("release", builder => builder.WithOrigins("flexx-tv.tk"));
+#if DEBUG
+                options.AddDefaultPolicy(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+#else
+                options.AddDefaultPolicy(builder => builder.WithOrigins("flexx-tv.tk"));
+#endif
             });
         }
 
@@ -30,7 +34,16 @@ namespace Flexx.Server
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseCors("debug");
+            // Add custom mime types
+            FileExtensionContentTypeProvider provider = new();
+            provider.Mappings[".m3u8"] = "application/x-mpegURL";
+            provider.Mappings[".M3U8"] = "application/x-mpegURL";
+            provider.Mappings[".ts"] = "video/MP2T";
+            provider.Mappings[".TS"] = "video/MP2T";
+
+            app.UseCors();
+
+            app.UseForwardedHeaders();
 
             app.UseMvc();
 
