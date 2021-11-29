@@ -1,9 +1,13 @@
 ﻿using ChaseLabs.CLLogger;
 using ChaseLabs.CLLogger.Interfaces;
+using Flexx.Authentication;
+using Flexx.Media.Objects.Libraries;
+using Flexx.Media.Utilities;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Flexx.Core.Data;
 
@@ -53,12 +57,18 @@ public static class Global
                 string path = Path.Combine(MetaData, "missing_poster.jpg");
                 if (!File.Exists(path))
                 {
+                    log.Warn($"Downloading Missing Poster Artwork");
                     HttpClient client = new();
                     using HttpResponseMessage response = client.GetAsync($"https://flexx-tv.tk/assets/images/missing_poster.jpg").Result;
                     if (response.IsSuccessStatusCode)
                     {
-                        using FileStream fs = new(Path.Combine(TempData, "poster.jpg"), FileMode.CreateNew, FileAccess.ReadWrite);
+                        string temp = Path.Combine(TempData, "poster.jpg");
+                        if (File.Exists(temp)) File.Delete(temp);
+                        using FileStream fs = new(temp, FileMode.CreateNew, FileAccess.ReadWrite);
                         response.Content.CopyToAsync(fs).Wait();
+                        log.Warn($"Optimizing Missing Poster Artwork");
+                        Transcoder.OptimizePoster(temp, path);
+                        log.Info($"Done Processing Missing Poster Artwork");
                     }
                 }
                 return path;
@@ -72,12 +82,18 @@ public static class Global
                 string path = Path.Combine(MetaData, "missing_cover.jpg");
                 if (!File.Exists(path))
                 {
+                    log.Warn($"Downloading Missing Cover Artwork");
                     HttpClient client = new();
                     using HttpResponseMessage response = client.GetAsync($"https://flexx-tv.tk/assets/images/missing_cover.jpg").Result;
                     if (response.IsSuccessStatusCode)
                     {
-                        using FileStream fs = new(path, FileMode.CreateNew, FileAccess.ReadWrite);
+                        string temp = Path.Combine(TempData, "cover.jpg");
+                        if (File.Exists(temp)) File.Delete(temp);
+                        using FileStream fs = new(temp, FileMode.CreateNew, FileAccess.ReadWrite);
                         response.Content.CopyToAsync(fs).Wait();
+                        log.Warn($"Optimizing Missing Cover Artwork");
+                        Transcoder.OptimizeCover(temp, path);
+                        log.Info($"Done Processing Missing Cover Artwork");
                     }
                 }
                 return path;
@@ -133,5 +149,23 @@ public static class Global
             }
             return JsonConvert.DeserializeObject(json);
         }
+        public static Task InitializeServer() => Task.Run(() =>
+        {
+            config = new();
+            Transcoder.Init();
+            _ = Users.Instance;
+            _ = Paths.MissingPoster;
+            _ = Paths.MissingCover;
+            Task.Run(MovieLibraryModel.Instance.Initialize).ContinueWith(a =>
+            {
+                log.Info("Done Loading Movies");
+                MovieLibraryModel.Instance.PostInitializationEvent();
+            });
+            Task.Run(TvLibraryModel.Instance.Initialize).ContinueWith(a =>
+            {
+                log.Info("Done Loading TV Shows");
+                TvLibraryModel.Instance.PostInitializationEvent();
+            });
+        });
     }
 }

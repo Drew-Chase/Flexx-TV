@@ -14,19 +14,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        config = new();
-        Transcoder.Init();
-        _ = Users.Instance;
-        Task.Run(MovieLibraryModel.Instance.Initialize).ContinueWith(a =>
-        {
-            log.Info("Done Loading Movies");
-            MovieLibraryModel.Instance.PostInitializationEvent();
-        });
-        Task.Run(TvLibraryModel.Instance.Initialize).ContinueWith(a =>
-        {
-            log.Info("Done Loading TV Shows");
-            TvLibraryModel.Instance.PostInitializationEvent();
-        });
+        Functions.InitializeServer().Wait();
         StartHttpServer(args);
         CommandManager();
     }
