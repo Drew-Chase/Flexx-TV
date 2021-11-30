@@ -15,7 +15,7 @@ public class PostMoviesController : ControllerBase
         MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
         if (movie == null)
             return BadRequest(new { message = $"Movie with id of \"{id}\" does not exist" });
-        Users.Instance.Get(username).SetHasWatched(movie.Title, watched);
+        Users.Instance.Get(username).SetHasWatched(movie, watched);
         return Ok();
     }
 
@@ -27,7 +27,7 @@ public class PostMoviesController : ControllerBase
             return BadRequest(new { message = $"Movie with id of \"{id}\" does not exist" });
         if (duration > ushort.MaxValue)
             return BadRequest(new { message = $"A duration of \"{duration}\" was too long.  Duration max possible value is {ushort.MaxValue}" });
-        Users.Instance.Get(username).SetWatchedDuration(movie.Title, (ushort)duration);
+        Users.Instance.Get(username).SetWatchedDuration(movie, (ushort)duration);
         return Ok();
     }
 }
