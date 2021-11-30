@@ -1,7 +1,11 @@
 ﻿using ChaseLabs.CLConfiguration.List;
+using Flexx.Media.Objects;
+using Flexx.Media.Objects.Extras;
+using Flexx.Media.Objects.Libraries;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
@@ -33,6 +37,7 @@ public class Users
     public User Get(string username)
     {
         User value = null;
+        if (string.IsNullOrEmpty(username)) return GetGuestUser();
         Parallel.ForEach(users, user =>
         {
             if (user.Username.Equals(username))
@@ -63,6 +68,7 @@ public class User
 {
     private readonly Dictionary<string, ushort> WatchedDuration;
     private readonly Dictionary<string, bool> HasWatched;
+    private Dictionary<string, DateTime> ContinueWatching;
     private readonly ConfigManager userProfile;
     public string Username { get; }
     public bool IsAuthorized { get; private set; }
@@ -78,6 +84,7 @@ public class User
 #endif
         HasWatched = new();
         WatchedDuration = new();
+        ContinueWatching = new();
         Notifications = new(this);
         UpdateDictionaries();
         IsAuthorized = CheckIfAuthorized();
@@ -92,6 +99,7 @@ public class User
     {
         WatchedDuration.Clear();
         HasWatched.Clear();
+        ContinueWatching.Clear();
         foreach (ChaseLabs.CLConfiguration.Object.Config config in userProfile.List())
         {
             if (config.Key.EndsWith("-watched_duration"))
@@ -108,12 +116,127 @@ public class User
                     HasWatched.Add(config.Key, config.Value);
                 }
             }
+            else if (config.Key.EndsWith("-continue-watching"))
+            {
+                if (DateTime.TryParse(config.Value, out DateTime time))
+                {
+                    ContinueWatching.Add(config.Key, time);
+                }
+            }
         }
     }
 
-    public void SetHasWatched(string title, bool watched)
+    public MediaBase[] ContinueWatchingList()
     {
-        string key = $"{title}-watched";
+        List<MediaBase> list = new();
+        ContinueWatching = ContinueWatching.OrderBy(key => key.Value) as Dictionary<string, DateTime>;
+        foreach (var (name, _) in ContinueWatching)
+        {
+            try
+            {
+                string[] components = name.Split('_');
+                string id = components[1];
+                if (components[0].Equals("e"))
+                {
+                    // Episode
+                    if (int.TryParse(components[2], out int season) && int.TryParse(components[3], out int episode))
+                    {
+                        var show = TvLibraryModel.Instance.GetShowByTMDB(id);
+                        if (show != null)
+                        {
+                            var seasonModel = show.GetSeasonByNumber(season);
+                            if (seasonModel != null)
+                            {
+                                var episodeModel = seasonModel.GetEpisodeByNumber(episode);
+                                if (episodeModel != null)
+                                {
+                                    list.Add(episodeModel);
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (components[0].Equals("m"))
+                {
+                    // Movie
+                    MediaBase media = MovieLibraryModel.Instance.GetMovieByTMDB(id);
+                    if (media != null)
+                    {
+                        list.Add(media);
+                    }
+                }
+            }
+            catch
+            {
+                continue;
+            }
+        }
+        return list.ToArray();
+    }
+
+    public void SetToContinueWatching(MediaBase media)
+    {
+        if (media != null)
+        {
+            string name = "";
+            DateTime time = DateTime.Now;
+            if (media.GetType().Equals(typeof(MovieModel)))
+            {
+                name = $"m_{media.TMDB}";
+            }
+            else if (media.GetType().Equals(typeof(EpisodeModel)))
+            {
+                EpisodeModel episode = (EpisodeModel)media;
+                name = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
+            }
+            if (!string.IsNullOrEmpty(name))
+            {
+                name += "-continue-watching";
+                ContinueWatching.Add(name, time);
+                userProfile.Add(name, time.ToString("MM/dd/yyyy-HH:mm:ss:ff"));
+            }
+
+        }
+    }
+
+    public void RemoveFromContinueWatching(MediaBase media)
+    {
+        if (media != null)
+        {
+            string name = "";
+            if (media.GetType().Equals(typeof(MovieModel)))
+            {
+                name = $"m_{media.TMDB}";
+            }
+            else if (media.GetType().Equals(typeof(EpisodeModel)))
+            {
+                EpisodeModel episode = (EpisodeModel)media;
+                name = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
+            }
+            if (!string.IsNullOrEmpty(name))
+            {
+                name += "-continue-watching";
+                ContinueWatching.Remove(name);
+                userProfile.Remove(name);
+            }
+        }
+    }
+
+    public void SetHasWatched(MediaBase media, bool watched)
+    {
+        string key = "";
+        if (media.GetType().Equals(typeof(MovieModel)))
+        {
+            key = $"m_{media.TMDB}";
+        }
+        else if (media.GetType().Equals(typeof(EpisodeModel)))
+        {
+            EpisodeModel episode = (EpisodeModel)media;
+            key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
+        }
+
+        key += "-watched";
+
         ChaseLabs.CLConfiguration.Object.Config cfg = userProfile.GetConfigByKey(key);
         if (cfg == null)
         {
@@ -134,9 +257,20 @@ public class User
         }
     }
 
-    public bool GetHasWatched(string title)
+    public bool GetHasWatched(MediaBase media)
     {
-        string key = $"{title}-watched";
+        string key = "";
+        if (media.GetType().Equals(typeof(MovieModel)))
+        {
+            key = $"m_{media.TMDB}";
+        }
+        else if (media.GetType().Equals(typeof(EpisodeModel)))
+        {
+            EpisodeModel episode = (EpisodeModel)media;
+            key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
+        }
+
+        key += "-watched";
         if (HasWatched.TryGetValue(key, out bool watched))
         {
             return watched;
@@ -154,11 +288,22 @@ public class User
         }
     }
 
-    public void SetWatchedDuration(string title, ushort duration)
+    public void SetWatchedDuration(MediaBase media, ushort duration)
     {
         try
         {
-            string key = $"{title}-watched_duration";
+            string key = "";
+            if (media.GetType().Equals(typeof(MovieModel)))
+            {
+                key = $"m_{media.TMDB}";
+            }
+            else if (media.GetType().Equals(typeof(EpisodeModel)))
+            {
+                EpisodeModel episode = (EpisodeModel)media;
+                key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
+            }
+
+            key += "-watched_duration";
             ChaseLabs.CLConfiguration.Object.Config cfg = userProfile.GetConfigByKey(key);
             if (cfg == null)
             {
@@ -179,9 +324,20 @@ public class User
         catch (Exception e) { log.Error(e); }
     }
 
-    public ushort GetWatchedDuration(string title)
+    public ushort GetWatchedDuration(MediaBase media)
     {
-        string key = $"{title}-watched_duration";
+        string key = "";
+        if (media.GetType().Equals(typeof(MovieModel)))
+        {
+            key = $"m_{media.TMDB}";
+        }
+        else if (media.GetType().Equals(typeof(EpisodeModel)))
+        {
+            EpisodeModel episode = (EpisodeModel)media;
+            key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
+        }
+
+        key += "-watched_duration";
         if (WatchedDuration.TryGetValue(key, out ushort duration))
         {
             return duration;
