@@ -4,9 +4,12 @@ using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Linq;
+using YoutubeExplode;
+using YoutubeExplode.Videos.Streams;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Server.Controllers;
@@ -18,7 +21,7 @@ public class StreamController : ControllerBase
     [HttpGet("start")]
     public JsonResult StartStream(string id, string username, string library, string version, int? season, int? episode, int? start_time)
     {
-        MediaBase media = library.Equals("movies") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
+        MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
         MediaVersion foundVersion = media.AlternativeVersions.FirstOrDefault(m => m.DisplayName.Equals(version), media.AlternativeVersions[0]);
         var stream = Transcoder.GetTranscodedStream(Users.Instance.Get(username), media, foundVersion, start_time.GetValueOrDefault(0), 0);
         return new(new
@@ -30,7 +33,7 @@ public class StreamController : ControllerBase
     [HttpGet("get/version")]
     public FileStreamResult GetVideoStream(string id, string username, string library, string version, int? season, int? episode, int? start_time, long? startTick)
     {
-        MediaBase media = library.Equals("movies") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
+        MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
         MediaVersion foundVersion = media.AlternativeVersions.FirstOrDefault(m => m.DisplayName.Equals(version), media.AlternativeVersions[0]);
         if (config.UseVersionFile)
             return File(new FileStream(Paths.GetVersionPath(Directory.GetParent(media.Metadata.PATH).FullName, media.Title, foundVersion.Height, foundVersion.BitRate), FileMode.Open, FileAccess.Read), "video/mp4", true);
@@ -70,7 +73,7 @@ public class StreamController : ControllerBase
     [HttpGet("get/stream_info")]
     public JsonResult GetStreamInfo(string id, string username, string library, long startTime, string version, int? season, int? episode)
     {
-        MediaBase media = library.Equals("movies") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault(0)).GetEpisodeByNumber(episode.GetValueOrDefault(0)) : null;
+        MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault(0)).GetEpisodeByNumber(episode.GetValueOrDefault(0)) : null;
         MediaVersion foundVersion = media.AlternativeVersions.FirstOrDefault(m => m.DisplayName.Equals(version), media.AlternativeVersions[0]);
         int ts = 0;
         MediaStream stream = ActiveStreams.Instance.Get(Users.Instance.Get(username), foundVersion, startTime);
@@ -93,7 +96,7 @@ public class StreamController : ControllerBase
     [HttpPost("remove")]
     public IActionResult RemoveFromActiveStream([FromForm] string id, [FromForm] string username, [FromForm] string version, [FromForm] long startTime, [FromForm] string library, [FromForm] int? season, [FromForm] int? episode)
     {
-        MediaBase media = library.Equals("movies") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
+        MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
         if (media == null)
         {
             log.Error($"No Media File from Library \"{library}\" and an ID of \"{id}\"");
@@ -115,5 +118,51 @@ public class StreamController : ControllerBase
         }
         stream.KillAsync();
         return Ok(new { message = "Stream Successfully Removed" });
+    }
+
+    [HttpGet("trailer")]
+    public IActionResult GetMovieTrailer(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "ID cannot be empty" });
+        MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
+        string trailerURL = string.Empty;
+        if (movie == null)
+        {
+            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/videos?api_key={TMDB_API}");
+            if (jresult == new { }) return BadRequest();
+            JToken results = ((JObject)jresult)["results"];
+            if (results.Any())
+            {
+                JToken keyObject = results[0]["key"];
+                string key = keyObject.ToString();
+                IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(key).Result.GetMuxedStreams().GetWithHighestVideoQuality();
+                if (!string.IsNullOrWhiteSpace(key) && streamInfo != null)
+                {
+                    trailerURL = streamInfo.Url;
+                }
+                else
+                {
+                    trailerURL = "";
+                }
+            }
+            else
+            {
+                trailerURL = "";
+            }
+        }
+        else
+        {
+            if (movie.HasTrailer)
+            {
+                trailerURL = movie.TrailerUrl;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(trailerURL))
+        {
+            return new NotFoundResult();
+        }
+
+        return RedirectPermanent(trailerURL);
     }
 }
