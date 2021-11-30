@@ -96,12 +96,12 @@ namespace Flexx.Media.Objects.Libraries
             return model.ToArray();
         }
 
-        public SeriesObject[] DiscoverShows(User user, DiscoveryCategory category = DiscoveryCategory.Popular)
+        public SeriesObject[] Discover(User user, DiscoveryCategory category = DiscoveryCategory.popular)
         {
             return GetList(user).Where(t => t.Category == category).ToArray();
         }
 
-        public object[] SearchForShows(string query, int year = -1)
+        public object[] Search(string query, int year = -1)
         {
             string url;
             if (year != -1)
@@ -126,20 +126,6 @@ namespace Flexx.Media.Objects.Libraries
                 model.Add(new SeriesObject(JsonConvert.SerializeObject(result)));
             }
             return model.ToArray();
-        }
-
-        public object[] GetContinueWatchingList(User user)
-        {
-            MediaBase[] continueWatching = medias.Where(m => !user.GetHasWatched($"{((EpisodeModel)m).Season.Series.Title}_{((EpisodeModel)m).FriendlyName}") && user.GetWatchedDuration($"{((EpisodeModel)m).Season.Series.Title}_{((EpisodeModel)m).FriendlyName}") > 0).ToArray();
-            object[] model = new object[continueWatching.Length > 10 ? 10 : continueWatching.Length];
-            for (int i = 0; i < model.Length; i++)
-            {
-                if (continueWatching[i] != null)
-                {
-                    model[i] = new EpisodeObject((EpisodeModel)continueWatching[i], user);
-                }
-            }
-            return model;
         }
 
         public object[] GetRecentlyAddedList(User user)
@@ -271,6 +257,27 @@ namespace Flexx.Media.Objects.Libraries
             {
                 log.Error($"Had Issues trying to load Ghost Episodes", e);
             }
+        }
+
+        public SeriesObject[] FindSimilar(string id)
+        {
+            List<SeriesObject> model = new();
+            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/similar?api_key={TMDB_API}");
+            if (jresult == new { }) return model.ToArray();
+            JArray results = (JArray)((JObject)jresult)["results"];
+            if (results != null && results.Any())
+            {
+                foreach (JToken result in results)
+                {
+                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace((string)result["release_date"]))
+                    {
+                        continue;
+                    }
+
+                    model.Add(new SeriesObject(JsonConvert.SerializeObject(result)));
+                }
+            }
+            return model.ToArray();
         }
     }
 }

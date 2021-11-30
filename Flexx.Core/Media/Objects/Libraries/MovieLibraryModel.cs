@@ -54,7 +54,7 @@ namespace Flexx.Media.Objects.Libraries
             return null;
         }
 
-        public MovieObject[] DiscoverMovies(User user, DiscoveryCategory category = DiscoveryCategory.Latest)
+        public MovieObject[] Discover(User user, DiscoveryCategory category = DiscoveryCategory.latest)
         {
             return GetList(user).Where(m => m.Category == category).ToArray();
         }
@@ -69,7 +69,7 @@ namespace Flexx.Media.Objects.Libraries
             log.Warn($"Done Fetching Movie Trailers");
         }
 
-        public MovieObject[] SearchForMovies(string query, int year = -1)
+        public MovieObject[] Search(string query, int year = -1)
         {
             string url;
             if (year != -1)
@@ -142,20 +142,6 @@ namespace Flexx.Media.Objects.Libraries
                 }
             }
             return list.OrderBy(m => m.Title).ToArray();
-        }
-
-        public object[] GetContinueWatchingList(User user)
-        {
-            MediaBase[] continueWatching = medias.Where(m => !user.GetHasWatched(m.Title) && user.GetWatchedDuration(m.Title) > 0).ToArray();
-            object[] model = new object[continueWatching.Length > 10 ? 10 : continueWatching.Length];
-            for (int i = 0; i < model.Length; i++)
-            {
-                if (continueWatching[i] != null)
-                {
-                    model[i] = new MovieObject((MovieModel)continueWatching[i], user);
-                }
-            }
-            return model;
         }
 
         public object[] GetRecentlyAddedList(User user)
