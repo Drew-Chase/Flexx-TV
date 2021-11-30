@@ -17,8 +17,6 @@ namespace Flexx.Media.Objects.Extras
         public double Rating { get; }
         public bool Downloaded { get; }
         public ushort Year { get; }
-        public string Poster { get; }
-        public string Cover { get; }
         public bool Watched { get; }
         public ushort WatchedDuration { get; }
         public byte WatchedPercentage { get; }
@@ -36,8 +34,8 @@ namespace Flexx.Media.Objects.Extras
             Rating = movie.Rating;
             Downloaded = movie.Downloaded;
             Year = (ushort)movie.ReleaseDate.Year;
-            Watched = user.GetHasWatched(movie.Title);
-            WatchedDuration = user.GetWatchedDuration(movie.Title);
+            Watched = user.GetHasWatched(movie);
+            WatchedDuration = user.GetWatchedDuration(movie);
             if (movie.Downloaded)
                 WatchedPercentage = (byte)Math.Floor(WatchedDuration / movie.MediaInfo.Duration.TotalSeconds * 100);
             MainCast = movie.Cast.GetCast().ToArray();
@@ -57,8 +55,6 @@ namespace Flexx.Media.Objects.Extras
                 Year = (ushort)date.Year;
             }
 
-            Poster = $"https://image.tmdb.org/t/p/original{result["poster_path"]}";
-            Cover = $"https://image.tmdb.org/t/p/original{result["backdrop_path"]}";
             Rating = double.Parse(result["vote_average"].ToString());
             Downloaded = MovieLibraryModel.Instance.GetMovieByTMDB(result["id"].ToString()) != null;
             Watched = false;
@@ -121,7 +117,7 @@ namespace Flexx.Media.Objects.Extras
             {
                 return s.Episodes.Where(e =>
                 {
-                    if (!user.GetHasWatched(e.MetaDataKey))
+                    if (!user.GetHasWatched(e))
                     {
                         return true;
                     }
@@ -213,7 +209,7 @@ namespace Flexx.Media.Objects.Extras
             Show = season.Series.Title;
             Watched = !season.Episodes.Where(e =>
             {
-                if (!user.GetHasWatched(e.MetaDataKey))
+                if (!user.GetHasWatched(e))
                 {
                     return true;
                 }
@@ -262,7 +258,6 @@ namespace Flexx.Media.Objects.Extras
         public double Rating { get; }
         public bool Downloaded { get; }
         public DateTime ReleaseDate { get; }
-        public string Poster { get; }
         public int Season { get; }
         public int Episode { get; }
         public string Show { get; }
@@ -280,12 +275,11 @@ namespace Flexx.Media.Objects.Extras
             Rating = episode.Rating;
             Downloaded = episode.Downloaded;
             ReleaseDate = episode.ReleaseDate;
-            Poster = episode.PosterImage;
             Show = episode.Season.Series.Title;
             Season = episode.Season.Season_Number;
             Episode = episode.Episode_Number;
-            Watched = user.GetHasWatched(episode.MetaDataKey);
-            WatchedDuration = user.GetWatchedDuration(episode.MetaDataKey);
+            Watched = user.GetHasWatched(episode);
+            WatchedDuration = user.GetWatchedDuration(episode);
 
             int currentIndex = episode.Season.Episodes.IndexOf(episode);
             int seasonIndex = episode.Season.Series.Seasons.IndexOf(episode.Season);
