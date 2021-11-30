@@ -1,6 +1,5 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Media.Objects;
-using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
 using System;
 using System.Collections.Generic;
@@ -195,7 +194,6 @@ public class User
                 ContinueWatching.Add(name, time);
                 userProfile.Add(name, time.ToString("MM/dd/yyyy-HH:mm:ss:ff"));
             }
-
         }
     }
 

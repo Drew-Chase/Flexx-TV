@@ -1,6 +1,5 @@
 ﻿using Flexx.Authentication;
 using Flexx.Media.Objects.Libraries;
-using Flexx.Media.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System;

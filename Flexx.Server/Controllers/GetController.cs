@@ -207,7 +207,6 @@ namespace Flexx.Server.Controllers
                                 {
                                     return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                 }
-
                             }
                             else if (type.Equals("cover"))
                             {
@@ -386,7 +385,6 @@ namespace Flexx.Server.Controllers
                                         key = (string)images[0]["file_path"];
                                     }
                                 }
-
                             }
                             else
                             {
@@ -539,6 +537,7 @@ namespace Flexx.Server.Controllers
         }
 
         #region Notifications
+
         [HttpGet("{username}/notifications")]
         public IActionResult GetUsersNotifications(string username)
         {
@@ -570,6 +569,7 @@ namespace Flexx.Server.Controllers
             Users.Instance.Get(username).Notifications.MarkAsRead(title);
             return new OkResult();
         }
-        #endregion
+
+        #endregion Notifications
     }
 }

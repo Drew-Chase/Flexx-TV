@@ -149,23 +149,24 @@ public static class Global
             }
             return JsonConvert.DeserializeObject(json);
         }
+
         public static Task InitializeServer() => Task.Run(() =>
-        {
-            config = new();
-            Transcoder.Init();
-            _ = Users.Instance;
-            _ = Paths.MissingPoster;
-            _ = Paths.MissingCover;
-            Task.Run(MovieLibraryModel.Instance.Initialize).ContinueWith(a =>
-            {
-                log.Info("Done Loading Movies");
-                MovieLibraryModel.Instance.PostInitializationEvent();
-            });
-            Task.Run(TvLibraryModel.Instance.Initialize).ContinueWith(a =>
-            {
-                log.Info("Done Loading TV Shows");
-                TvLibraryModel.Instance.PostInitializationEvent();
-            });
-        });
+          {
+              config = new();
+              Transcoder.Init();
+              _ = Users.Instance;
+              _ = Paths.MissingPoster;
+              _ = Paths.MissingCover;
+              Task.Run(MovieLibraryModel.Instance.Initialize).ContinueWith(a =>
+              {
+                  log.Info("Done Loading Movies");
+                  MovieLibraryModel.Instance.PostInitializationEvent();
+              });
+              Task.Run(TvLibraryModel.Instance.Initialize).ContinueWith(a =>
+              {
+                  log.Info("Done Loading TV Shows");
+                  TvLibraryModel.Instance.PostInitializationEvent();
+              });
+          });
     }
 }
