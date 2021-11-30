@@ -396,7 +396,7 @@ namespace Flexx.Media.Objects
             Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true);
 #endif
             LoadMetaData();
-            Episodes = Episodes.OrderBy(e => e.Episode_Number).ToList();
+            Episodes.Sort((x, y) => x.Episode_Number.CompareTo(y.Episode_Number));
         }
 
         public EpisodeModel GetEpisodeByNumber(int episode)
@@ -416,11 +416,7 @@ namespace Flexx.Media.Objects
         {
             EpisodeModel model = new(episode, this);
             Episodes.Add(model);
-            Episodes.Sort(delegate (EpisodeModel x, EpisodeModel y)
-            {
-                return x.Episode_Number.CompareTo(y.Episode_Number);
-            });
-            //Episodes = Episodes.OrderBy(e => e.Episode_Number).ToList();
+            Episodes.Sort((x, y) => x.Episode_Number.CompareTo(y.Episode_Number));
             return model;
         }
 
@@ -428,7 +424,7 @@ namespace Flexx.Media.Objects
         {
             EpisodeModel model = new(file, episode, this);
             Episodes.Add(model);
-            Episodes = Episodes.OrderBy(e => e.Episode_Number).ToList();
+            Episodes.Sort((x, y) => x.Episode_Number.CompareTo(y.Episode_Number));
             return model;
         }
 
@@ -447,6 +443,7 @@ namespace Flexx.Media.Objects
                     StartDate = DateTime.Parse(Metadata.GetConfigByKey("start_date").Value);
                 }
             }
+            Episodes.Sort((x, y) => x.Episode_Number.CompareTo(y.Episode_Number));
         }
 
         public void UpdateMetaData()
@@ -498,6 +495,7 @@ namespace Flexx.Media.Objects
 
         public void ScanForMissing()
         {
+            Episodes.Sort((x, y) => x.Episode_Number.CompareTo(y.Episode_Number));
             Parallel.ForEach(Episodes, episode =>
             {
                 episode.ScanForMissing();
@@ -532,8 +530,6 @@ namespace Flexx.Media.Objects
                 }
             }
         }
-
-        public string MetaDataKey => $"{Season.Series.Title}_{FriendlyName}";
 
         public SeasonModel Season { get; private set; }
         public int Episode_Number { get; private set; }
