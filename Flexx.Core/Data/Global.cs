@@ -25,10 +25,10 @@ public static class Global
     public enum DiscoveryCategory
     {
         None,
-        Latest,
-        Popular,
-        Top_Rated,
-        Upcoming
+        latest,
+        popular,
+        top_rated,
+        upcoming
     }
 
     public static class Paths

@@ -259,7 +259,7 @@ namespace Flexx.Media.Utilities
 
                 log.Debug($"Prefetching {category} TV Shows");
                 string url = "";
-                if (category == DiscoveryCategory.Upcoming)
+                if (category == DiscoveryCategory.upcoming)
                     url = $"https://api.themoviedb.org/3/tv/airing_today?api_key={TMDB_API}&language=en-US";
                 else
                     url = $"https://api.themoviedb.org/3/tv/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
