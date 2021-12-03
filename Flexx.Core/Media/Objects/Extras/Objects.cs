@@ -27,6 +27,8 @@ namespace Flexx.Media.Objects.Extras
             Episode = episode.Episode_Number;
             Watched = user.GetHasWatched(episode);
             WatchedDuration = user.GetWatchedDuration(episode);
+            if (episode.Downloaded)
+                WatchedPercentage = (byte)Math.Floor(WatchedDuration / episode.MediaInfo.Duration.TotalSeconds * 100);
 
             EpisodeModel next = null;
             EpisodeModel previous = null;
@@ -137,6 +139,8 @@ namespace Flexx.Media.Objects.Extras
         public bool Watched { get; }
 
         public ushort WatchedDuration { get; }
+
+        public byte WatchedPercentage { get; }
 
         #endregion Public Properties
     }
