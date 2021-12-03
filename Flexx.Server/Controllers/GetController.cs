@@ -28,62 +28,76 @@ namespace Flexx.Server.Controllers
         /// <returns></returns>
         public JsonResult Index(string library, string? username, string? id, int? season)
         {
-            if (!string.IsNullOrWhiteSpace(library))
+            try
             {
-                object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(library.Equals("tv") ? (season.HasValue ? $"/season/{season.Value}" : "") : "")}?api_key={TMDB_API}");
-                User user = Users.Instance.Get(username);
-                if (string.IsNullOrWhiteSpace(id))
+                if (!string.IsNullOrWhiteSpace(library))
                 {
-                    return new(library.Equals("tv") ? TvLibraryModel.Instance.GetLocalList(user) : MovieLibraryModel.Instance.GetLocalList(user));
-                }
-                else
-                {
-                    if (library.Equals("tv"))
+                    User user = Users.Instance.Get(username);
+                    if (string.IsNullOrWhiteSpace(id))
                     {
-                        TVModel tvModel = TvLibraryModel.Instance.GetShowByTMDB(id);
-                        if (!season.HasValue)
+                        return new(library.Equals("tv") ? TvLibraryModel.Instance.GetLocalList(user) : MovieLibraryModel.Instance.GetLocalList(user));
+                    }
+                    else
+                    {
+                        object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(library.Equals("tv") ? (season.HasValue ? $"/season/{season.Value}" : "") : "")}?api_key={TMDB_API}");
+                        if (obj == null) return new(new { });
+                        if (library.Equals("tv"))
                         {
-                            // Get Show Seasons
-                            List<SeasonObject> seasons = new();
-                            if (tvModel == null || !tvModel.Added)
+                            TVModel tvModel = TvLibraryModel.Instance.GetShowByTMDB(id);
+                            if (!season.HasValue)
                             {
-                                foreach (var json in (JArray)((JToken)obj)["seasons"])
+                                // Get Show Seasons
+                                List<SeasonObject> seasons = new();
+                                if (tvModel == null || !tvModel.Added)
                                 {
-                                    seasons.Add(new(JsonConvert.SerializeObject(json)));
+                                    if (obj != null)
+                                    {
+                                        foreach (var json in (JArray)((JToken)obj)["seasons"])
+                                        {
+                                            seasons.Add(new(JsonConvert.SerializeObject(json)));
+                                        }
+                                    }
                                 }
+                                else
+                                {
+                                    foreach (SeasonModel seasonModel in tvModel.Seasons)
+                                    {
+                                        seasons.Add(new(seasonModel, user));
+                                    }
+                                }
+                                seasons.Sort((x, y) => x.Season.CompareTo(y.Season));
+                                return new(new { seasons });
                             }
                             else
                             {
-                                foreach (SeasonModel seasonModel in tvModel.Seasons)
+                                // Get Seasons Episodes
+                                List<EpisodeObject> episodes = new();
+                                if (tvModel == null || !tvModel.Added || (tvModel != null && tvModel.GetSeasonByNumber(season.Value) == null))
                                 {
-                                    seasons.Add(new(seasonModel, user));
+                                    if (obj != null)
+                                    {
+                                        foreach (var json in (JArray)((JToken)obj)["episodes"])
+                                        {
+                                            episodes.Add(new(JsonConvert.SerializeObject(json)));
+                                        }
+                                    }
                                 }
-                            }
-                            seasons.Sort((x, y) => x.Season.CompareTo(y.Season));
-                            return new(new { seasons });
-                        }
-                        else
-                        {
-                            // Get Seasons Episodes
-                            List<EpisodeObject> episodes = new();
-                            if (tvModel == null || !tvModel.Added || (tvModel != null && tvModel.GetSeasonByNumber(season.Value) == null))
-                            {
-                                foreach (var json in (JArray)((JToken)obj)["episodes"])
+                                else
                                 {
-                                    episodes.Add(new(JsonConvert.SerializeObject(json)));
+                                    foreach (var episodeModel in tvModel.GetSeasonByNumber(season.Value).Episodes)
+                                    {
+                                        episodes.Add(new(episodeModel, user));
+                                    }
                                 }
+                                return new(new { episodes });
                             }
-                            else
-                            {
-                                foreach (var episodeModel in tvModel.GetSeasonByNumber(season.Value).Episodes)
-                                {
-                                    episodes.Add(new(episodeModel, user));
-                                }
-                            }
-                            return new(new { episodes });
                         }
                     }
                 }
+            }
+            catch
+            {
+                return new(new { });
             }
             return new(new { });
         }
@@ -100,72 +114,84 @@ namespace Flexx.Server.Controllers
         [HttpGet("info")]
         public JsonResult Info(string id, string library, string? username, int? season, int? episode)
         {
-            User user = Users.Instance.Get(username);
-            object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(library.Equals("tv") ? (season.HasValue ? $"/season/{season.Value}{(episode.HasValue ? $"episode/{episode.Value}" : "")}" : "") : "")}?api_key={TMDB_API}");
-            if (!string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(library) && obj != new { })
+            try
             {
-                if (library.Equals("tv"))
-                {
-                    TVModel tvModel = TvLibraryModel.Instance.GetShowByTMDB(id);
-                    SeasonModel seasonModel;
-                    EpisodeModel episodeModel;
+                User user = Users.Instance.Get(username);
+                object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(library.Equals("tv") ? (season.HasValue ? $"/season/{season.Value}{(episode.HasValue ? $"/episode/{episode.Value}" : "")}" : "") : "")}?api_key={TMDB_API}");
 
-                    if (!season.HasValue && !episode.HasValue)
-                    {
-                        // Show View
-                        if (tvModel == null)
-                        {
-                            return new(new SeriesObject(JsonConvert.SerializeObject(obj)));
-                        }
-                        else
-                        {
-                            return new(new SeriesObject(tvModel, user));
-                        }
-                    }
-                    else if (season.HasValue)
-                    {
-                        // Season View
-                        seasonModel = tvModel.GetSeasonByNumber(season.Value);
-                        if (!episode.HasValue)
-                        {
-                            if (tvModel == null || seasonModel == null)
-                            {
-                                return new(new SeasonObject(JsonConvert.SerializeObject(obj)));
-                            }
-                            else
-                            {
-                                return new(new SeasonObject(tvModel.GetSeasonByNumber(season.Value), user));
-                            }
-                        }
-                        else
-                        {
-                            // Episode View
-                            episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
-                            if (tvModel == null || seasonModel == null || episodeModel == null)
-                            {
-                                return new(new EpisodeObject(JsonConvert.SerializeObject(obj)));
-                            }
-                            else
-                            {
-                                return new(new EpisodeObject(episodeModel, user));
-                            }
-                        }
-                    }
-                }
-                else if (library.Equals("movie"))
+                if (!string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(library) && obj != null)
                 {
-                    MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
-                    if (movie == null)
+                    if (library.Equals("tv"))
                     {
-                        return new(new MovieObject(JsonConvert.SerializeObject(obj)));
+                        TVModel tvModel = TvLibraryModel.Instance.GetShowByTMDB(id);
+                        SeasonModel seasonModel = null;
+                        EpisodeModel episodeModel;
+
+                        if (!season.HasValue && !episode.HasValue)
+                        {
+                            // Show View
+                            if (tvModel == null)
+                            {
+                                return new(new SeriesObject(JsonConvert.SerializeObject(obj)));
+                            }
+                            else
+                            {
+                                return new(new SeriesObject(tvModel, user));
+                            }
+                        }
+                        else if (season.HasValue)
+                        {
+                            // Season View
+                            if (tvModel != null)
+                                seasonModel = tvModel.GetSeasonByNumber(season.Value);
+                            if (!episode.HasValue)
+                            {
+                                if (tvModel == null || seasonModel == null)
+                                {
+                                    return new(new SeasonObject(JsonConvert.SerializeObject(obj)));
+                                }
+                                else
+                                {
+                                    SeasonModel s = tvModel.GetSeasonByNumber(season.Value);
+                                    if (s != null)
+                                        return new(new SeasonObject(s, user));
+                                }
+                            }
+                            else
+                            {
+                                // Episode View
+                                if (tvModel == null || seasonModel == null)
+                                {
+                                    return new(new EpisodeObject(JsonConvert.SerializeObject(obj)));
+                                }
+                                else
+                                {
+                                    episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
+                                    if (episodeModel != null)
+                                        return new(new EpisodeObject(episodeModel, user));
+                                }
+                            }
+                        }
                     }
-                    else
+                    else if (library.Equals("movie"))
                     {
-                        return new(new MovieObject(movie, user));
+                        MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
+                        if (movie == null)
+                        {
+                            return new(new MovieObject(JsonConvert.SerializeObject(obj)));
+                        }
+                        else
+                        {
+                            return new(new MovieObject(movie, user));
+                        }
                     }
                 }
+
             }
-
+            catch
+            {
+                return new(new { });
+            }
             return new(new { });
         }
 
@@ -183,29 +209,242 @@ namespace Flexx.Server.Controllers
         [HttpGet("images")]
         public IActionResult Images(string id, string library, string type, bool? language, int? season, int? episode)
         {
-            if (!string.IsNullOrWhiteSpace(library) || !string.IsNullOrWhiteSpace(id) || !string.IsNullOrWhiteSpace(type))
+            try
             {
-                object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(season.HasValue ? $"/season/{season.Value}{(episode.HasValue ? $"/episode/{episode.Value}" : "")}" : "")}/images?api_key={TMDB_API}{(language.GetValueOrDefault(false) ? $"&include_image_language={config.LanguagePreference}" : "")}");
-                JArray images;
-                string key = "";
-                if (obj != new { })
+                if (!string.IsNullOrWhiteSpace(library) || !string.IsNullOrWhiteSpace(id) || !string.IsNullOrWhiteSpace(type))
                 {
-                    JObject json = (JObject)obj;
-                    if (library.Equals("movie"))
+                    object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(season.HasValue ? $"/season/{season.Value}{(episode.HasValue ? $"/episode/{episode.Value}" : "")}" : "")}/images?api_key={TMDB_API}{(language.GetValueOrDefault(false) ? $"&include_image_language={config.LanguagePreference}" : "")}");
+                    JArray images;
+                    string key = "";
+                    if (obj != null)
                     {
-                        var movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
-                        if (movie == null)
+                        JObject json = (JObject)obj;
+                        if (library.Equals("movie"))
                         {
+                            var movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
+                            if (movie == null)
+                            {
+                                if (type.Equals("poster"))
+                                {
+                                    images = (JArray)json["posters"];
+                                    if (images.Any())
+                                    {
+                                        key = (string)images[0]["file_path"];
+                                    }
+                                    else
+                                    {
+                                        return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                    }
+                                }
+                                else if (type.Equals("cover"))
+                                {
+                                    images = (JArray)json["backdrops"];
+                                    if (images.Any())
+                                    {
+                                        key = (string)images[0]["file_path"];
+                                    }
+                                    else
+                                    {
+                                        return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                    }
+                                }
+                                else if (type.Equals("logo"))
+                                {
+                                    images = (JArray)json["logos"];
+                                    if (images.Any())
+                                    {
+                                        key = (string)images[0]["file_path"];
+                                    }
+                                    else
+                                    {
+                                        return NotFound();
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (type.Equals("poster"))
+                                {
+                                    if (!string.IsNullOrWhiteSpace(movie.PosterImage) && System.IO.File.Exists(movie.PosterImage))
+                                    {
+                                        return File(new FileStream(movie.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                    }
+                                    else
+                                    {
+                                        return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read), "image/jpg", false);
+                                    }
+                                }
+                                else if (type.Equals("cover"))
+                                {
+                                    if (language.GetValueOrDefault(false))
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage) && System.IO.File.Exists(movie.CoverImageWithLanguage))
+                                        {
+                                            return File(new FileStream(movie.CoverImageWithLanguage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                        }
+                                        else
+                                        {
+                                            return Images(id, library, type, false, season, episode);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(movie.CoverImage) && System.IO.File.Exists(movie.CoverImage))
+                                        {
+                                            return File(new FileStream(movie.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                        }
+                                        else
+                                        {
+                                            return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read), "image/jpg", false);
+                                        }
+                                    }
+                                }
+                                else if (type.Equals("logo"))
+                                {
+                                    if (!string.IsNullOrWhiteSpace(movie.LogoImage) && System.IO.File.Exists(movie.LogoImage))
+                                    {
+                                        return File(new FileStream(movie.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                    }
+                                    else
+                                    {
+                                        return NotFound();
+                                    }
+                                }
+                            }
+                        }
+                        else if (library.Equals("tv"))
+                        {
+                            TVModel tvModel = TvLibraryModel.Instance.GetShowByTMDB(id);
+                            SeasonModel seasonModel;
+                            EpisodeModel episodeModel;
+                            if (tvModel != null)
+                            {
+                                if (type.Equals("poster"))
+                                {
+                                    if (season.HasValue)
+                                    {
+                                        seasonModel = tvModel.GetSeasonByNumber(season.Value);
+                                        if (episode.HasValue)
+                                        {
+                                            if (tvModel.Added)
+                                            {
+
+                                                episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
+                                                if (episodeModel != null && !string.IsNullOrWhiteSpace(episodeModel.PosterImage) && System.IO.File.Exists(episodeModel.PosterImage))
+                                                {
+                                                    return File(new FileStream(episodeModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                                }
+                                                else
+                                                {
+                                                    return BadRequest();
+                                                }
+                                            }
+                                            else
+                                            {
+                                                images = (JArray)json["stills"];
+                                                if (!images.Any())
+                                                {
+                                                    return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                                }
+                                                else
+                                                {
+                                                    key = (string)images[0]["file_path"];
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(seasonModel.PosterImage) && System.IO.File.Exists(seasonModel.PosterImage))
+                                            {
+                                                return File(new FileStream(seasonModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(tvModel.PosterImage) && System.IO.File.Exists(tvModel.PosterImage))
+                                        {
+                                            return File(new FileStream(tvModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                        }
+                                    }
+                                }
+                                else if (type.Equals("cover"))
+                                {
+                                    if (season.HasValue)
+                                    {
+                                        seasonModel = tvModel.GetSeasonByNumber(season.Value);
+                                        if (episode.HasValue)
+                                        {
+                                            episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
+                                            if (episodeModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
+                                            {
+                                                return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
+                                            {
+                                                return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
+                                        {
+                                            return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                        }
+                                    }
+                                }
+                                else if (type.Equals("logo"))
+                                {
+                                    if (!string.IsNullOrWhiteSpace(tvModel.LogoImage) && System.IO.File.Exists(tvModel.LogoImage))
+                                    {
+                                        return File(new FileStream(tvModel.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                    }
+                                }
+                            }
                             if (type.Equals("poster"))
                             {
-                                images = (JArray)json["posters"];
-                                if (images.Any())
+                                if (season.HasValue)
                                 {
-                                    key = (string)images[0]["file_path"];
+                                    if (episode.HasValue)
+                                    {
+                                        images = (JArray)json["stills"];
+                                        if (!images.Any())
+                                        {
+                                            return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                        }
+                                        else
+                                        {
+                                            key = (string)images[0]["file_path"];
+                                        }
+                                    }
+                                    else
+                                    {
+                                        images = (JArray)json["posters"];
+                                        if (!images.Any())
+                                        {
+                                            return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                        }
+                                        else
+                                        {
+                                            key = (string)images[0]["file_path"];
+                                        }
+                                    }
                                 }
                                 else
                                 {
-                                    return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                    images = (JArray)json["posters"];
+                                    if (!images.Any())
+                                    {
+                                        return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                    }
+                                    else
+                                    {
+                                        key = (string)images[0]["file_path"];
+                                    }
                                 }
                             }
                             else if (type.Equals("cover"))
@@ -233,205 +472,19 @@ namespace Flexx.Server.Controllers
                                 }
                             }
                         }
-                        else
-                        {
-                            if (type.Equals("poster"))
-                            {
-                                if (!string.IsNullOrWhiteSpace(movie.PosterImage) && System.IO.File.Exists(movie.PosterImage))
-                                {
-                                    return File(new FileStream(movie.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                }
-                                else
-                                {
-                                    return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read), "image/jpg", false);
-                                }
-                            }
-                            else if (type.Equals("cover"))
-                            {
-                                if (language.GetValueOrDefault(false))
-                                {
-                                    if (!string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage) && System.IO.File.Exists(movie.CoverImageWithLanguage))
-                                    {
-                                        return File(new FileStream(movie.CoverImageWithLanguage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                    }
-                                    else
-                                    {
-                                        return Images(id, library, type, false, season, episode);
-                                    }
-                                }
-                                else
-                                {
-                                    if (!string.IsNullOrWhiteSpace(movie.CoverImage) && System.IO.File.Exists(movie.CoverImage))
-                                    {
-                                        return File(new FileStream(movie.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                    }
-                                    else
-                                    {
-                                        return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read), "image/jpg", false);
-                                    }
-                                }
-                            }
-                            else if (type.Equals("logo"))
-                            {
-                                if (!string.IsNullOrWhiteSpace(movie.LogoImage) && System.IO.File.Exists(movie.LogoImage))
-                                {
-                                    return File(new FileStream(movie.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                }
-                                else
-                                {
-                                    return NotFound();
-                                }
-                            }
-                        }
-                    }
-                    else if (library.Equals("tv"))
-                    {
-                        TVModel tvModel = TvLibraryModel.Instance.GetShowByTMDB(id);
-                        SeasonModel seasonModel;
-                        EpisodeModel episodeModel;
-                        if (tvModel != null)
-                        {
-                            if (type.Equals("poster"))
-                            {
-                                if (season.HasValue)
-                                {
-                                    seasonModel = tvModel.GetSeasonByNumber(season.Value);
-                                    if (episode.HasValue)
-                                    {
-                                        episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
-                                        if (episodeModel != null && !string.IsNullOrWhiteSpace(episodeModel.PosterImage) && System.IO.File.Exists(episodeModel.PosterImage))
-                                        {
-                                            return File(new FileStream(episodeModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (seasonModel != null && !string.IsNullOrWhiteSpace(seasonModel.PosterImage) && System.IO.File.Exists(seasonModel.PosterImage))
-                                        {
-                                            return File(new FileStream(seasonModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!string.IsNullOrWhiteSpace(tvModel.PosterImage) && System.IO.File.Exists(tvModel.PosterImage))
-                                    {
-                                        return File(new FileStream(tvModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                    }
-                                }
-                            }
-                            else if (type.Equals("cover"))
-                            {
-                                if (season.HasValue)
-                                {
-                                    seasonModel = tvModel.GetSeasonByNumber(season.Value);
-                                    if (episode.HasValue)
-                                    {
-                                        episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
-                                        if (episodeModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
-                                        {
-                                            return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
-                                        {
-                                            return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
-                                    {
-                                        return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                    }
-                                }
-                            }
-                            else if (type.Equals("logo"))
-                            {
-                                if (!string.IsNullOrWhiteSpace(tvModel.LogoImage) && System.IO.File.Exists(tvModel.LogoImage))
-                                {
-                                    return File(new FileStream(tvModel.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                }
-                            }
-                        }
-                        if (type.Equals("poster"))
-                        {
-                            if (season.HasValue)
-                            {
-                                if (episode.HasValue)
-                                {
-                                    images = (JArray)json["stills"];
-                                    if (!images.Any())
-                                    {
-                                        return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                    }
-                                    else
-                                    {
-                                        key = (string)images[0]["file_path"];
-                                    }
-                                }
-                                else
-                                {
-                                    images = (JArray)json["posters"];
-                                    if (!images.Any())
-                                    {
-                                        return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                    }
-                                    else
-                                    {
-                                        key = (string)images[0]["file_path"];
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                images = (JArray)json["posters"];
-                                if (!images.Any())
-                                {
-                                    return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                                }
-                                else
-                                {
-                                    key = (string)images[0]["file_path"];
-                                }
-                            }
-                        }
-                        else if (type.Equals("cover"))
-                        {
-                            images = (JArray)json["backdrops"];
-                            if (images.Any())
-                            {
-                                key = (string)images[0]["file_path"];
-                            }
-                            else
-                            {
-                                return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
-                            }
-                        }
-                        else if (type.Equals("logo"))
-                        {
-                            images = (JArray)json["logos"];
-                            if (images.Any())
-                            {
-                                key = (string)images[0]["file_path"];
-                            }
-                            else
-                            {
-                                return NotFound();
-                            }
-                        }
-                    }
 
-                    if (!string.IsNullOrWhiteSpace(key))
-                    {
-                        return File(new HttpClient().GetAsync($"https://image.tmdb.org/t/p/original{key}").Result.Content.ReadAsStream(), "image/png");
+                        if (!string.IsNullOrWhiteSpace(key))
+                        {
+                            return File(new HttpClient().GetAsync($"https://image.tmdb.org/t/p/original{key}").Result.Content.ReadAsStream(), "image/png");
+                        }
                     }
                 }
+                return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read), "image/jpg", false);
             }
-            return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read), "image/jpg", false);
+            catch
+            {
+                return BadRequest();
+            }
         }
 
         /// <summary>
@@ -447,91 +500,102 @@ namespace Flexx.Server.Controllers
         [HttpGet("filtered")]
         public JsonResult FilteredList(string library, string category, string? username, string? query, int? year, string? id)
         {
-            if (!string.IsNullOrWhiteSpace(library) && !string.IsNullOrWhiteSpace(category))
+            try
             {
-                object[] results = null;
-                User user = Users.Instance.Get(username);
-                if (category.Equals("simular"))
+                if (!string.IsNullOrWhiteSpace(library) && !string.IsNullOrWhiteSpace(category))
                 {
-                    if (!string.IsNullOrWhiteSpace(id))
+                    object[] results = null;
+                    User user = Users.Instance.Get(username);
+                    if (category.Equals("similar"))
                     {
-                        if (library.Equals("movie"))
+                        if (!string.IsNullOrWhiteSpace(id))
                         {
-                            results = MovieLibraryModel.Instance.FindSimilar(id);
+                            if (library.Equals("movie"))
+                            {
+                                results = MovieLibraryModel.Instance.FindSimilar(id);
+                            }
+                            else if (library.Equals("tv"))
+                            {
+                                results = TvLibraryModel.Instance.FindSimilar(id);
+                            }
                         }
-                        else if (library.Equals("tv"))
+                        if (results == null)
                         {
-                            results = TvLibraryModel.Instance.FindSimilar(id);
+                            return FilteredList(library, "popular", username, query, year, id);
                         }
-                    }
-                    if (results != null)
-                    {
-                        return FilteredList(library, "popular", username, query, year, id);
-                    }
-                    return new(results);
-                }
-                else if (category.Equals("search"))
-                {
-                    if (!string.IsNullOrWhiteSpace(query))
-                    {
-                        if (library.Equals("movie"))
-                        {
-                            results = MovieLibraryModel.Instance.Search(query);
-                        }
-                        else if (library.Equals("tv"))
-                        {
-                            results = TvLibraryModel.Instance.Search(query);
-                        }
-                    }
-                    if (results != null)
-                    {
-                        return FilteredList(library, "popular", username, query, year, id);
-                    }
-                    return new(results);
-                }
-                else if (category.Equals("recently-added"))
-                {
-                    if (library.Equals("movie"))
-                    {
-                        return new(MovieLibraryModel.Instance.GetRecentlyAddedList(Users.Instance.Get(username)));
-                    }
-                    else if (library.Equals("tv"))
-                    {
-                        return new(TvLibraryModel.Instance.GetRecentlyAddedList(Users.Instance.Get(username)));
-                    }
-                }
-                else if (category.Equals("continue-watching"))
-                {
-                    List<object> list = new();
-                    foreach (MediaBase media in user.ContinueWatchingList())
-                    {
-                        if (media.GetType().Equals(typeof(MovieModel)))
-                        {
-                            list.Add(new MovieObject((MovieModel)media, user));
-                        }
-                        else if (media.GetType().Equals(typeof(EpisodeModel)))
-                        {
-                            list.Add(new EpisodeObject((EpisodeModel)media, user));
-                        }
-                    }
-                    return new(list);
-                }
-                else if (Enum.TryParse(typeof(DiscoveryCategory), category, out object cat))
-                {
-                    DiscoveryCategory discoveryCategory = (DiscoveryCategory)cat;
-                    if (library.Equals("movie"))
-                    {
-                        results = MovieLibraryModel.Instance.Discover(user, discoveryCategory);
-                    }
-                    else if (library.Equals("tv"))
-                    {
-                        results = TvLibraryModel.Instance.Discover(user, discoveryCategory);
-                    }
-                    if (results != null)
-                    {
                         return new(results);
                     }
+                    else if (category.Equals("search"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(query))
+                        {
+                            if (library.Equals("movie"))
+                            {
+                                results = MovieLibraryModel.Instance.Search(query);
+                            }
+                            else if (library.Equals("tv"))
+                            {
+                                results = TvLibraryModel.Instance.Search(query);
+                            }
+                            else if (library.Equals("actors"))
+                            {
+                                results = CastListModel.GetMediaByActor(query);
+                            }
+                        }
+                        if (results == null)
+                        {
+                            return FilteredList(library, "popular", username, query, year, id);
+                        }
+                        return new(results);
+                    }
+                    else if (category.Equals("recently-added"))
+                    {
+                        if (library.Equals("movie"))
+                        {
+                            return new(MovieLibraryModel.Instance.GetRecentlyAddedList(Users.Instance.Get(username)));
+                        }
+                        else if (library.Equals("tv"))
+                        {
+                            return new(TvLibraryModel.Instance.GetRecentlyAddedList(Users.Instance.Get(username)));
+                        }
+                    }
+                    else if (category.Equals("continue-watching"))
+                    {
+                        List<object> list = new();
+                        foreach (MediaBase media in user.ContinueWatchingList())
+                        {
+                            if (media.GetType().Equals(typeof(MovieModel)))
+                            {
+                                list.Add(new MovieObject((MovieModel)media, user));
+                            }
+                            else if (media.GetType().Equals(typeof(EpisodeModel)))
+                            {
+                                list.Add(new EpisodeObject((EpisodeModel)media, user));
+                            }
+                        }
+                        return new(list);
+                    }
+                    else if (Enum.TryParse(typeof(DiscoveryCategory), category, out object cat))
+                    {
+                        DiscoveryCategory discoveryCategory = (DiscoveryCategory)cat;
+                        if (library.Equals("movie"))
+                        {
+                            results = MovieLibraryModel.Instance.Discover(user, discoveryCategory);
+                        }
+                        else if (library.Equals("tv"))
+                        {
+                            results = TvLibraryModel.Instance.Discover(user, discoveryCategory);
+                        }
+                        if (results != null)
+                        {
+                            return new(results);
+                        }
+                    }
                 }
+            }
+            catch
+            {
+                return new(new { });
             }
             return new(new { });
         }

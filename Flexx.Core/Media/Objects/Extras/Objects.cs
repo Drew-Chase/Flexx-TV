@@ -24,6 +24,7 @@ namespace Flexx.Media.Objects.Extras
         public CastModel[] MainCast { get; }
         public DiscoveryCategory Category { get; }
         public MediaVersion[] Versions { get; }
+        public string Type => "movie";
 
         public MovieObject(MovieModel movie, User user)
         {
@@ -38,7 +39,7 @@ namespace Flexx.Media.Objects.Extras
             WatchedDuration = user.GetWatchedDuration(movie);
             if (movie.Downloaded)
                 WatchedPercentage = (byte)Math.Floor(WatchedDuration / movie.MediaInfo.Duration.TotalSeconds * 100);
-            MainCast = movie.Cast.GetCast().ToArray();
+            MainCast = movie.Cast.GetCast();
             Category = movie.Category;
             FullDuration = movie.FullDuration;
             Versions = movie.AlternativeVersions;
@@ -47,29 +48,29 @@ namespace Flexx.Media.Objects.Extras
         public MovieObject(string json)
         {
             JObject result = (JObject)JsonConvert.DeserializeObject(json);
-            ID = result["id"].ToString();
-            Title = result["title"].ToString();
-            Plot = result["overview"].ToString();
-            if (DateTime.TryParse(result["release_date"].ToString(), out DateTime date))
+            ID = (string)result["id"];
+            Title = (string)result["title"];
+            Plot = (string)result["overview"];
+            if (DateTime.TryParse((string)result["release_date"], out DateTime date))
             {
                 Year = (ushort)date.Year;
             }
 
-            Rating = double.Parse(result["vote_average"].ToString());
-            Downloaded = MovieLibraryModel.Instance.GetMovieByTMDB(result["id"].ToString()) != null;
+            Rating = double.Parse((string)result["vote_average"]);
+            Downloaded = MovieLibraryModel.Instance.GetMovieByTMDB((string)result["id"]) != null;
             Watched = false;
             WatchedDuration = 0;
             Category = DiscoveryCategory.None;
             object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{ID}/release_dates?api_key={TMDB_API}");
             if (jresult != null)
             {
-                foreach (JToken child in ((JObject)jresult)["results"].Children().ToList())
+                foreach (JToken child in ((JObject)jresult)["results"].Children())
                 {
                     try
                     {
-                        if (child["iso_3166_1"].ToString().ToLower().Equals("us"))
+                        if (((string)child["iso_3166_1"]).ToLower().Equals("us"))
                         {
-                            MPAA = child["release_dates"][0]["certification"].ToString();
+                            MPAA = (string)child["release_dates"][0]["certification"];
                         }
                     }
                     catch
@@ -83,7 +84,7 @@ namespace Flexx.Media.Objects.Extras
                 MPAA = "NR";
             }
 
-            MainCast = new CastListModel("movie", ID).GetCast().ToArray();
+            MainCast = new CastListModel("movie", ID).GetCast();
         }
     }
 
@@ -104,6 +105,7 @@ namespace Flexx.Media.Objects.Extras
         public CastModel[] MainCast { get; }
         public int Seasons { get; }
         public int Episodes { get; }
+        public string Type => "tv";
 
         public SeriesObject(TVModel show, User user)
         {
@@ -127,24 +129,35 @@ namespace Flexx.Media.Objects.Extras
             }).Any();
             Added = show.Added;
             Category = show.Category;
+
+            Seasons = show.Seasons.Count;
+
+            EpisodeModel next = null;
             if (show.Added)
             {
-                SeasonModel[] UnwatchedSeasons = show.Seasons.Where(s => !new SeasonObject(s, user).Watched && new SeasonObject(s, user).Season != 0).ToArray();
-                SeasonModel UnwatchedSeason = UnwatchedSeasons.Length == 0 ? show.Seasons.ElementAt(0) : UnwatchedSeasons[0];
-                EpisodeModel[] UnwatchedEpisodes = UnwatchedSeason.Episodes.Where(e => !new EpisodeObject(e, user).Watched && new EpisodeObject(e, user).Downloaded).ToArray();
-                EpisodeModel UnwatchedEpisode = UnwatchedEpisodes.Length == 0 ? UnwatchedSeason.Episodes.ElementAt(0) : UnwatchedEpisodes[0];
+                foreach (var season in show.Seasons)
+                {
+                    Episodes += season.Episodes.Count;
+                    foreach (var episode in season.Episodes)
+                    {
+                        if (next != null) break;
+                        if (!episode.Downloaded || user.GetHasWatched(episode)) continue;
+                        next = episode;
+                        break;
+                    }
+                }
+            }
+
+            if (next != null)
+            {
                 UpNext = new
                 {
-                    Season = UnwatchedEpisode.Season.Season_Number,
-                    Episode = UnwatchedEpisode.Episode_Number,
-                    Name = UnwatchedEpisode.FriendlyName,
+                    Season = next.Season.Season_Number,
+                    Episode = next.Episode_Number,
+                    Name = next.FriendlyName,
                 };
             }
-            Seasons = show.Seasons.Count;
-            foreach (var season in show.Seasons)
-            {
-                Episodes += season.Episodes.Count;
-            }
+
             MPAA = show.MPAA;
             Rating = show.Rating;
             MainCast = show.MainCast.GetCast().Take(10).ToArray();
@@ -153,10 +166,10 @@ namespace Flexx.Media.Objects.Extras
         public SeriesObject(string json)
         {
             JObject result = (JObject)JsonConvert.DeserializeObject(json);
-            ID = result["id"].ToString();
-            Title = result["name"].ToString();
-            Plot = result["overview"].ToString();
-            if (DateTime.TryParse(result["first_air_date"].ToString(), out DateTime date))
+            ID = (string)result["id"];
+            Title = (string)result["name"];
+            Plot = (string)result["overview"];
+            if (DateTime.TryParse((string)result["first_air_date"], out DateTime date))
             {
                 ReleaseDate = date;
                 Year = ReleaseDate.Year;
@@ -164,15 +177,15 @@ namespace Flexx.Media.Objects.Extras
 
             Watched = false;
             Added = TvLibraryModel.Instance.GetShowByTMDB(ID) != null && TvLibraryModel.Instance.GetShowByTMDB(ID).Added;
-            Rating = result["vote_average"].ToString();
+            Rating = (string)result["vote_average"];
             object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{ID}/content_ratings?api_key={TMDB_API}&language=en-US");
             if (jresult != null)
             {
                 foreach (JToken token in (JArray)((JObject)jresult)["results"])
                 {
-                    if (token["iso_3166_1"].ToString().Equals("US"))
+                    if (((string)token["iso_3166_1"]).Equals("US"))
                     {
-                        MPAA = token["rating"].ToString();
+                        MPAA = (string)token["rating"];
                         break;
                     }
                 }
@@ -197,6 +210,7 @@ namespace Flexx.Media.Objects.Extras
         public string Show { get; }
         public bool Watched { get; }
         public object UpNext { get; }
+        public string Type => "tv";
 
         public SeasonObject(SeasonModel season, User user)
         {
@@ -216,22 +230,39 @@ namespace Flexx.Media.Objects.Extras
 
                 return false;
             }).Any();
-            EpisodeModel[] UnwatchedEpisodes = season.Episodes.Where(e => !new EpisodeObject(e, user).Watched).ToArray();
-            EpisodeModel UnwatchedEpisode = UnwatchedEpisodes.Length == 0 ? season.Episodes.ElementAt(0) : UnwatchedEpisodes[0];
-            UpNext = new
+            EpisodeModel next = null;
+            foreach (EpisodeModel e in season.Episodes)
             {
-                Season = UnwatchedEpisode.Season.Season_Number,
-                Episode = UnwatchedEpisode.Episode_Number,
-                Name = UnwatchedEpisode.FriendlyName,
-            };
+                if (!e.Downloaded || user.GetHasWatched(e)) continue;
+                next = e;
+                break;
+            }
+            if (next == null)
+            {
+                foreach (EpisodeModel e in season.Episodes)
+                {
+                    if (!e.Downloaded) continue;
+                    next = e;
+                    break;
+                }
+            }
+            if (next != null)
+            {
+                UpNext = new
+                {
+                    next.Season.Season_Number,
+                    Episode = next.Episode_Number,
+                    Name = next.FriendlyName,
+                };
+            }
         }
 
         public SeasonObject(string json)
         {
             JObject result = (JObject)JsonConvert.DeserializeObject(json);
-            Name = result["name"].ToString();
-            Plot = result["overview"].ToString();
-            if (DateTime.TryParse(result["air_date"].ToString(), out DateTime date))
+            Name = (string)result["name"];
+            Plot = (string)result["overview"];
+            if (DateTime.TryParse((string)result["air_date"], out DateTime date))
             {
                 ReleaseDate = date;
             }
@@ -239,12 +270,12 @@ namespace Flexx.Media.Objects.Extras
             Watched = false;
             if (result["episode_count"] != null)
             {
-                Episodes = int.TryParse(result["episode_count"].ToString(), out int episode) ? episode : 0;
+                Episodes = int.TryParse((string)result["episode_count"], out int episode) ? episode : 0;
             }
 
             if (result["season_number"] != null)
             {
-                Season = int.TryParse(result["season_number"].ToString(), out int season) ? season : 0;
+                Season = int.TryParse((string)result["season_number"], out int season) ? season : 0;
             }
         }
     }
@@ -264,10 +295,13 @@ namespace Flexx.Media.Objects.Extras
         public bool Watched { get; }
         public ushort WatchedDuration { get; }
         public object NextEpisode { get; }
+        public object PreviousEpisode { get; }
         public MediaVersion[] Versions { get; }
+        public string Type => "tv";
 
         public EpisodeObject(EpisodeModel episode, User user)
         {
+            if (episode == null) return;
             ID = episode.Season.Series.TMDB;
             Title = episode.Title;
             Name = episode.FriendlyName;
@@ -281,9 +315,38 @@ namespace Flexx.Media.Objects.Extras
             Watched = user.GetHasWatched(episode);
             WatchedDuration = user.GetWatchedDuration(episode);
 
-            int currentIndex = episode.Season.Episodes.IndexOf(episode);
-            int seasonIndex = episode.Season.Series.Seasons.IndexOf(episode.Season);
-            EpisodeModel next = episode.Season.Episodes.Count <= currentIndex ? episode.Season.Episodes.ElementAt(currentIndex + 1) : episode.Season.Series.Seasons.Count <= seasonIndex ? episode.Season.Series.Seasons.ElementAt(seasonIndex + 1).Episodes.ElementAt(0) : null;
+            EpisodeModel next = null;
+            EpisodeModel previous = null;
+
+            foreach (SeasonModel s in episode.Season.Series.Seasons)
+            {
+                if (s.Season_Number > episode.Season.Season_Number) continue;
+                if (next != null) break;
+                foreach (EpisodeModel e in s.Episodes)
+                {
+                    if (!e.Downloaded || episode.Episode_Number >= e.Episode_Number) continue;
+                    if (next != null) break;
+                    next = e;
+                    break;
+                }
+            }
+
+            for (int i = episode.Season.Series.Seasons.Count - 1; i > 0; i--)
+            {
+                SeasonModel s = episode.Season.Series.Seasons[i];
+                if (s.Season_Number > episode.Season.Season_Number) continue;
+                if (previous != null) break;
+                for (int j = s.Episodes.Count - 1; j > 0; j--)
+                {
+                    EpisodeModel e = s.Episodes[j];
+                    if (!e.Downloaded || episode.Episode_Number <= e.Episode_Number) continue;
+                    if (previous != null) break;
+                    previous = e;
+                    break;
+                }
+            }
+
+
             if (next != null)
             {
                 NextEpisode = new
@@ -293,24 +356,34 @@ namespace Flexx.Media.Objects.Extras
                     Name = next.FriendlyName,
                 };
             }
+
+            if (previous != null)
+            {
+                PreviousEpisode = new
+                {
+                    Season = previous.Season.Season_Number,
+                    Episode = previous.Episode_Number,
+                    Name = previous.FriendlyName,
+                };
+            }
             Versions = episode.AlternativeVersions;
         }
 
         public EpisodeObject(string json)
         {
             JObject result = (JObject)JsonConvert.DeserializeObject(json);
-            ID = result["id"].ToString();
-            Title = result["name"].ToString();
-            Season = int.TryParse(result["season_number"].ToString(), out int season) ? season : 0;
-            Episode = int.TryParse(result["episode_number"].ToString(), out int episode) ? episode : 0;
+            ID = (string)result["id"];
+            Title = (string)result["name"];
+            Season = int.TryParse((string)result["season_number"], out int season) ? season : 0;
+            Episode = int.TryParse((string)result["episode_number"], out int episode) ? episode : 0;
             Name = $"S{(Season < 10 ? "0" + Season : Season)}E{(Episode < 10 ? "0" + Episode : Episode)}";
-            Plot = result["overview"].ToString();
-            if (DateTime.TryParse(result["air_date"].ToString(), out DateTime date))
+            Plot = (string)result["overview"];
+            if (DateTime.TryParse((string)result["air_date"], out DateTime date))
             {
                 ReleaseDate = date;
             }
 
-            Rating = double.Parse(result["vote_average"].ToString());
+            Rating = double.Parse((string)result["vote_average"]);
             Downloaded = false;
             Watched = false;
             WatchedDuration = 0;

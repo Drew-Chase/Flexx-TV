@@ -54,7 +54,7 @@ public class Users
 
     private void LoadExisting()
     {
-        log.Warn("Loading UserData");
+        log.Debug("Loading UserData");
         string[] files = Directory.GetFiles(Paths.UserData, "*.userdata", SearchOption.AllDirectories);
         Parallel.ForEach(files, file =>
         {
@@ -128,8 +128,7 @@ public class User
     public MediaBase[] ContinueWatchingList()
     {
         List<MediaBase> list = new();
-        ContinueWatching = ContinueWatching.OrderBy(key => key.Value) as Dictionary<string, DateTime>;
-        foreach (var (name, _) in ContinueWatching)
+        foreach (var (name, _) in ContinueWatching.OrderBy(key => key.Value))
         {
             try
             {
