@@ -61,12 +61,12 @@ namespace Flexx.Media.Objects.Libraries
 
         public void FetchAllTrailers()
         {
-            log.Info($"Fetching All Movie Trailers");
+            log.Debug($"Fetching All Movie Trailers");
             Parallel.ForEach(medias, movie =>
             {
                 ((MovieModel)movie).GetTrailer();
             });
-            log.Warn($"Done Fetching Movie Trailers");
+            log.Debug($"Done Fetching Movie Trailers");
         }
 
         public MovieObject[] Search(string query, int year = -1)
@@ -82,14 +82,14 @@ namespace Flexx.Media.Objects.Libraries
             }
             object jresult = Functions.GetJsonObjectFromURL(url);
             List<MovieObject> model = new();
-            if (jresult == new { })
+            if (jresult == null)
                 return model.ToArray();
             JArray results = (JArray)((JObject)jresult)["results"];
             if (results != null && results.Any())
             {
                 foreach (JToken result in results)
                 {
-                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace(result["release_date"].ToString()))
+                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace((string)result["release_date"]))
                     {
                         continue;
                     }
@@ -104,13 +104,13 @@ namespace Flexx.Media.Objects.Libraries
         {
             List<MovieObject> model = new();
             object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/similar?api_key={TMDB_API}");
-            if (jresult == new { }) return model.ToArray();
+            if (jresult == null) return model.ToArray();
             JArray results = (JArray)((JObject)jresult)["results"];
             if (results != null && results.Any())
             {
                 foreach (JToken result in results)
                 {
-                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace(result["release_date"].ToString()))
+                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace((string)result["release_date"]))
                     {
                         continue;
                     }

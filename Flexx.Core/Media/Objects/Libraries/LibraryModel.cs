@@ -19,7 +19,7 @@ namespace Flexx.Media.Objects.Libraries
         {
         }
 
-        public void PostInitializationEvent()
+        public virtual void PostInitializationEvent()
         {
             if (config.UseVersionFile)
             {
@@ -29,7 +29,7 @@ namespace Flexx.Media.Objects.Libraries
                     {
                         item.AlternativeVersions = Transcoder.CreateVersion(item);
                     }
-                });
+                }).Wait();
             }
         }
 
@@ -41,7 +41,7 @@ namespace Flexx.Media.Objects.Libraries
                 {
                     return null;
                 }
-                foreach (MediaBase media in medias)
+                foreach (MediaBase media in medias.ToArray())
                 {
                     if (!string.IsNullOrWhiteSpace(media.Title) && media.Title.ToLower().Equals(name.ToLower()))
                         return media;
@@ -80,7 +80,7 @@ namespace Flexx.Media.Objects.Libraries
                     }
                     else
                     {
-                        log.Warn($"Not Adding Reduntant Title \"{media.Title}\"");
+                        log.Debug($"Not Adding Reduntant Title \"{media.Title}\"");
                     }
                 }
             }

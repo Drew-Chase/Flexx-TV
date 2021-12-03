@@ -3,7 +3,9 @@ using ChaseLabs.CLLogger.Interfaces;
 using Flexx.Authentication;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
+using Flexx.Utilities;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Net.Http;
@@ -15,7 +17,7 @@ public static class Global
 {
     public static string TMDB_API => "378ae44c6e7f5dde094cd8c8456378e0";
 #if DEBUG
-    public static ILog log => LogManager.Singleton.SetLogDirectory(Path.Combine(Paths.Log, "latest.log")).SetDumpMethod(DumpType.NoDump).SetMinimumLogType(Lists.LogTypes.All);
+    public static ILog log => LogManager.Singleton.SetLogDirectory(Path.Combine(Paths.Log, "latest.log")).SetDumpMethod(3000).SetMinimumLogType(Lists.LogTypes.All);
 #else
         public static ILog log => LogManager.Init().SetLogDirectory(Path.Combine(Paths.Log, "latest.log")).SetDumpMethod(3000).SetMinimumLogType(Lists.LogTypes.Info);
 #endif
@@ -28,7 +30,6 @@ public static class Global
         latest,
         popular,
         top_rated,
-        upcoming
     }
 
     public static class Paths
@@ -57,7 +58,7 @@ public static class Global
                 string path = Path.Combine(MetaData, "missing_poster.jpg");
                 if (!File.Exists(path))
                 {
-                    log.Warn($"Downloading Missing Poster Artwork");
+                    log.Debug($"Downloading Missing Poster Artwork");
                     HttpClient client = new();
                     using HttpResponseMessage response = client.GetAsync($"https://flexx-tv.tk/assets/images/missing_poster.jpg").Result;
                     if (response.IsSuccessStatusCode)
@@ -66,9 +67,9 @@ public static class Global
                         if (File.Exists(temp)) File.Delete(temp);
                         using FileStream fs = new(temp, FileMode.CreateNew, FileAccess.ReadWrite);
                         response.Content.CopyToAsync(fs).Wait();
-                        log.Warn($"Optimizing Missing Poster Artwork");
+                        log.Debug($"Optimizing Missing Poster Artwork");
                         Transcoder.OptimizePoster(temp, path);
-                        log.Info($"Done Processing Missing Poster Artwork");
+                        log.Debug($"Done Processing Missing Poster Artwork");
                     }
                 }
                 return path;
@@ -82,7 +83,7 @@ public static class Global
                 string path = Path.Combine(MetaData, "missing_cover.jpg");
                 if (!File.Exists(path))
                 {
-                    log.Warn($"Downloading Missing Cover Artwork");
+                    log.Debug($"Downloading Missing Cover Artwork");
                     HttpClient client = new();
                     using HttpResponseMessage response = client.GetAsync($"https://flexx-tv.tk/assets/images/missing_cover.jpg").Result;
                     if (response.IsSuccessStatusCode)
@@ -91,9 +92,9 @@ public static class Global
                         if (File.Exists(temp)) File.Delete(temp);
                         using FileStream fs = new(temp, FileMode.CreateNew, FileAccess.ReadWrite);
                         response.Content.CopyToAsync(fs).Wait();
-                        log.Warn($"Optimizing Missing Cover Artwork");
+                        log.Debug($"Optimizing Missing Cover Artwork");
                         Transcoder.OptimizeCover(temp, path);
-                        log.Info($"Done Processing Missing Cover Artwork");
+                        log.Debug($"Done Processing Missing Cover Artwork");
                     }
                 }
                 return path;
@@ -127,6 +128,7 @@ public static class Global
 
         public static object GetJsonObjectFromURL(string url)
         {
+
             string json = "";
             HttpClient client = new();
             client.Timeout = new(0, 0, 20);
@@ -139,34 +141,16 @@ public static class Global
                 catch (Exception e)
                 {
                     log.Error($"Unable to fetch Json from url \"{url}\"", e);
-                    return new { };
+                    return null;
                 }
             }
-            if (string.IsNullOrWhiteSpace(json))
+            JObject jsonObject = (JObject)JsonConvert.DeserializeObject(json);
+            if (string.IsNullOrWhiteSpace(json) || jsonObject["success"] != null)
             {
                 log.Error($"Unable to fetch Json from url \"{url}\"");
-                return new { };
+                return null;
             }
             return JsonConvert.DeserializeObject(json);
         }
-
-        public static Task InitializeServer() => Task.Run(() =>
-          {
-              config = new();
-              Transcoder.Init();
-              _ = Users.Instance;
-              _ = Paths.MissingPoster;
-              _ = Paths.MissingCover;
-              Task.Run(MovieLibraryModel.Instance.Initialize).ContinueWith(a =>
-              {
-                  log.Info("Done Loading Movies");
-                  MovieLibraryModel.Instance.PostInitializationEvent();
-              });
-              Task.Run(TvLibraryModel.Instance.Initialize).ContinueWith(a =>
-              {
-                  log.Info("Done Loading TV Shows");
-                  TvLibraryModel.Instance.PostInitializationEvent();
-              });
-          });
     }
 }

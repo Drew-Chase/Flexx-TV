@@ -21,8 +21,8 @@ namespace Flexx.Media.Utilities
             {
                 ForMovies();
                 ForTV();
-                PrefetchMovies(true);
-                PrefetchTV(true);
+                Prefetch(true, true); // Movies
+                Prefetch(false, true); // TV Shows
                 config.NextScheduledPrefetch = DateTime.Now.AddHours(24).ToString("HH:mm:ss MM-dd-yyy");
             }
         }
@@ -31,7 +31,7 @@ namespace Flexx.Media.Utilities
 
         public static void ForMovies()
         {
-            log.Warn("Scanning for Movies");
+            log.Debug("Scanning for Movies");
             List<MovieModel> model = new();
             string[] files = Directory.GetFiles(config.MovieLibraryPath, "*.*", SearchOption.AllDirectories)
                 .Where(f =>
@@ -59,10 +59,6 @@ namespace Flexx.Media.Utilities
                       log.Error($"Had trouble loading file \"{file}\"", e);
                   }
               });
-            Task.Run(() => PrefetchMovies()).ContinueWith(a =>
-            {
-                Task.Run(() => MovieLibraryModel.Instance.FetchAllTrailers());
-            });
         }
 
         private static Task<MovieModel> PopulateMovieAsync(string file)
@@ -75,58 +71,58 @@ namespace Flexx.Media.Utilities
             return new(file);
         }
 
-        private static void PrefetchMovies(bool force = false)
-        {
-            log.Warn($"Prefetching Movies");
-            string prefetch_dir = Directory.CreateDirectory(Path.Combine(Paths.MovieData, "Prefetch")).FullName;
-            if (force)
-            {
-                Directory.Delete(prefetch_dir, true);
-                Directory.CreateDirectory(prefetch_dir);
-            }
-            Parallel.ForEach(Directory.GetFiles(prefetch_dir, "prefetch.metadata", SearchOption.AllDirectories), file =>
-            {
-                try
-                {
-                    MovieLibraryModel.Instance.AddMedia(new MovieModel(new ChaseLabs.CLConfiguration.List.ConfigManager(file)));
-                }
-                catch (Exception e)
-                {
-                    log.Error("Issue with Prefetching Local Movies", e);
-                }
-            });
-            foreach (DiscoveryCategory category in Enum.GetValues(typeof(DiscoveryCategory)))
-            {
-                if (category == DiscoveryCategory.None)
-                {
-                    continue;
-                }
+        //private static void PrefetchMovies(bool force = false)
+        //{
+        //    log.Debug($"Prefetching Movies");
+        //    string prefetch_dir = Directory.CreateDirectory(Path.Combine(Paths.MovieData, "Prefetch")).FullName;
+        //    if (force)
+        //    {
+        //        Directory.Delete(prefetch_dir, true);
+        //        Directory.CreateDirectory(prefetch_dir);
+        //    }
+        //    Parallel.ForEach(Directory.GetFiles(prefetch_dir, "prefetch.metadata", SearchOption.AllDirectories), file =>
+        //    {
+        //        try
+        //        {
+        //            MovieLibraryModel.Instance.AddMedia(new MovieModel(new ChaseLabs.CLConfiguration.List.ConfigManager(file)));
+        //        }
+        //        catch (Exception e)
+        //        {
+        //            log.Error("Issue with Prefetching Local Movies", e);
+        //        }
+        //    });
+        //    foreach (DiscoveryCategory category in Enum.GetValues(typeof(DiscoveryCategory)))
+        //    {
+        //        if (category == DiscoveryCategory.None)
+        //        {
+        //            continue;
+        //        }
 
-                log.Debug($"Prefetching {category} Movies");
-                string url = $"https://api.themoviedb.org/3/movie/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
-                JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
-                if (results == null || !results.Any())
-                {
-                    continue;
-                }
-                Parallel.ForEach(results, result =>
-                {
-                    if (result["id"] != null && MovieLibraryModel.Instance.GetMovieByTMDB(result["id"].ToString()) == null)
-                    {
-                        try
-                        {
-                            MovieLibraryModel.Instance.AddMedia(new MovieModel(result["id"].ToString(), category));
-                        }
-                        catch (Exception e)
-                        {
-                            log.Error("Issue with Prefetching Remote Movies", e);
-                        }
-                    }
-                });
-            }
+        //        log.Debug($"Prefetching {category} Movies");
+        //        string url = $"https://api.themoviedb.org/3/movie/{category.ToLower()}?api_key={TMDB_API}&language=en-US";
+        //        JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
+        //        if (results == null || !results.Any())
+        //        {
+        //            continue;
+        //        }
+        //        Parallel.ForEach(results, result =>
+        //        {
+        //            if (result["id"] != null && MovieLibraryModel.Instance.GetMovieByTMDB(result["id"]) == null)
+        //            {
+        //                try
+        //                {
+        //                    MovieLibraryModel.Instance.AddMedia(new MovieModel(result["id"], category));
+        //                }
+        //                catch (Exception e)
+        //                {
+        //                    log.Error("Issue with Prefetching Remote Movies", e);
+        //                }
+        //            }
+        //        });
+        //    }
 
-            log.Info($"Done Prefetching Movies");
-        }
+        //    log.Debug($"Done Prefetching Movies");
+        //}
 
         #endregion Movies
 
@@ -134,7 +130,7 @@ namespace Flexx.Media.Utilities
 
         public static void ForTV()
         {
-            log.Warn("Scanning for TV Shows");
+            log.Debug("Scanning for TV Shows");
 
             string[] files = Directory.GetFiles(config.TVLibraryPath, "*.*", SearchOption.AllDirectories)
                 .Where(f =>
@@ -155,10 +151,6 @@ namespace Flexx.Media.Utilities
             {
                 TvLibraryModel.Instance.AddMedia(PopulateTVAsync(file).Result);
             }
-            Task.Run(() => PrefetchTV()).ContinueWith(a =>
-            {
-                Task.Run(() => TvLibraryModel.Instance.AddGhostEpisodes()).ContinueWith(t => log.Info($"Done Processing Ghost Episodes... Ohhhsoshshsh.. Ghossts"));
-            });
         }
 
         private static Task<TVModel[]> PopulateTVAsync(params string[] files)
@@ -188,14 +180,14 @@ namespace Flexx.Media.Utilities
                         json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={title}&first_air_date_year={year}"));
                         if (json["results"].Children().Any())
                         {
-                            tmdb = json["results"][0]["id"].ToString();
+                            tmdb = (string)json["results"][0]["id"];
                         }
                         else
                         {
                             json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={title}"));
                             if (json["results"].Children().Any())
                             {
-                                tmdb = json["results"][0]["id"].ToString();
+                                tmdb = (string)json["results"][0]["id"];
                             }
                         }
                     }
@@ -220,36 +212,49 @@ namespace Flexx.Media.Utilities
             }
             return models.ToArray();
         }
+        #endregion TV
 
-        private static void PrefetchTV(bool force = false)
+
+        public static void Prefetch(bool movies, bool force = false)
         {
-            log.Warn($"Prefetching TV Shows");
-            string prefetch_dir = Directory.CreateDirectory(Path.Combine(Paths.TVData, "Prefetch")).FullName;
+            string prefetch_dir = Directory.CreateDirectory(Path.Combine(movies ? Paths.MovieData : Paths.TVData, "Prefetch")).FullName;
             if (force)
             {
                 Directory.Delete(prefetch_dir, true);
                 Directory.CreateDirectory(prefetch_dir);
             }
-            log.Warn($"Loading Cached Prefetched Data");
+            log.Debug($"Loading Cached Prefetched Data");
             Parallel.ForEach(Directory.GetFiles(prefetch_dir, "prefetch.metadata", SearchOption.AllDirectories), file =>
-           {
-               try
-               {
-                   ChaseLabs.CLConfiguration.List.ConfigManager data = new(file);
-                   if (data.GetConfigByKey("id") != null)
-                   {
-                       TvLibraryModel.Instance.AddMedia(new TVModel(data));
-                   }
-                   else
-                   {
-                       File.Delete(file);
-                   }
-               }
-               catch (Exception e)
-               {
-                   log.Error("Issue with Loading TV Shows Cached Prefetches", e);
-               }
-           });
+            {
+                try
+                {
+                    ChaseLabs.CLConfiguration.List.ConfigManager data = new(file);
+                    if (data.GetConfigByKey("id") != null)
+                    {
+                        if (movies)
+                        {
+                            var m = new MovieModel(data);
+                            log.Debug($"Found Cached Data for \"{m.Title}\"");
+                            MovieLibraryModel.Instance.AddMedia(m);
+                        }
+                        else
+                        {
+                            var m = new TVModel(data);
+                            log.Debug($"Found Cached Data for \"{m.Title}\"");
+                            TvLibraryModel.Instance.AddMedia(m);
+                        }
+                    }
+                    else
+                    {
+                        log.Debug($"Deleting \"{file}\"");
+                        File.Delete(file);
+                    }
+                }
+                catch (Exception e)
+                {
+                    log.Error($"Issue with Loading {(movies ? "Movies" : "TV Shows")} Cached Prefetches", e);
+                }
+            });
             foreach (DiscoveryCategory category in Enum.GetValues(typeof(DiscoveryCategory)))
             {
                 if (category == DiscoveryCategory.None)
@@ -257,12 +262,9 @@ namespace Flexx.Media.Utilities
                     continue;
                 }
 
-                log.Debug($"Prefetching {category} TV Shows");
-                string url = "";
-                if (category == DiscoveryCategory.upcoming)
-                    url = $"https://api.themoviedb.org/3/tv/airing_today?api_key={TMDB_API}&language=en-US";
-                else
-                    url = $"https://api.themoviedb.org/3/tv/{category.ToString().ToLower()}?api_key={TMDB_API}&language=en-US";
+                log.Debug($"Prefetching {category} {(movies ? "Movies" : "TV Shows")}");
+                string url = $"https://api.themoviedb.org/3/{(movies ? "movie" : "tv")}/{category}?api_key={TMDB_API}&language={config.LanguagePreference}";
+
                 JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                 if (results == null || !results.Any())
                 {
@@ -270,43 +272,32 @@ namespace Flexx.Media.Utilities
                 }
                 Parallel.ForEach(results, result =>
                 {
-                    if (result["id"] != null && !string.IsNullOrWhiteSpace(result["id"].ToString()) && TvLibraryModel.Instance.GetShowByTMDB(result["id"].ToString()) == null)
+                    if (result["id"] != null && !string.IsNullOrWhiteSpace((string)result["id"]) && movies ? (MovieLibraryModel.Instance.GetMovieByTMDB((string)result["id"]) == null) : (TvLibraryModel.Instance.GetShowByTMDB((string)result["id"]) == null))
                     {
-                        TVModel model = null;
+                        object model = null;
                         try
                         {
-                            model = new(result["id"].ToString(), category);
+                            model = movies ? new MovieModel((string)result["id"], category) : new TVModel((string)result["id"], category);
                         }
                         catch (Exception e)
                         {
-                            log.Error("Issue with Prefetching Remote TV Shows", e);
+                            log.Error($"Issue with Prefetching Remote {(movies ? "Movies" : "TV Shows")}", e);
                         }
                         if (model != null)
                         {
-                            TvLibraryModel.Instance.AddMedia(model);
+                            if (movies)
+                            {
+                                MovieLibraryModel.Instance.AddMedia((MovieModel)model);
+                            }
+                            else
+                            {
+                                TvLibraryModel.Instance.AddMedia((TVModel)model);
+                            }
                         }
                     }
                 });
             }
-
-            log.Info($"Done Prefetching TV Shows");
         }
 
-        #endregion TV
-
-        /// <summary>
-        /// Splits an array into several smaller arrays.
-        /// </summary>
-        /// <typeparam name="T">The type of the array.</typeparam>
-        /// <param name="array">The array to split.</param>
-        /// <param name="size">The size of the smaller arrays.</param>
-        /// <returns>An array containing smaller arrays.</returns>
-        public static IEnumerable<IEnumerable<T>> Split<T>(T[] array, int size)
-        {
-            for (int i = 0; i < (float)array.Length / size; i++)
-            {
-                yield return array.Skip(i * size).Take(size);
-            }
-        }
     }
 }

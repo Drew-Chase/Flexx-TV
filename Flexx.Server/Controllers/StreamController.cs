@@ -26,7 +26,7 @@ public class StreamController : ControllerBase
         var stream = Transcoder.GetTranscodedStream(Users.Instance.Get(username), media, foundVersion, start_time.GetValueOrDefault(0), 0);
         return new(new
         {
-            UUID = stream.StartTime.ToString(),
+            UUID = stream.StartTime,
         });
     }
 
@@ -106,7 +106,7 @@ public class StreamController : ControllerBase
         var stream = ActiveStreams.Instance.Get(Users.Instance.Get(username), foundVersion, startTime);
         if (stream == null)
         {
-            log.Warn("Stream Info",
+            log.Debug("Stream Info",
                 $"ID: {id}",
                 $"Username: {username}",
                 $"Version: {version}",
@@ -129,12 +129,12 @@ public class StreamController : ControllerBase
         if (movie == null)
         {
             object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/videos?api_key={TMDB_API}");
-            if (jresult == new { }) return BadRequest();
+            if (jresult == null) return BadRequest();
             JToken results = ((JObject)jresult)["results"];
             if (results.Any())
             {
                 JToken keyObject = results[0]["key"];
-                string key = keyObject.ToString();
+                string key = (string)keyObject;
                 IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(key).Result.GetMuxedStreams().GetWithHighestVideoQuality();
                 if (!string.IsNullOrWhiteSpace(key) && streamInfo != null)
                 {

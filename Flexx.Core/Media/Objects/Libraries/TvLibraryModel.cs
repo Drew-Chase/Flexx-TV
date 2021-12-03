@@ -41,6 +41,12 @@ namespace Flexx.Media.Objects.Libraries
             base.Initialize();
         }
 
+        public override void PostInitializationEvent()
+        {
+            AddGhostEpisodes();
+            log.Debug("Done Processing Ghost Episodes");
+        }
+
         public TVModel GetTVShowByName(string name)
         {
             foreach (TVModel model in TVShows)
@@ -114,8 +120,8 @@ namespace Flexx.Media.Objects.Libraries
             }
             object jresult = Functions.GetJsonObjectFromURL(url);
             List<object> model = new();
-            if (jresult == new { }) return model.ToArray();
-            JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
+            if (jresult == null) return model.ToArray();
+            JArray results = (JArray)((JObject)jresult)["results"];
             if (results == null)
             {
                 return model.ToArray();
@@ -160,7 +166,7 @@ namespace Flexx.Media.Objects.Libraries
                                     JArray seasons = (JArray)json["seasons"];
                                     Parallel.ForEach(seasons, season =>
                                     {
-                                        int season_number = int.Parse(season["season_number"].ToString());
+                                        int season_number = int.Parse((string)season["season_number"]);
                                         try
                                         {
                                             SeasonModel seasonModel = tvModel.GetSeasonByNumber(season_number);
@@ -170,23 +176,26 @@ namespace Flexx.Media.Objects.Libraries
                                                 seasonModel = tvModel.AddSeason(season_number);
                                             }
                                             JObject seasonJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{tvModel.TMDB}/season/{season_number}?api_key={TMDB_API}");
-                                            JArray episodes = (JArray)seasonJson["episodes"];
-                                            Parallel.ForEach(episodes, episode =>
+                                            if (seasonJson != null)
                                             {
-                                                int episode_number = int.Parse(episode["episode_number"].ToString());
-                                                try
+                                                JArray episodes = (JArray)seasonJson["episodes"];
+                                                Parallel.ForEach(episodes, episode =>
                                                 {
-                                                    if (seasonModel.GetEpisodeByNumber(episode_number) == null)
+                                                    int episode_number = int.Parse((string)episode["episode_number"]);
+                                                    try
                                                     {
-                                                        log.Debug($"Adding Ghost Episode for {tvModel.Title} Season {season_number} Episode {episode_number}");
-                                                        seasonModel.AddEpisode(episode_number);
+                                                        if (seasonModel.GetEpisodeByNumber(episode_number) == null)
+                                                        {
+                                                            log.Debug($"Adding Ghost Episode for {tvModel.Title} Season {season_number} Episode {episode_number}");
+                                                            seasonModel.AddEpisode(episode_number);
+                                                        }
                                                     }
-                                                }
-                                                catch (Exception e)
-                                                {
-                                                    log.Error($"Had issues trying to load Ghost Episodes for \"{tvModel.Title}\" Season {season_number} Episode {episode_number}", e);
-                                                }
-                                            });
+                                                    catch (Exception e)
+                                                    {
+                                                        log.Error($"Had issues trying to load Ghost Episodes for \"{tvModel.Title}\" Season {season_number} Episode {episode_number}", e);
+                                                    }
+                                                });
+                                            }
                                         }
                                         catch (Exception e)
                                         {
@@ -212,7 +221,7 @@ namespace Flexx.Media.Objects.Libraries
                             JArray seasons = (JArray)json["seasons"];
                             Parallel.ForEach(seasons, season =>
                             {
-                                int season_number = int.Parse(season["season_number"].ToString());
+                                int season_number = int.Parse((string)season["season_number"]);
                                 try
                                 {
                                     SeasonModel seasonModel = show.GetSeasonByNumber(season_number);
@@ -225,7 +234,7 @@ namespace Flexx.Media.Objects.Libraries
                                     JArray episodes = (JArray)seasonJson["episodes"];
                                     Parallel.ForEach(episodes, episode =>
                                     {
-                                        int episode_number = int.Parse(episode["episode_number"].ToString());
+                                        int episode_number = int.Parse((string)episode["episode_number"]);
                                         try
                                         {
                                             if (seasonModel.GetEpisodeByNumber(episode_number) == null)
@@ -263,7 +272,7 @@ namespace Flexx.Media.Objects.Libraries
         {
             List<SeriesObject> model = new();
             object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{id}/similar?api_key={TMDB_API}");
-            if (jresult == new { }) return model.ToArray();
+            if (jresult == null) return model.ToArray();
             JArray results = (JArray)((JObject)jresult)["results"];
             if (results != null && results.Any())
             {
