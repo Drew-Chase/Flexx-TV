@@ -1,6 +1,7 @@
 ﻿using Flexx.Authentication;
 using Flexx.Media.Objects.Libraries;
 using System;
+using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Data
@@ -34,26 +35,29 @@ namespace Flexx.Data
 
         #region Public Methods
 
-        public static void Run()
+        public static Task Run()
         {
-            Console.Write(">>> ");
-            string command = Console.ReadLine().ToLower();
-            bool found = false;
-            foreach (var cmd in commands)
+            return Task.Run(() =>
             {
-                if (command.Equals(cmd.Name.ToLower()))
+                Console.Write(">>> ");
+                string command = Console.ReadLine().ToLower();
+                bool found = false;
+                foreach (var cmd in commands)
                 {
-                    cmd.Action.Invoke();
-                    found = true;
-                    break;
+                    if (command.Equals(cmd.Name.ToLower()))
+                    {
+                        cmd.Action.Invoke();
+                        found = true;
+                        break;
+                    }
                 }
-            }
-            if (!found)
-            {
-                log.Error($"Unkown command \"{command}\"");
-                CommandHelp();
-            }
-            Run();
+                if (!found)
+                {
+                    log.Error($"Unkown command \"{command}\"");
+                    CommandHelp();
+                }
+                Run();
+            });
         }
 
         #endregion Public Methods
