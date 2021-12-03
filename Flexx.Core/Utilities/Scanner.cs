@@ -212,8 +212,8 @@ namespace Flexx.Media.Utilities
             }
             return models.ToArray();
         }
-        #endregion TV
 
+        #endregion TV
 
         public static void Prefetch(bool movies, bool force = false)
         {
@@ -298,6 +298,5 @@ namespace Flexx.Media.Utilities
                 });
             }
         }
-
     }
 }

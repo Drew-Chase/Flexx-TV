@@ -346,7 +346,6 @@ namespace Flexx.Media.Objects.Extras
                 }
             }
 
-
             if (next != null)
             {
                 NextEpisode = new

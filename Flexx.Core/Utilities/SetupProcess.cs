@@ -1,10 +1,8 @@
-﻿using ChaseLabs.CLLogger;
-using Flexx.Authentication;
+﻿using Flexx.Authentication;
 using Flexx.Data;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
@@ -38,7 +36,6 @@ namespace Flexx.Utilities
 
                 for (int i = 0; i < steps.Length; i++)
                 {
-
                     log.Warn($"{steps[i].Name} ({i + 1}/{steps.Length + 1})...");
 
                     if (i == steps.Length - 1)
@@ -63,5 +60,4 @@ namespace Flexx.Utilities
             this.Action = Action;
         }
     }
-
 }

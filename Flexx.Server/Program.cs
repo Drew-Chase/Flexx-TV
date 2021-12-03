@@ -1,11 +1,6 @@
-﻿using ChaseLabs.CLLogger;
-using Flexx.Authentication;
-using Flexx.Media.Objects.Libraries;
-using Flexx.Utilities;
+﻿using Flexx.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
@@ -34,6 +29,4 @@ public class Program
                 log.Debug("HTTP Server is Now Active!!!");
             }).Build().Run();
         });
-
-
 }

@@ -1,15 +1,11 @@
 ﻿using ChaseLabs.CLLogger;
 using ChaseLabs.CLLogger.Interfaces;
-using Flexx.Authentication;
-using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
-using Flexx.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace Flexx.Core.Data;
 
@@ -128,7 +124,6 @@ public static class Global
 
         public static object GetJsonObjectFromURL(string url)
         {
-
             string json = "";
             HttpClient client = new();
             client.Timeout = new(0, 0, 20);

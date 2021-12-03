@@ -186,7 +186,6 @@ namespace Flexx.Server.Controllers
                         }
                     }
                 }
-
             }
             catch
             {
@@ -328,7 +327,6 @@ namespace Flexx.Server.Controllers
                                         {
                                             if (tvModel.Added)
                                             {
-
                                                 episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
                                                 if (episodeModel != null && !string.IsNullOrWhiteSpace(episodeModel.PosterImage) && System.IO.File.Exists(episodeModel.PosterImage))
                                                 {

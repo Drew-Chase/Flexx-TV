@@ -1,17 +1,12 @@
 ﻿using Flexx.Authentication;
 using Flexx.Media.Objects.Libraries;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
 namespace Flexx.Data
 {
     public static class CommandEngine
     {
-
         private static readonly Command[] commands = new Command[]
         {
             new ("help", "Displays this message.", ()=>CommandHelp()),
@@ -68,6 +63,7 @@ namespace Flexx.Data
             public string Name { get; }
             public string Description { get; }
             public Action Action { get; }
+
             public Command(string Name, string Description, Action Action)
             {
                 this.Name = Name;

@@ -2,7 +2,6 @@
 using Flexx.Media.Objects.Libraries;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -61,7 +60,6 @@ namespace Flexx.Media.Objects.Extras
                 }
             }
 
-
             foreach (var show in TvLibraryModel.Instance.GetList(Users.Instance.GetGuestUser()))
             {
                 foreach (var member in show.MainCast)
@@ -89,7 +87,6 @@ namespace Flexx.Media.Objects.Extras
             }
             return list.ToArray();
         }
-
     }
 
     public class CastModel
