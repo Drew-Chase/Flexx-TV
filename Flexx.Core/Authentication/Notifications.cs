@@ -67,7 +67,7 @@ namespace Flexx.Authentication
             {
                 json.Add(new
                 {
-                    type = n.Type.ToString(),
+                    type = n.Type,
                     user = n.User.ToString(),
                     title = n.Title,
                     message = n.Message,

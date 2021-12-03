@@ -240,17 +240,17 @@ namespace Flexx.Media.Objects
                 log.Error($"Unable to get Image metadata for TV Show with ID of {TMDB}", e);
             }
 
-            Title = json["name"].ToString();
-            Plot = json["overview"].ToString();
-            Rating = json["vote_average"].ToString();
+            Title = (string)json["name"];
+            Plot = (string)json["overview"];
+            Rating = (string)json["vote_average"];
             try
             {
                 string j = new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/content_ratings?api_key={TMDB_API}");
                 foreach (JToken token in (JArray)((JObject)JsonConvert.DeserializeObject(j))["results"])
                 {
-                    if (token["iso_3166_1"].ToString().Equals("US"))
+                    if (token["iso_3166_1"].Equals("US"))
                     {
-                        MPAA = token["rating"].ToString();
+                        MPAA = (string)token["rating"];
                         break;
                     }
                 }
@@ -261,7 +261,7 @@ namespace Flexx.Media.Objects
             }
             try
             {
-                Studio = json["networks"][0]["name"].ToString();
+                Studio = (string)json["networks"][0]["name"];
             }
             catch { }
             try
@@ -271,15 +271,15 @@ namespace Flexx.Media.Objects
             catch { }
             try
             {
-                StartDate = DateTime.Parse(json["first_air_date"].ToString());
+                StartDate = DateTime.Parse((string)json["first_air_date"]);
             }
             catch { }
-            if (json["poster_path"] != null && !string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
+            if (json["poster_path"] != null && !string.IsNullOrWhiteSpace((string)json["poster_path"]))
             {
                 PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
             }
 
-            if (json["backdrop_path"] != null && !string.IsNullOrWhiteSpace(json["backdrop_path"].ToString()))
+            if (json["backdrop_path"] != null && !string.IsNullOrWhiteSpace((string)json["backdrop_path"]))
             {
                 CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
             }
@@ -288,7 +288,7 @@ namespace Flexx.Media.Objects
             Metadata.Add("title", Title);
             Metadata.Add("added", Added);
             Metadata.Add("plot", Plot);
-            Metadata.Add("category", Category.ToString());
+            Metadata.Add("category", Category);
             Metadata.Add("studio", Studio);
             Metadata.Add("mpaa", MPAA);
             Metadata.Add("rating", Rating);
@@ -464,14 +464,14 @@ namespace Flexx.Media.Objects
                 }
                 if (json != null)
                 {
-                    Title = json["name"].ToString();
-                    Plot = json["overview"].ToString();
-                    if (!string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
+                    Title = (string)json["name"];
+                    Plot = (string)json["overview"];
+                    if (!string.IsNullOrWhiteSpace((string)json["poster_path"]))
                         PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
                     else
                         PosterImage = Series.PosterImage;
-                    if (json["air_date"] != null && !string.IsNullOrWhiteSpace(json["air_date"].ToString()))
-                        StartDate = DateTime.Parse(json["air_date"].ToString());
+                    if (json["air_date"] != null && !string.IsNullOrWhiteSpace((string)json["air_date"]))
+                        StartDate = DateTime.Parse((string)json["air_date"]);
                     else
                         StartDate = Series.StartDate;
                 }
@@ -604,12 +604,12 @@ namespace Flexx.Media.Objects
                 }
                 if (json != null)
                 {
-                    Title = json["name"].ToString();
-                    Plot = json["overview"].ToString();
+                    Title = (string)json["name"];
+                    Plot = (string)json["overview"];
                     try
                     {
                         PosterImage = $"https://image.tmdb.org/t/p/original{json["still_path"]}";
-                        ReleaseDate = DateTime.Parse(json["air_date"].ToString());
+                        ReleaseDate = DateTime.Parse((string)json["air_date"]);
                     }
                     catch
                     {

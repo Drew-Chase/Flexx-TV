@@ -163,7 +163,7 @@ namespace Flexx.Media.Objects
             }
             else
             {
-                PATH = initializer.ToString();
+                PATH = initializer;
                 Downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
                 if (Downloaded)
                 {
@@ -177,7 +177,7 @@ namespace Flexx.Media.Objects
                 JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                 if (results.Children().Any())
                 {
-                    TMDB = results[0]["id"].ToString();
+                    TMDB = (string)results[0]["id"];
                 }
                 else
                 {
@@ -185,7 +185,7 @@ namespace Flexx.Media.Objects
                     results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                     if (results.Children().Any())
                     {
-                        TMDB = results[0]["id"].ToString();
+                        TMDB = (string)results[0]["id"];
                     }
                     else
                     {
@@ -193,7 +193,7 @@ namespace Flexx.Media.Objects
                         results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                         if (results.Children().Any())
                         {
-                            TMDB = results[0]["id"].ToString();
+                            TMDB = (string)results[0]["id"];
                         }
                         else
                         {
@@ -201,7 +201,7 @@ namespace Flexx.Media.Objects
                             results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
                             if (results.Children().Any())
                             {
-                                TMDB = results[0]["id"].ToString();
+                                TMDB = (string)results[0]["id"];
                             }
                         }
                     }
@@ -244,7 +244,7 @@ namespace Flexx.Media.Objects
         {
             if (Metadata.Size() <= 5 || Metadata.GetConfigByKey("title") == null)
             {
-                log.Warn($"No cache saved for {TMDB}");
+                log.Debug($"No cache saved for {TMDB}");
                 UpdateMetaData();
             }
             else
@@ -291,24 +291,24 @@ namespace Flexx.Media.Objects
                 LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
             }
 
-            if (!string.IsNullOrWhiteSpace(json["poster_path"].ToString()))
+            if (!string.IsNullOrWhiteSpace((string)json["poster_path"]))
             {
                 PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
             }
 
-            if (!string.IsNullOrWhiteSpace(json["backdrop_path"].ToString()))
+            if (!string.IsNullOrWhiteSpace((string)json["backdrop_path"]))
                 CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
 
-            if (DateTime.TryParse(json["release_date"].ToString(), out DateTime tmp))
+            if (DateTime.TryParse((string)json["release_date"], out DateTime tmp))
             {
                 ReleaseDate = tmp;
             }
 
-            Title = json["title"].ToString();
-            Plot = json["overview"].ToString();
+            Title = (string)json["title"];
+            Plot = (string)json["overview"];
             try
             {
-                Rating = (sbyte)(decimal.Parse(json["vote_average"].ToString()) * 10);
+                Rating = (sbyte)(decimal.Parse((string)json["vote_average"]) * 10);
             }
             catch
             {
@@ -317,9 +317,9 @@ namespace Flexx.Media.Objects
             {
                 try
                 {
-                    if (child["iso_3166_1"].ToString().ToLower().Equals("us"))
+                    if (((string)child["iso_3166_1"]).ToLower().Equals("us"))
                     {
-                        MPAA = child["release_dates"][0]["certification"].ToString();
+                        MPAA = (string)child["release_dates"][0]["certification"];
                     }
                 }
                 catch
@@ -330,7 +330,7 @@ namespace Flexx.Media.Objects
             Metadata.Add("id", TMDB);
             Metadata.Add("title", Title);
             Metadata.Add("plot", Plot);
-            Metadata.Add("category", Category.ToString());
+            Metadata.Add("category", Category);
             if (Rating != 0)
             {
                 Metadata.Add("rating", Rating);
@@ -383,7 +383,7 @@ namespace Flexx.Media.Objects
             if (results.Any())
             {
                 JToken keyObject = results[0]["key"];
-                string key = keyObject.ToString();
+                string key = (string)keyObject;
                 if (!string.IsNullOrWhiteSpace(key))
                 {
                     try

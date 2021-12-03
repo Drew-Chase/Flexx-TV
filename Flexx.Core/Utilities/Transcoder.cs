@@ -35,7 +35,6 @@ public class Transcoder
 
     private Transcoder()
     {
-        log.Debug($"Initializing Transcoder");
         if (Directory.GetFiles(Paths.FFMpeg, "*ffmpeg*", SearchOption.AllDirectories).Length == 0)
         {
             log.Debug($"Downloading Latest FFMPEG Version");
@@ -143,7 +142,7 @@ public class Transcoder
         try
         {
             IVideoStream videoStream = media.MediaInfo.VideoStreams.ToArray()[0];
-            log.Warn($"Original File = Title: {media.Title}, Resolution: {videoStream.Width}x{videoStream.Height}, Bitrate: {videoStream.Bitrate / 1000}Kbps");
+            log.Debug($"Original File = Title: {media.Title}, Resolution: {videoStream.Width}x{videoStream.Height}, Bitrate: {videoStream.Bitrate / 1000}Kbps");
             foreach (MediaVersion resolution in AllResolutions)
             {
                 if (videoStream.Height >= (resolution.Height - 100) && (videoStream.Bitrate / 1000) >= resolution.BitRate)
@@ -191,7 +190,7 @@ public class Transcoder
                     };
                     process.Exited += (s, e) =>
                     {
-                        log.Info($"Finished Creating Version file for \"{media.Title}\", Width={res.Height}, Bitrate={res.BitRate}Kbps");
+                        log.Debug($"Finished Creating Version file for \"{media.Title}\", Width={res.Height}, Bitrate={res.BitRate}Kbps");
                         if (!File.Exists(fileOutput))
                         {
                             log.Debug($"ffmpeg {arguments}");
@@ -205,7 +204,7 @@ public class Transcoder
                         }
                     };
                     process.Start();
-                    log.Warn($"Creating Version file for \"{media.Title}\", Width={res.Height}, Bitrate={res.BitRate}Kbps");
+                    log.Debug($"Creating Version file for \"{media.Title}\", Width={res.Height}, Bitrate={res.BitRate}Kbps");
 
                     process.WaitForExit();
                 }
@@ -274,7 +273,7 @@ public class Transcoder
     //    builder.Append($"#EXT-X-ENDLIST");
     //    using (TextWriter writer = new StreamWriter(fileOutput))
     //    {
-    //        writer.Write(builder.ToString());
+    //        writer.Write(builder);
     //        writer.Flush();
     //        writer.Dispose();
     //        writer.Close();
@@ -303,7 +302,7 @@ public class Transcoder
     //        StartInfo = new()
     //        {
     //            FileName = exe,
-    //            Arguments = builder.ToString(),
+    //            Arguments = builder,
     //            UseShellExecute = false,
     //            WorkingDirectory = directoryOutput,
     //        },
