@@ -17,21 +17,44 @@ namespace Flexx.Media.Utilities;
 
 public class Transcoder
 {
+    #region Public Fields
+
     public static Transcoder Instance = null;
 
-    public enum EncoderPreset
+    #endregion Public Fields
+
+    #region Private Fields
+
+    private static readonly List<MediaVersion> AllResolutions = new()
     {
-        ultrafast,
-        superfast,
-        veryfast,
-        faster,
-        fast,
-        medium,
-        slow,
-        slower,
-        veryslow,
-        placebo,
-    }
+        //4K
+        new("4K High", 2160, 34000),  //High
+        new("4K Medium", 2160, 20000), //Medium
+        new("4K Low", 2160, 13000), //Low
+
+        //1080p
+        new("1080p High", 1080, 8000),  //High
+        new("1080p Medium", 1080, 6000), //Medium
+        new("1080p Low", 1080, 4500), //Low
+
+        //720p
+        new("720p High", 720, 4000),  //High
+        new("720p Medium", 720, 2250), //Medium
+        new("720p Low", 720, 1500), //Low
+
+        //480p
+        new("480p Low", 480, 500), //Low
+
+        //360p
+        new("360p Low", 360, 400), //Low
+
+        //240p
+        new("240p Low", 240, 300), //Low
+    };
+
+    #endregion Private Fields
+
+    #region Private Constructors
 
     private Transcoder()
     {
@@ -60,109 +83,36 @@ public class Transcoder
         FFmpeg.SetExecutablesPath(Paths.FFMpeg);
     }
 
-    public static void Init()
-    {
-        if (Instance != null)
-        {
-            return;
-        }
+    #endregion Private Constructors
 
-        Instance = new Transcoder();
+    #region Public Enums
+
+    public enum EncoderPreset
+    {
+        ultrafast,
+
+        superfast,
+
+        veryfast,
+
+        faster,
+
+        fast,
+
+        medium,
+
+        slow,
+
+        slower,
+
+        veryslow,
+
+        placebo,
     }
 
-    public static void OptimizePoster(string input, string output)
-    {
-        OptimizeImage(input, output, 320);
-    }
+    #endregion Public Enums
 
-    public static void OptimizeCover(string input, string output)
-    {
-        OptimizeImage(input, output, 1280);
-    }
-
-    public static void OptimizeLogo(string input, string output)
-    {
-        OptimizeImage(input, output, 500);
-    }
-
-    public static void OptimizeImage(string input, string output, int scale)
-    {
-        string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
-        if (File.Exists(output))
-        {
-            if (Functions.IsFileLocked(new FileInfo(output)))
-            {
-                Thread.Sleep(500);
-                OptimizeImage(input, output, scale);
-            }
-            File.Delete(output);
-        }
-
-        Process process = new()
-        {
-            StartInfo = new()
-            {
-                FileName = exe,
-                Arguments = $"-i \"{input}\" -pix_fmt rgba -vf scale={scale}:-1 \"{output}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-            },
-            EnableRaisingEvents = true,
-        };
-        process.Exited += (s, e) => File.Delete(input);
-        process.Start();
-    }
-
-    private static readonly List<MediaVersion> AllResolutions = new()
-    {
-        //4K
-        new("4K High", 2160, 34000),  //High
-        new("4K Medium", 2160, 20000), //Medium
-        new("4K Low", 2160, 13000), //Low
-                                    //1080p
-        new("1080p High", 1080, 8000),  //High
-        new("1080p Medium", 1080, 6000), //Medium
-        new("1080p Low", 1080, 4500), //Low
-                                      //720p
-        new("720p High", 720, 4000),  //High
-        new("720p Medium", 720, 2250), //Medium
-        new("720p Low", 720, 1500), //Low
-                                    //480p
-        new("480p Low", 480, 500), //Low
-                                   //360p
-        new("360p Low", 360, 400), //Low
-                                   //240p
-        new("240p Low", 240, 300), //Low
-    };
-
-    public static MediaVersion[] GetAcceptableVersions(MediaBase media)
-    {
-        List<MediaVersion> Versions = new();
-        try
-        {
-            IVideoStream videoStream = media.MediaInfo.VideoStreams.ToArray()[0];
-            log.Debug($"Original File = Title: {media.Title}, Resolution: {videoStream.Width}x{videoStream.Height}, Bitrate: {videoStream.Bitrate / 1000}Kbps");
-            foreach (MediaVersion resolution in AllResolutions)
-            {
-                if (videoStream.Height >= (resolution.Height - 100) && (videoStream.Bitrate / 1000) >= resolution.BitRate)
-                    Versions.Add(resolution);
-            }
-            if (!Versions.Any())
-            {
-                foreach (MediaVersion resolution in AllResolutions)
-                {
-                    if (videoStream.Height >= (resolution.Height - 100))
-                        Versions.Add(resolution);
-                }
-            }
-        }
-        catch (Exception e)
-        {
-            log.Error("Had issue while fetching resolution data for PreTranscoding Alternative versions", e);
-        }
-        return Versions.ToArray();
-    }
+    #region Public Methods
 
     public static MediaVersion[] CreateVersion(MediaBase media, bool force = false)
     {
@@ -184,6 +134,7 @@ public class Transcoder
                             FileName = exe,
                             Arguments = arguments,
                             UseShellExecute = false,
+
                             //WindowStyle = ProcessWindowStyle.Hidden,
                         },
                         EnableRaisingEvents = true,
@@ -215,6 +166,43 @@ public class Transcoder
                 log.Error($"Had issue while running the conversion process for alternative version Width={res.Height}, Bitrate={res.BitRate}Kbps", e);
             }
         });
+        return Versions.ToArray();
+    }
+
+    public static StringBuilder FFmpegArgumentBuilder(string input, string output, int start_duration = 0, int width = -2, int height = 720, string video_codec = "libx264", string audio_codec = "aac", int video_bitrate = 4500, int audio_bitrate = 380, bool UseHardwareAccel = false, EncoderPreset preset = EncoderPreset.ultrafast)
+    {
+        StringBuilder builder = new();
+        if (UseHardwareAccel)
+            builder.Append("-hwaccel auto ");
+        builder.Append($"-ss {start_duration} -i \"{input}\" -loglevel quiet -vf scale={width}:{height} -c:v {video_codec} -c:a {audio_codec} -b:v {video_bitrate}K -b:a {audio_bitrate}K -preset {preset} -movflags +faststart");
+        return builder;
+    }
+
+    public static MediaVersion[] GetAcceptableVersions(MediaBase media)
+    {
+        List<MediaVersion> Versions = new();
+        try
+        {
+            IVideoStream videoStream = media.MediaInfo.VideoStreams.ToArray()[0];
+            log.Debug($"Original File = Title: {media.Title}, Resolution: {videoStream.Width}x{videoStream.Height}, Bitrate: {videoStream.Bitrate / 1000}Kbps");
+            foreach (MediaVersion resolution in AllResolutions)
+            {
+                if (videoStream.Height >= (resolution.Height - 100) && (videoStream.Bitrate / 1000) >= resolution.BitRate)
+                    Versions.Add(resolution);
+            }
+            if (!Versions.Any())
+            {
+                foreach (MediaVersion resolution in AllResolutions)
+                {
+                    if (videoStream.Height >= (resolution.Height - 100))
+                        Versions.Add(resolution);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            log.Error("Had issue while fetching resolution data for PreTranscoding Alternative versions", e);
+        }
         return Versions.ToArray();
     }
 
@@ -252,6 +240,62 @@ public class Transcoder
         }
         return ActiveStreams.Instance.Get(directoryOutput);
     }
+
+    public static void Init()
+    {
+        if (Instance != null)
+        {
+            return;
+        }
+
+        Instance = new Transcoder();
+    }
+
+    public static void OptimizeCover(string input, string output)
+    {
+        OptimizeImage(input, output, 1280);
+    }
+
+    public static void OptimizeImage(string input, string output, int scale)
+    {
+        string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
+        if (File.Exists(output))
+        {
+            if (Functions.IsFileLocked(new FileInfo(output)))
+            {
+                Thread.Sleep(500);
+                OptimizeImage(input, output, scale);
+            }
+            File.Delete(output);
+        }
+
+        Process process = new()
+        {
+            StartInfo = new()
+            {
+                FileName = exe,
+                Arguments = $"-i \"{input}\" -pix_fmt rgba -vf scale={scale}:-1 \"{output}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+            },
+            EnableRaisingEvents = true,
+        };
+        process.Exited += (s, e) => File.Delete(input);
+        process.Start();
+    }
+
+    public static void OptimizeLogo(string input, string output)
+    {
+        OptimizeImage(input, output, 500);
+    }
+
+    public static void OptimizePoster(string input, string output)
+    {
+        OptimizeImage(input, output, 320);
+    }
+
+    #endregion Public Methods
 
     //public static FileStream GetM3U8(User requestedUser, MediaBase media, MediaVersion version)
     //{
@@ -292,7 +336,7 @@ public class Transcoder
     //    string fileName = $"{id}_{user}_{version}";
     //    double startPosition = segment * 10;
 
-    //    MediaBase media =
+    // MediaBase media =
 
     //    string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
     //    StringBuilder builder = FFmpegArgumentBuilder(media.PATH, file, height: version.Height, video_bitrate: version.BitRate, start_duration: start_time);
@@ -309,13 +353,4 @@ public class Transcoder
     //        EnableRaisingEvents = true,
     //    };
     //}
-
-    public static StringBuilder FFmpegArgumentBuilder(string input, string output, int start_duration = 0, int width = -2, int height = 720, string video_codec = "libx264", string audio_codec = "aac", int video_bitrate = 4500, int audio_bitrate = 380, bool UseHardwareAccel = false, EncoderPreset preset = EncoderPreset.ultrafast)
-    {
-        StringBuilder builder = new();
-        if (UseHardwareAccel)
-            builder.Append("-hwaccel auto ");
-        builder.Append($"-ss {start_duration} -i \"{input}\" -loglevel quiet -vf scale={width}:{height} -c:v {video_codec} -c:a {audio_codec} -b:v {video_bitrate}K -b:a {audio_bitrate}K -preset {preset} -movflags +faststart");
-        return builder;
-    }
 }

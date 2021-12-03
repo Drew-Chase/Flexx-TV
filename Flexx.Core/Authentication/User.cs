@@ -12,8 +12,19 @@ namespace Flexx.Authentication;
 
 public class Users
 {
+    #region Public Fields
+
     public static Users Instance = Instance ?? new Users();
+
+    #endregion Public Fields
+
+    #region Private Fields
+
     private readonly List<User> users;
+
+    #endregion Private Fields
+
+    #region Private Constructors
 
     private Users()
     {
@@ -21,6 +32,10 @@ public class Users
         users = new();
         LoadExisting();
     }
+
+    #endregion Private Constructors
+
+    #region Public Methods
 
     public User Add(string username)
     {
@@ -52,6 +67,10 @@ public class Users
         return Get("guest");
     }
 
+    #endregion Public Methods
+
+    #region Private Methods
+
     private void LoadExisting()
     {
         log.Debug("Loading UserData");
@@ -61,17 +80,25 @@ public class Users
             Add(new FileInfo(file).Name.Replace(".userdata", ""));
         });
     }
+
+    #endregion Private Methods
 }
 
 public class User
 {
-    private readonly Dictionary<string, ushort> WatchedDuration;
+    #region Private Fields
+
     private readonly Dictionary<string, bool> HasWatched;
-    private Dictionary<string, DateTime> ContinueWatching;
+
     private readonly ConfigManager userProfile;
-    public string Username { get; }
-    public bool IsAuthorized { get; private set; }
-    public Notifications Notifications { get; }
+
+    private readonly Dictionary<string, ushort> WatchedDuration;
+
+    private Dictionary<string, DateTime> ContinueWatching;
+
+    #endregion Private Fields
+
+    #region Internal Constructors
 
     internal User(string username)
     {
@@ -89,41 +116,19 @@ public class User
         IsAuthorized = CheckIfAuthorized();
     }
 
-    private bool CheckIfAuthorized()
-    {
-        return false;
-    }
+    #endregion Internal Constructors
 
-    private void UpdateDictionaries()
-    {
-        WatchedDuration.Clear();
-        HasWatched.Clear();
-        ContinueWatching.Clear();
-        foreach (ChaseLabs.CLConfiguration.Object.Config config in userProfile.List())
-        {
-            if (config.Key.EndsWith("-watched_duration"))
-            {
-                if (config.Value is ushort)
-                {
-                    WatchedDuration.Add(config.Key, config.Value);
-                }
-            }
-            else if (config.Key.EndsWith("-watched"))
-            {
-                if (config.Value is bool)
-                {
-                    HasWatched.Add(config.Key, config.Value);
-                }
-            }
-            else if (config.Key.EndsWith("-continue-watching"))
-            {
-                if (DateTime.TryParse(config.Value, out DateTime time))
-                {
-                    ContinueWatching.Add(config.Key, time);
-                }
-            }
-        }
-    }
+    #region Public Properties
+
+    public bool IsAuthorized { get; private set; }
+
+    public Notifications Notifications { get; }
+
+    public string Username { get; }
+
+    #endregion Public Properties
+
+    #region Public Methods
 
     public MediaBase[] ContinueWatchingList()
     {
@@ -172,27 +177,65 @@ public class User
         return list.ToArray();
     }
 
-    public void SetToContinueWatching(MediaBase media)
+    public bool GetHasWatched(MediaBase media)
     {
-        if (media != null)
+        string key = "";
+        if (media.GetType().Equals(typeof(MovieModel)))
         {
-            string name = "";
-            DateTime time = DateTime.Now;
-            if (media.GetType().Equals(typeof(MovieModel)))
+            key = $"m_{media.TMDB}";
+        }
+        else if (media.GetType().Equals(typeof(EpisodeModel)))
+        {
+            EpisodeModel episode = (EpisodeModel)media;
+            key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
+        }
+
+        key += "-watched";
+        if (HasWatched.TryGetValue(key, out bool watched))
+        {
+            return watched;
+        }
+        else
+        {
+            ChaseLabs.CLConfiguration.Object.Config cfg = userProfile.GetConfigByKey(key);
+            if (cfg == null)
             {
-                name = $"m_{media.TMDB}";
+                userProfile.Add(key, false);
+                return false;
             }
-            else if (media.GetType().Equals(typeof(EpisodeModel)))
+            HasWatched.Add(key, cfg.Value);
+            return cfg.Value;
+        }
+    }
+
+    public ushort GetWatchedDuration(MediaBase media)
+    {
+        string key = "";
+        if (media.GetType().Equals(typeof(MovieModel)))
+        {
+            key = $"m_{media.TMDB}";
+        }
+        else if (media.GetType().Equals(typeof(EpisodeModel)))
+        {
+            EpisodeModel episode = (EpisodeModel)media;
+            key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
+        }
+
+        key += "-watched_duration";
+        if (WatchedDuration.TryGetValue(key, out ushort duration))
+        {
+            return duration;
+        }
+        else
+        {
+            ChaseLabs.CLConfiguration.Object.Config cfg = userProfile.GetConfigByKey(key);
+            if (cfg == null)
             {
-                EpisodeModel episode = (EpisodeModel)media;
-                name = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
+                userProfile.Add(key, (ushort)0);
+                return 0;
             }
-            if (!string.IsNullOrEmpty(name))
-            {
-                name += "-continue-watching";
-                ContinueWatching.Add(name, time);
-                userProfile.Add(name, time.ToString("MM/dd/yyyy-HH:mm:ss:ff"));
-            }
+            WatchedDuration.Add(key, cfg.Value);
+            return cfg.Value;
         }
     }
 
@@ -254,34 +297,27 @@ public class User
         }
     }
 
-    public bool GetHasWatched(MediaBase media)
+    public void SetToContinueWatching(MediaBase media)
     {
-        string key = "";
-        if (media.GetType().Equals(typeof(MovieModel)))
+        if (media != null)
         {
-            key = $"m_{media.TMDB}";
-        }
-        else if (media.GetType().Equals(typeof(EpisodeModel)))
-        {
-            EpisodeModel episode = (EpisodeModel)media;
-            key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
-        }
-
-        key += "-watched";
-        if (HasWatched.TryGetValue(key, out bool watched))
-        {
-            return watched;
-        }
-        else
-        {
-            ChaseLabs.CLConfiguration.Object.Config cfg = userProfile.GetConfigByKey(key);
-            if (cfg == null)
+            string name = "";
+            DateTime time = DateTime.Now;
+            if (media.GetType().Equals(typeof(MovieModel)))
             {
-                userProfile.Add(key, false);
-                return false;
+                name = $"m_{media.TMDB}";
             }
-            HasWatched.Add(key, cfg.Value);
-            return cfg.Value;
+            else if (media.GetType().Equals(typeof(EpisodeModel)))
+            {
+                EpisodeModel episode = (EpisodeModel)media;
+                name = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
+            }
+            if (!string.IsNullOrEmpty(name))
+            {
+                name += "-continue-watching";
+                ContinueWatching.Add(name, time);
+                userProfile.Add(name, time.ToString("MM/dd/yyyy-HH:mm:ss:ff"));
+            }
         }
     }
 
@@ -321,39 +357,50 @@ public class User
         catch (Exception e) { log.Error(e); }
     }
 
-    public ushort GetWatchedDuration(MediaBase media)
-    {
-        string key = "";
-        if (media.GetType().Equals(typeof(MovieModel)))
-        {
-            key = $"m_{media.TMDB}";
-        }
-        else if (media.GetType().Equals(typeof(EpisodeModel)))
-        {
-            EpisodeModel episode = (EpisodeModel)media;
-            key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
-        }
-
-        key += "-watched_duration";
-        if (WatchedDuration.TryGetValue(key, out ushort duration))
-        {
-            return duration;
-        }
-        else
-        {
-            ChaseLabs.CLConfiguration.Object.Config cfg = userProfile.GetConfigByKey(key);
-            if (cfg == null)
-            {
-                userProfile.Add(key, (ushort)0);
-                return 0;
-            }
-            WatchedDuration.Add(key, cfg.Value);
-            return cfg.Value;
-        }
-    }
-
     public override string ToString()
     {
         return Username;
     }
+
+    #endregion Public Methods
+
+    #region Private Methods
+
+    private bool CheckIfAuthorized()
+    {
+        return false;
+    }
+
+    private void UpdateDictionaries()
+    {
+        WatchedDuration.Clear();
+        HasWatched.Clear();
+        ContinueWatching.Clear();
+        foreach (ChaseLabs.CLConfiguration.Object.Config config in userProfile.List())
+        {
+            if (config.Key.EndsWith("-watched_duration"))
+            {
+                if (config.Value is ushort)
+                {
+                    WatchedDuration.Add(config.Key, config.Value);
+                }
+            }
+            else if (config.Key.EndsWith("-watched"))
+            {
+                if (config.Value is bool)
+                {
+                    HasWatched.Add(config.Key, config.Value);
+                }
+            }
+            else if (config.Key.EndsWith("-continue-watching"))
+            {
+                if (DateTime.TryParse(config.Value, out DateTime time))
+                {
+                    ContinueWatching.Add(config.Key, time);
+                }
+            }
+        }
+    }
+
+    #endregion Private Methods
 }

@@ -9,6 +9,8 @@ namespace Flexx.Server.Controllers
     [Route("/api/action")]
     public class ActionController : ControllerBase
     {
+        #region Public Methods
+
         [HttpGet("movies/add/{tmdb}")]
         public IActionResult AddMovie(string tmdb)
         {
@@ -24,5 +26,7 @@ namespace Flexx.Server.Controllers
             }
             return new OkResult();
         }
+
+        #endregion Public Methods
     }
 }

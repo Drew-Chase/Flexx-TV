@@ -5,9 +5,15 @@ namespace Flexx.Networking
 {
     public class Indexer
     {
+        #region Public Constructors
+
         public Indexer()
         {
         }
+
+        #endregion Public Constructors
+
+        #region Public Methods
 
         public static string[] GetMagnetList(string query)
         {
@@ -22,5 +28,7 @@ namespace Flexx.Networking
             }
             return links.ToArray();
         }
+
+        #endregion Public Methods
     }
 }

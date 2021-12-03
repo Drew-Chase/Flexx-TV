@@ -8,28 +8,39 @@ namespace Flexx.Media.Objects.Libraries
 {
     public class LibraryModel
     {
+        #region Protected Fields
+
         protected List<MediaBase> medias;
+
+        #endregion Protected Fields
+
+        #region Protected Constructors
 
         protected LibraryModel()
         {
             medias = new();
         }
 
-        public virtual void Initialize()
-        {
-        }
+        #endregion Protected Constructors
 
-        public virtual void PostInitializationEvent()
+        #region Public Methods
+
+        public virtual void AddMedia(params MediaBase[] medias)
         {
-            if (config.UseVersionFile)
+            foreach (MediaBase media in medias)
             {
-                Task.Run(() =>
+                if (media != null && !string.IsNullOrWhiteSpace(media.Title))
                 {
-                    foreach (var item in medias)
+                    if (GetMediaByName(media.Title) == null && !string.IsNullOrWhiteSpace(media.TMDB))
                     {
-                        item.AlternativeVersions = Transcoder.CreateVersion(item);
+                        log.Debug($"Adding \"{media.Title}\"");
+                        this.medias.Add(media);
                     }
-                }).Wait();
+                    else
+                    {
+                        log.Debug($"Not Adding Reduntant Title \"{media.Title}\"");
+                    }
+                }
             }
         }
 
@@ -67,28 +78,40 @@ namespace Flexx.Media.Objects.Libraries
             return list.ToArray();
         }
 
-        public virtual void AddMedia(params MediaBase[] medias)
-        {
-            foreach (MediaBase media in medias)
-            {
-                if (media != null && !string.IsNullOrWhiteSpace(media.Title))
-                {
-                    if (GetMediaByName(media.Title) == null && !string.IsNullOrWhiteSpace(media.TMDB))
-                    {
-                        log.Debug($"Adding \"{media.Title}\"");
-                        this.medias.Add(media);
-                    }
-                    else
-                    {
-                        log.Debug($"Not Adding Reduntant Title \"{media.Title}\"");
-                    }
-                }
-            }
-        }
-
         public MediaBase[] GetMediaItems()
         {
             return medias.ToArray();
+        }
+
+        public virtual void Initialize()
+        {
+        }
+
+        public virtual void PostInitializationEvent()
+        {
+            if (config.UseVersionFile)
+            {
+                Task.Run(() =>
+                {
+                    foreach (var item in medias)
+                    {
+                        item.AlternativeVersions = Transcoder.CreateVersion(item);
+                    }
+                }).Wait();
+            }
+        }
+
+        public virtual void RefreshMetadata()
+        {
+            foreach (MediaBase media in medias)
+            {
+                media.UpdateMetaData();
+            }
+        }
+
+        public virtual Task RefreshMetadataAsync()
+        {
+            return Task.Run(() => RefreshMetadata());
         }
 
         public virtual void RemoveMedia(params MediaBase[] medias)
@@ -99,17 +122,6 @@ namespace Flexx.Media.Objects.Libraries
             }
         }
 
-        public virtual Task RefreshMetadataAsync()
-        {
-            return Task.Run(() => RefreshMetadata());
-        }
-
-        public virtual void RefreshMetadata()
-        {
-            foreach (MediaBase media in medias)
-            {
-                media.UpdateMetaData();
-            }
-        }
+        #endregion Public Methods
     }
 }

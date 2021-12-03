@@ -18,37 +18,48 @@ namespace Flexx.Media.Objects
 {
     public class MovieModel : MediaBase
     {
-        public string TrailerUrl { get; private set; }
-        public bool HasTrailer { get; private set; }
-        public DiscoveryCategory Category { get; private set; }
+        #region Private Fields
 
-        public override string PosterImage
+        private string Metadata_Directory;
+
+        #endregion Private Fields
+
+        #region Public Constructors
+
+        public MovieModel(ConfigManager metadata)
         {
-            get
+            Metadata = metadata;
+            Metadata_Directory = Directory.GetParent(metadata.PATH).FullName;
+            if (metadata.GetConfigByKey("id") != null && metadata.GetConfigByKey("category") != null)
             {
-                string path = Path.Combine(Metadata_Directory, "poster.jpg");
-                if (!File.Exists(path))
+                if (Enum.TryParse(typeof(DiscoveryCategory), metadata.GetConfigByKey("category").Value, out object category))
                 {
-                    UpdateMetaData();
-                }
-
-                return path;
-            }
-            set
-            {
-                try
-                {
-                    log.Debug($"Optimizing Poster for {TMDB}");
-                    string path = Path.Combine(Metadata_Directory, "poster.jpg");
-                    string tmp = Path.Combine(Paths.TempData, $"mp_{TMDB}.jpg");
-                    new System.Net.WebClient().DownloadFile(value, tmp);
-                    Transcoder.OptimizePoster(tmp, path);
-                }
-                catch
-                {
+                    Init(metadata.GetConfigByKey("id").Value, true, (DiscoveryCategory)category);
                 }
             }
         }
+
+        public MovieModel(string TMDB, DiscoveryCategory Category) : base()
+        {
+#if DEBUG
+            Metadata = new(Path.Combine(Path.Combine(Paths.MovieData, "Prefetch"), TMDB, "prefetch.metadata"), false, "FlexxTV");
+#else
+            Metadata = new(Path.Combine(Path.Combine(Paths.MovieData, "Prefetch"), TMDB, "prefetch.metadata"), true, "FlexxTV");
+#endif
+            Metadata_Directory = Path.Combine(Paths.MovieData, "Prefetch", TMDB);
+            Init(TMDB, true, Category);
+        }
+
+        public MovieModel(string Initializer, bool IsTMDB = false) : base()
+        {
+            Init(Initializer, IsTMDB, DiscoveryCategory.None);
+        }
+
+        #endregion Public Constructors
+
+        #region Public Properties
+
+        public DiscoveryCategory Category { get; private set; }
 
         public override string CoverImage
         {
@@ -102,6 +113,8 @@ namespace Flexx.Media.Objects
             }
         }
 
+        public bool HasTrailer { get; private set; }
+
         public string LogoImage
         {
             get
@@ -123,36 +136,193 @@ namespace Flexx.Media.Objects
             }
         }
 
-        private string Metadata_Directory;
-
-        public MovieModel(ConfigManager metadata)
+        public override string PosterImage
         {
-            Metadata = metadata;
-            Metadata_Directory = Directory.GetParent(metadata.PATH).FullName;
-            if (metadata.GetConfigByKey("id") != null && metadata.GetConfigByKey("category") != null)
+            get
             {
-                if (Enum.TryParse(typeof(DiscoveryCategory), metadata.GetConfigByKey("category").Value, out object category))
+                string path = Path.Combine(Metadata_Directory, "poster.jpg");
+                if (!File.Exists(path))
                 {
-                    Init(metadata.GetConfigByKey("id").Value, true, (DiscoveryCategory)category);
+                    UpdateMetaData();
+                }
+
+                return path;
+            }
+            set
+            {
+                try
+                {
+                    log.Debug($"Optimizing Poster for {TMDB}");
+                    string path = Path.Combine(Metadata_Directory, "poster.jpg");
+                    string tmp = Path.Combine(Paths.TempData, $"mp_{TMDB}.jpg");
+                    new System.Net.WebClient().DownloadFile(value, tmp);
+                    Transcoder.OptimizePoster(tmp, path);
+                }
+                catch
+                {
                 }
             }
         }
 
-        public MovieModel(string TMDB, DiscoveryCategory Category) : base()
+        public string TrailerUrl { get; private set; }
+
+        #endregion Public Properties
+
+        #region Public Methods
+
+        public override void AddToTorrentClient(bool useInternal = true)
         {
-#if DEBUG
-            Metadata = new(Path.Combine(Path.Combine(Paths.MovieData, "Prefetch"), TMDB, "prefetch.metadata"), false, "FlexxTV");
-#else
-            Metadata = new(Path.Combine(Path.Combine(Paths.MovieData, "Prefetch"), TMDB, "prefetch.metadata"), true, "FlexxTV");
-#endif
-            Metadata_Directory = Path.Combine(Paths.MovieData, "Prefetch", TMDB);
-            Init(TMDB, true, Category);
+            if (ScanForDownloads(out string[] links))
+            {
+                foreach (string link in links)
+                {
+                    Console.WriteLine(link);
+                }
+            }
         }
 
-        public MovieModel(string Initializer, bool IsTMDB = false) : base()
+        public void GetTrailer()
         {
-            Init(Initializer, IsTMDB, DiscoveryCategory.None);
+            string trailerURL;
+            string json;
+            try
+            {
+                json = new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/videos?api_key={TMDB_API}");
+            }
+            catch (Exception e)
+            {
+                log.Error($"Unable to get reponse regarding {TMDB} trailer", e);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return;
+            }
+
+            JToken results = ((JObject)JsonConvert.DeserializeObject(json))["results"];
+            if (results.Any())
+            {
+                JToken keyObject = results[0]["key"];
+                string key = (string)keyObject;
+                if (!string.IsNullOrWhiteSpace(key))
+                {
+                    try
+                    {
+                        IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(key).Result.GetMuxedStreams().GetWithHighestVideoQuality();
+                        if (streamInfo != null)
+                        {
+                            trailerURL = streamInfo.Url;
+                        }
+                        else
+                        {
+                            trailerURL = "";
+                        }
+                    }
+                    catch
+                    {
+                        trailerURL = "";
+                    }
+                }
+                else
+                {
+                    trailerURL = "";
+                }
+            }
+            else
+            {
+                trailerURL = "";
+            }
+
+            TrailerUrl = trailerURL;
+            HasTrailer = !string.IsNullOrWhiteSpace(TrailerUrl);
+            if (HasTrailer)
+            {
+                log.Debug($"Found Trailer for {Title}");
+            }
+            else
+            {
+                log.Debug($"No Trailer was Found for {Title}");
+            }
         }
+
+        public override bool ScanForDownloads(out string[] links)
+        {
+            links = Indexer.GetMagnetList($"{Title} {ReleaseDate.Year}");
+            return links.Length != 0;
+        }
+
+        public override void UpdateMetaData()
+        {
+            log.Debug($"Getting metadata for {TMDB}");
+            ScannedDate = DateTime.Now;
+            JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}?api_key={TMDB_API}");
+            JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}/images?api_key={TMDB_API}&include_image_language=en");
+            if (imagesJson["backdrops"].Any())
+            {
+                CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
+            }
+
+            if (imagesJson["logos"].Any())
+            {
+                LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
+            }
+
+            if (!string.IsNullOrWhiteSpace((string)json["poster_path"]))
+            {
+                PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
+            }
+
+            if (!string.IsNullOrWhiteSpace((string)json["backdrop_path"]))
+                CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
+
+            if (DateTime.TryParse((string)json["release_date"], out DateTime tmp))
+            {
+                ReleaseDate = tmp;
+            }
+
+            Title = (string)json["title"];
+            Plot = (string)json["overview"];
+            try
+            {
+                Rating = (sbyte)(decimal.Parse((string)json["vote_average"]) * 10);
+            }
+            catch
+            {
+            }
+            foreach (JToken child in ((JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}/release_dates?api_key={TMDB_API}"))["results"].Children().ToList())
+            {
+                try
+                {
+                    if (((string)child["iso_3166_1"]).ToLower().Equals("us"))
+                    {
+                        MPAA = (string)child["release_dates"][0]["certification"];
+                    }
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+            Metadata.Add("id", TMDB);
+            Metadata.Add("title", Title);
+            Metadata.Add("plot", Plot);
+            Metadata.Add("category", Category);
+            if (Rating != 0)
+            {
+                Metadata.Add("rating", Rating);
+            }
+
+            Metadata.Add("release_date", ReleaseDate.ToString("MM-dd-yyyy"));
+            Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
+            if (!string.IsNullOrWhiteSpace(MPAA))
+            {
+                Metadata.Add("mpaa", MPAA);
+            }
+        }
+
+        #endregion Public Methods
+
+        #region Private Methods
 
         private void Init(string initializer, bool isTMDB, DiscoveryCategory Category)
         {
@@ -275,154 +445,6 @@ namespace Flexx.Media.Objects
             }
         }
 
-        public override void UpdateMetaData()
-        {
-            log.Debug($"Getting metadata for {TMDB}");
-            ScannedDate = DateTime.Now;
-            JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}?api_key={TMDB_API}");
-            JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}/images?api_key={TMDB_API}&include_image_language=en");
-            if (imagesJson["backdrops"].Any())
-            {
-                CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
-            }
-
-            if (imagesJson["logos"].Any())
-            {
-                LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
-            }
-
-            if (!string.IsNullOrWhiteSpace((string)json["poster_path"]))
-            {
-                PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
-            }
-
-            if (!string.IsNullOrWhiteSpace((string)json["backdrop_path"]))
-                CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
-
-            if (DateTime.TryParse((string)json["release_date"], out DateTime tmp))
-            {
-                ReleaseDate = tmp;
-            }
-
-            Title = (string)json["title"];
-            Plot = (string)json["overview"];
-            try
-            {
-                Rating = (sbyte)(decimal.Parse((string)json["vote_average"]) * 10);
-            }
-            catch
-            {
-            }
-            foreach (JToken child in ((JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}/release_dates?api_key={TMDB_API}"))["results"].Children().ToList())
-            {
-                try
-                {
-                    if (((string)child["iso_3166_1"]).ToLower().Equals("us"))
-                    {
-                        MPAA = (string)child["release_dates"][0]["certification"];
-                    }
-                }
-                catch
-                {
-                    continue;
-                }
-            }
-            Metadata.Add("id", TMDB);
-            Metadata.Add("title", Title);
-            Metadata.Add("plot", Plot);
-            Metadata.Add("category", Category);
-            if (Rating != 0)
-            {
-                Metadata.Add("rating", Rating);
-            }
-
-            Metadata.Add("release_date", ReleaseDate.ToString("MM-dd-yyyy"));
-            Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
-            if (!string.IsNullOrWhiteSpace(MPAA))
-            {
-                Metadata.Add("mpaa", MPAA);
-            }
-        }
-
-        public override bool ScanForDownloads(out string[] links)
-        {
-            links = Indexer.GetMagnetList($"{Title} {ReleaseDate.Year}");
-            return links.Length != 0;
-        }
-
-        public override void AddToTorrentClient(bool useInternal = true)
-        {
-            if (ScanForDownloads(out string[] links))
-            {
-                foreach (string link in links)
-                {
-                    Console.WriteLine(link);
-                }
-            }
-        }
-
-        public void GetTrailer()
-        {
-            string trailerURL;
-            string json;
-            try
-            {
-                json = new WebClient().DownloadString($"https://api.themoviedb.org/3/movie/{TMDB}/videos?api_key={TMDB_API}");
-            }
-            catch (Exception e)
-            {
-                log.Error($"Unable to get reponse regarding {TMDB} trailer", e);
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return;
-            }
-
-            JToken results = ((JObject)JsonConvert.DeserializeObject(json))["results"];
-            if (results.Any())
-            {
-                JToken keyObject = results[0]["key"];
-                string key = (string)keyObject;
-                if (!string.IsNullOrWhiteSpace(key))
-                {
-                    try
-                    {
-                        IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(key).Result.GetMuxedStreams().GetWithHighestVideoQuality();
-                        if (streamInfo != null)
-                        {
-                            trailerURL = streamInfo.Url;
-                        }
-                        else
-                        {
-                            trailerURL = "";
-                        }
-                    }
-                    catch
-                    {
-                        trailerURL = "";
-                    }
-                }
-                else
-                {
-                    trailerURL = "";
-                }
-            }
-            else
-            {
-                trailerURL = "";
-            }
-
-            TrailerUrl = trailerURL;
-            HasTrailer = !string.IsNullOrWhiteSpace(TrailerUrl);
-            if (HasTrailer)
-            {
-                log.Debug($"Found Trailer for {Title}");
-            }
-            else
-            {
-                log.Debug($"No Trailer was Found for {Title}");
-            }
-        }
+        #endregion Private Methods
     }
 }

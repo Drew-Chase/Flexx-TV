@@ -11,7 +11,13 @@ namespace Flexx.Media.Objects.Extras
 {
     public class CastListModel
     {
+        #region Private Fields
+
         private readonly CastModel[] FullCast;
+
+        #endregion Private Fields
+
+        #region Public Constructors
 
         public CastListModel(string media_type, string tmdb)
         {
@@ -34,15 +40,9 @@ namespace Flexx.Media.Objects.Extras
             FullCast = cast.ToArray();
         }
 
-        public CastModel[] GetCast()
-        {
-            return FullCast;
-        }
+        #endregion Public Constructors
 
-        public CastModel[] GetCast(string job)
-        {
-            return FullCast.Where(c => c.Job.Equals(job)).ToArray();
-        }
+        #region Public Methods
 
         public static object[] GetMediaByActor(string actor)
         {
@@ -87,14 +87,23 @@ namespace Flexx.Media.Objects.Extras
             }
             return list.ToArray();
         }
+
+        public CastModel[] GetCast()
+        {
+            return FullCast;
+        }
+
+        public CastModel[] GetCast(string job)
+        {
+            return FullCast.Where(c => c.Job.Equals(job)).ToArray();
+        }
+
+        #endregion Public Methods
     }
 
     public class CastModel
     {
-        public string Name { get; private set; }
-        public string Role { get; private set; }
-        public string ProfileImage { get; private set; }
-        public string Job { get; private set; }
+        #region Public Constructors
 
         public CastModel(string Name, string Role, string ProfileImage, string Job)
         {
@@ -114,5 +123,19 @@ namespace Flexx.Media.Objects.Extras
                 this.Job = Job;
             }
         }
+
+        #endregion Public Constructors
+
+        #region Public Properties
+
+        public string Job { get; private set; }
+
+        public string Name { get; private set; }
+
+        public string ProfileImage { get; private set; }
+
+        public string Role { get; private set; }
+
+        #endregion Public Properties
     }
 }

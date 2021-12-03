@@ -10,6 +10,8 @@ namespace Flexx.Utilities
 {
     public static class SetupProcess
     {
+        #region Public Methods
+
         public static Task Run()
         {
             return Task.Run(() =>
@@ -47,17 +49,28 @@ namespace Flexx.Utilities
                 }
             });
         }
+
+        #endregion Public Methods
     }
 
     internal class SetupStep
     {
-        public string Name { get; }
-        public Action Action { get; }
+        #region Public Constructors
 
         public SetupStep(string Name, Action Action)
         {
             this.Name = Name;
             this.Action = Action;
         }
+
+        #endregion Public Constructors
+
+        #region Public Properties
+
+        public Action Action { get; }
+
+        public string Name { get; }
+
+        #endregion Public Properties
     }
 }

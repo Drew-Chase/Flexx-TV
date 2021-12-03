@@ -8,6 +8,8 @@ namespace Flexx.Server;
 
 public class Program
 {
+    #region Public Methods
+
     public static void Main(string[] args)
     {
         StartHttpServer(args);
@@ -29,4 +31,6 @@ public class Program
                 log.Debug("HTTP Server is Now Active!!!");
             }).Build().Run();
         });
+
+    #endregion Public Methods
 }

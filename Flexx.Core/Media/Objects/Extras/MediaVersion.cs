@@ -4,9 +4,7 @@ namespace Flexx.Media.Objects.Extras
 {
     public struct MediaVersion
     {
-        public string DisplayName { get; }
-        public int Height { get; }
-        public int BitRate { get; }
+        #region Public Constructors
 
         public MediaVersion(string DisplayName, int Height, int BitRate)
         {
@@ -15,14 +13,28 @@ namespace Flexx.Media.Objects.Extras
             this.BitRate = BitRate;
         }
 
-        public static bool operator ==(MediaVersion a, MediaVersion b)
-        {
-            return a.Equals(b);
-        }
+        #endregion Public Constructors
+
+        #region Public Properties
+
+        public int BitRate { get; }
+
+        public string DisplayName { get; }
+
+        public int Height { get; }
+
+        #endregion Public Properties
+
+        #region Public Methods
 
         public static bool operator !=(MediaVersion a, MediaVersion b)
         {
             return !(a == b);
+        }
+
+        public static bool operator ==(MediaVersion a, MediaVersion b)
+        {
+            return a.Equals(b);
         }
 
         public override bool Equals([NotNullWhen(true)] object obj)
@@ -34,5 +46,7 @@ namespace Flexx.Media.Objects.Extras
         {
             return DisplayName;
         }
+
+        #endregion Public Methods
     }
 }

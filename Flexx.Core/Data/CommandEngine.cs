@@ -7,6 +7,8 @@ namespace Flexx.Data
 {
     public static class CommandEngine
     {
+        #region Private Fields
+
         private static readonly Command[] commands = new Command[]
         {
             new ("help", "Displays this message.", ()=>CommandHelp()),
@@ -27,6 +29,10 @@ namespace Flexx.Data
                     }
                 }),
         };
+
+        #endregion Private Fields
+
+        #region Public Methods
 
         public static void Run()
         {
@@ -50,6 +56,10 @@ namespace Flexx.Data
             Run();
         }
 
+        #endregion Public Methods
+
+        #region Private Methods
+
         private static void CommandHelp()
         {
             foreach (var cmd in commands)
@@ -58,11 +68,13 @@ namespace Flexx.Data
             }
         }
 
+        #endregion Private Methods
+
+        #region Internal Classes
+
         internal class Command
         {
-            public string Name { get; }
-            public string Description { get; }
-            public Action Action { get; }
+            #region Public Constructors
 
             public Command(string Name, string Description, Action Action)
             {
@@ -70,6 +82,20 @@ namespace Flexx.Data
                 this.Description = Description;
                 this.Action = Action;
             }
+
+            #endregion Public Constructors
+
+            #region Public Properties
+
+            public Action Action { get; }
+
+            public string Description { get; }
+
+            public string Name { get; }
+
+            #endregion Public Properties
         }
+
+        #endregion Internal Classes
     }
 }

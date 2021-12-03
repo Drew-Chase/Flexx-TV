@@ -6,10 +6,7 @@ namespace Flexx.Server.Controllers
     [Route("/api/")]
     public class GlobalController : ControllerBase
     {
-        public IActionResult Index()
-        {
-            return GetStatus();
-        }
+        #region Public Methods
 
         [HttpGet("status")]
         public IActionResult GetStatus()
@@ -19,5 +16,12 @@ namespace Flexx.Server.Controllers
                 status = "Online",
             });
         }
+
+        public IActionResult Index()
+        {
+            return GetStatus();
+        }
+
+        #endregion Public Methods
     }
 }

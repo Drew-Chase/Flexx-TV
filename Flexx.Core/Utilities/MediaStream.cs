@@ -13,14 +13,30 @@ namespace Flexx.Media.Utilities
 {
     public class ActiveStreams
     {
-        private readonly List<MediaStream> streams;
+        #region Private Fields
+
         private static ActiveStreams _instance;
-        public static ActiveStreams Instance => _instance ??= new ActiveStreams();
+
+        private readonly List<MediaStream> streams;
+
+        #endregion Private Fields
+
+        #region Private Constructors
 
         private ActiveStreams()
         {
             streams = new();
         }
+
+        #endregion Private Constructors
+
+        #region Public Properties
+
+        public static ActiveStreams Instance => _instance ??= new ActiveStreams();
+
+        #endregion Public Properties
+
+        #region Public Methods
 
         public MediaStream AddStream(MediaStream stream)
         {
@@ -87,22 +103,27 @@ namespace Flexx.Media.Utilities
             return null;
         }
 
+        #endregion Public Methods
+
+        #region Internal Methods
+
         internal void RemoveStream(MediaStream stream)
         {
             streams.Remove(stream);
         }
+
+        #endregion Internal Methods
     }
 
     public class MediaStream
     {
-        public User User { get; init; }
-        public Process Process { get; init; }
-        public MediaVersion Version { get; init; }
-        public string WorkingDirectory { get; init; }
-        public long StartTime { get; init; }
-        public FileStream FileStream { get; set; }
-        public int StreamTimeout { get; init; }
+        #region Private Fields
+
         private System.Timers.Timer _timer;
+
+        #endregion Private Fields
+
+        #region Public Constructors
 
         public MediaStream(User user, Process process, MediaVersion version, string working_directory, long start_time, FileStream fileStream, int timeout = 15000)
         {
@@ -116,20 +137,27 @@ namespace Flexx.Media.Utilities
             ResetTimeout();
         }
 
-        public void ResetTimeout()
-        {
-            if (_timer != null)
-                _timer.Stop();
-            _timer = new(StreamTimeout)
-            {
-                Enabled = true,
-            };
-            _timer.Elapsed += (s, e) =>
-            {
-                KillAsync();
-            };
-            _timer.Start();
-        }
+        #endregion Public Constructors
+
+        #region Public Properties
+
+        public FileStream FileStream { get; set; }
+
+        public Process Process { get; init; }
+
+        public long StartTime { get; init; }
+
+        public int StreamTimeout { get; init; }
+
+        public User User { get; init; }
+
+        public MediaVersion Version { get; init; }
+
+        public string WorkingDirectory { get; init; }
+
+        #endregion Public Properties
+
+        #region Public Methods
 
         public Task KillAsync() =>
              Task.Run(() =>
@@ -180,5 +208,22 @@ namespace Flexx.Media.Utilities
                 }
                 ActiveStreams.Instance.RemoveStream(this);
             });
+
+        public void ResetTimeout()
+        {
+            if (_timer != null)
+                _timer.Stop();
+            _timer = new(StreamTimeout)
+            {
+                Enabled = true,
+            };
+            _timer.Elapsed += (s, e) =>
+            {
+                KillAsync();
+            };
+            _timer.Start();
+        }
+
+        #endregion Public Methods
     }
 }

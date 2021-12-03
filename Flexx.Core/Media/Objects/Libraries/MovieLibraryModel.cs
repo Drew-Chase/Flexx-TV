@@ -13,7 +13,13 @@ namespace Flexx.Media.Objects.Libraries
 {
     public class MovieLibraryModel : LibraryModel
     {
+        #region Private Fields
+
         private static MovieLibraryModel _instance = null;
+
+        #endregion Private Fields
+
+        #region Public Properties
 
         public static MovieLibraryModel Instance
         {
@@ -24,35 +30,9 @@ namespace Flexx.Media.Objects.Libraries
             }
         }
 
-        public override void Initialize()
-        {
-            try
-            {
-                Scanner.ForMovies();
-            }
-            catch (Exception e)
-            {
-                log.Fatal("Unhandled Exception was found while trying to initialize Movies Library", e);
-            }
-            base.Initialize();
-        }
+        #endregion Public Properties
 
-        public MovieModel GetMovieByTMDB(string tmdb)
-        {
-            foreach (MovieModel movie in medias)
-            {
-                if (movie.TMDB == null)
-                {
-                    RemoveMedia(movie);
-                    continue;
-                }
-                if (movie.TMDB.Equals(tmdb))
-                {
-                    return movie;
-                }
-            }
-            return null;
-        }
+        #region Public Methods
 
         public MovieObject[] Discover(User user, DiscoveryCategory category = DiscoveryCategory.latest)
         {
@@ -67,37 +47,6 @@ namespace Flexx.Media.Objects.Libraries
                 ((MovieModel)movie).GetTrailer();
             });
             log.Debug($"Done Fetching Movie Trailers");
-        }
-
-        public MovieObject[] Search(string query, int year = -1)
-        {
-            string url;
-            if (year != -1)
-            {
-                url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}&year={year}";
-            }
-            else
-            {
-                url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}";
-            }
-            object jresult = Functions.GetJsonObjectFromURL(url);
-            List<MovieObject> model = new();
-            if (jresult == null)
-                return model.ToArray();
-            JArray results = (JArray)((JObject)jresult)["results"];
-            if (results != null && results.Any())
-            {
-                foreach (JToken result in results)
-                {
-                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace((string)result["release_date"]))
-                    {
-                        continue;
-                    }
-
-                    model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
-                }
-            }
-            return model.ToArray();
         }
 
         public MovieObject[] FindSimilar(string id)
@@ -144,6 +93,23 @@ namespace Flexx.Media.Objects.Libraries
             return list.OrderBy(m => m.Title).ToArray();
         }
 
+        public MovieModel GetMovieByTMDB(string tmdb)
+        {
+            foreach (MovieModel movie in medias)
+            {
+                if (movie.TMDB == null)
+                {
+                    RemoveMedia(movie);
+                    continue;
+                }
+                if (movie.TMDB.Equals(tmdb))
+                {
+                    return movie;
+                }
+            }
+            return null;
+        }
+
         public object[] GetRecentlyAddedList(User user)
         {
             MediaBase[] movies = medias.OrderBy(m => m.ScannedDate).ToArray();
@@ -157,5 +123,51 @@ namespace Flexx.Media.Objects.Libraries
             }
             return model;
         }
+
+        public override void Initialize()
+        {
+            try
+            {
+                Scanner.ForMovies();
+            }
+            catch (Exception e)
+            {
+                log.Fatal("Unhandled Exception was found while trying to initialize Movies Library", e);
+            }
+            base.Initialize();
+        }
+
+        public MovieObject[] Search(string query, int year = -1)
+        {
+            string url;
+            if (year != -1)
+            {
+                url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}&year={year}";
+            }
+            else
+            {
+                url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}";
+            }
+            object jresult = Functions.GetJsonObjectFromURL(url);
+            List<MovieObject> model = new();
+            if (jresult == null)
+                return model.ToArray();
+            JArray results = (JArray)((JObject)jresult)["results"];
+            if (results != null && results.Any())
+            {
+                foreach (JToken result in results)
+                {
+                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace((string)result["release_date"]))
+                    {
+                        continue;
+                    }
+
+                    model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
+                }
+            }
+            return model.ToArray();
+        }
+
+        #endregion Public Methods
     }
 }

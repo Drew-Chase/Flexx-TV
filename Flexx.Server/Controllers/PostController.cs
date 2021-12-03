@@ -9,6 +9,8 @@ namespace Flexx.Server.Controllers;
 [Route("/api/post/movies/")]
 public class PostController : ControllerBase
 {
+    #region Public Methods
+
     [HttpPost("watched")]
     public IActionResult SetWatched([FromForm] string id, [FromForm] string library, [FromForm] string username, [FromForm] bool watched, [FromBody] int? season, [FromBody] int? episode)
     {
@@ -30,4 +32,6 @@ public class PostController : ControllerBase
         Users.Instance.Get(username).SetWatchedDuration(media, (ushort)duration);
         return Ok();
     }
+
+    #endregion Public Methods
 }
