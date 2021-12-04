@@ -106,7 +106,7 @@ public class StreamController : ControllerBase
     }
 
     [HttpGet("get/version")]
-    public FileStreamResult GetVideoStream(string id, string username, string library, string version, int? season, int? episode, int? start_time, long? startTick)
+    public IActionResult GetVideoStream(string id, string username, string library, string version, int? season, int? episode, int? start_time, long? startTick)
     {
         MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
         MediaVersion foundVersion = media.AlternativeVersions.FirstOrDefault(m => m.DisplayName.Equals(version), media.AlternativeVersions[0]);
@@ -115,6 +115,10 @@ public class StreamController : ControllerBase
         else
         {
             MediaStream stream = ActiveStreams.Instance.Get(Users.Instance.Get(username), foundVersion, startTick.GetValueOrDefault(0)) ?? Transcoder.GetTranscodedStream(Users.Instance.Get(username), media, foundVersion, start_time.GetValueOrDefault(0), startTick.GetValueOrDefault(0));
+            if (stream == null)
+            {
+                return BadRequest();
+            }
             stream.ResetTimeout();
 
             System.Net.Mime.ContentDisposition cd = new()
@@ -162,6 +166,13 @@ public class StreamController : ControllerBase
         MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
         MediaVersion foundVersion = media.AlternativeVersions.FirstOrDefault(m => m.DisplayName.Equals(version), media.AlternativeVersions[0]);
         var stream = Transcoder.GetTranscodedStream(Users.Instance.Get(username), media, foundVersion, start_time.GetValueOrDefault(0), 0);
+        if (stream == null)
+        {
+            return new(new
+            {
+                message = "Stream failed to start"
+            });
+        }
         return new(new
         {
             UUID = stream.StartTime,
