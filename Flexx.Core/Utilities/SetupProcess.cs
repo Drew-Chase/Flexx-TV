@@ -18,6 +18,7 @@ namespace Flexx.Utilities
             {
                 SetupStep[] steps = new SetupStep[]
                 {
+                    new ("Cleaning Temporary Files", ()=> System.IO.Directory.Delete(Paths.TempData, true)),
                     new("Loading User Data", () => _ = Users.Instance),
                     new("Loading Configuration Settings", () => config = new()),
                     new("Initializing Transcoder", () => Transcoder.Init()),
@@ -38,14 +39,15 @@ namespace Flexx.Utilities
 
                 for (int i = 0; i < steps.Length; i++)
                 {
-                    log.Warn($"{steps[i].Name} ({i + 1}/{steps.Length + 1})...");
+                    log.Warn($"{steps[i].Name} ({i + 1}/{steps.Length})...");
 
                     if (i == steps.Length - 1)
                         log.Info($"Server is Now ACTIVE.", "Type \"help\" for help");
 
                     steps[i].Action.Invoke();
-                    if (i != steps.Length - 1)
-                        log.Info($"Done {steps[i].Name}! ({i + 1}/{steps.Length + 1})");
+
+                    //if (i != steps.Length - 1)
+                    //    log.Info($"Done {steps[i].Name}! ({i + 1}/{steps.Length + 1})");
                 }
             });
         }
