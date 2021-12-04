@@ -207,7 +207,7 @@ namespace Flexx.Media.Objects.Libraries
 
         public object[] GetRecentlyAddedList(User user)
         {
-            MediaBase[] episode = medias.OrderBy(m => m.ScannedDate).ToArray();
+            MediaBase[] episode = medias.Where(m => m.Downloaded).OrderBy(m => m.ScannedDate).ToArray();
             object[] model = new object[episode.Length > 10 ? 10 : episode.Length];
             for (int i = 0; i < model.Length; i++)
             {
