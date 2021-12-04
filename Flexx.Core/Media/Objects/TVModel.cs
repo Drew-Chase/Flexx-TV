@@ -1,4 +1,5 @@
 ﻿using ChaseLabs.CLConfiguration.List;
+using Flexx.Authentication;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
 using Flexx.Media.Utilities;
@@ -257,6 +258,14 @@ namespace Flexx.Media.Objects
         #endregion Public Properties
 
         #region Public Methods
+
+        public void MarkAsWatched(User user)
+        {
+            Parallel.ForEach(Episodes, episode =>
+            {
+                user.SetHasWatched(episode, true);
+            });
+        }
 
         public EpisodeModel AddEpisode(int episode)
         {
@@ -547,6 +556,17 @@ namespace Flexx.Media.Objects
         #endregion Public Properties
 
         #region Public Methods
+
+        public void MarkAsWatched(User user)
+        {
+            Parallel.ForEach(Seasons, season =>
+            {
+                Parallel.ForEach(season.Episodes, episode =>
+                {
+                    user.SetHasWatched(episode, true);
+                });
+            });
+        }
 
         public SeasonModel AddSeason(int season)
         {
