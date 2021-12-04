@@ -1,4 +1,5 @@
-﻿using Flexx.Utilities;
+﻿using Flexx.Data;
+using Flexx.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System.Threading.Tasks;
@@ -12,8 +13,8 @@ public class Program
 
     public static void Main(string[] args)
     {
-        StartHttpServer(args);
         SetupProcess.Run().Wait();
+        StartHttpServer(args).Wait();
     }
 
     public static Task StartHttpServer(string[] args) =>
