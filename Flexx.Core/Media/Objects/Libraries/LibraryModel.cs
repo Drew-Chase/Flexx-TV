@@ -38,7 +38,7 @@ namespace Flexx.Media.Objects.Libraries
                     }
                     else
                     {
-                        log.Debug($"Not Adding Reduntant Title \"{media.Title}\"");
+                        log.Debug($"Not Adding Redundant Title \"{media.Title}\"");
                     }
                 }
             }

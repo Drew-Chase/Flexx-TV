@@ -187,7 +187,7 @@ namespace Flexx.Media.Objects
             }
             catch (Exception e)
             {
-                log.Error($"Unable to get reponse regarding {TMDB} trailer", e);
+                log.Error($"Unable to get response regarding {TMDB} trailer", e);
                 return;
             }
             if (string.IsNullOrWhiteSpace(json))

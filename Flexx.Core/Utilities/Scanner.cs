@@ -109,7 +109,7 @@ namespace Flexx.Media.Utilities
                 ForTV();
                 Prefetch(true, true); // Movies
                 Prefetch(false, true); // TV Shows
-                config.NextScheduledPrefetch = DateTime.Now.AddHours(24).ToString("HH:mm:ss MM-dd-yyy");
+                config.NextScheduledPrefetch = DateTime.Now.AddHours(24).ToString("HH:mm:ss MM-dd-yyyy");
             }
         }
 
@@ -158,45 +158,6 @@ namespace Flexx.Media.Utilities
         {
             return Task.Run(() => PopulateMovie(file));
         }
-
-        //private static void PrefetchMovies(bool force = false)
-        //{
-        //    log.Debug($"Prefetching Movies");
-        //    string prefetch_dir = Directory.CreateDirectory(Path.Combine(Paths.MovieData, "Prefetch")).FullName;
-        //    if (force)
-        //    {
-        //        Directory.Delete(prefetch_dir, true);
-        //        Directory.CreateDirectory(prefetch_dir);
-        //    }
-        //    Parallel.ForEach(Directory.GetFiles(prefetch_dir, "prefetch.metadata", SearchOption.AllDirectories), file =>
-        //    {
-        //        try
-        //        {
-        //            MovieLibraryModel.Instance.AddMedia(new MovieModel(new ChaseLabs.CLConfiguration.List.ConfigManager(file)));
-        //        }
-        //        catch (Exception e)
-        //        {
-        //            log.Error("Issue with Prefetching Local Movies", e);
-        //        }
-        //    });
-        //    foreach (DiscoveryCategory category in Enum.GetValues(typeof(DiscoveryCategory)))
-        //    {
-        //        if (category == DiscoveryCategory.None)
-        //        {
-        //            continue;
-        //        }
-
-        // log.Debug($"Prefetching {category} Movies"); string url =
-        // $"https://api.themoviedb.org/3/movie/{category.ToLower()}?api_key={TMDB_API}&language=en-US";
-        // JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"]; if
-        // (results == null || !results.Any()) { continue; } Parallel.ForEach(results, result => {
-        // if (result["id"] != null && MovieLibraryModel.Instance.GetMovieByTMDB(result["id"]) ==
-        // null) { try { MovieLibraryModel.Instance.AddMedia(new MovieModel(result["id"],
-        // category)); } catch (Exception e) { log.Error("Issue with Prefetching Remote Movies", e);
-        // } } }); }
-
-        //    log.Debug($"Done Prefetching Movies");
-        //}
 
         #endregion Movies
 

@@ -150,14 +150,14 @@ public static class Global
                 }
                 catch (Exception e)
                 {
-                    log.Error($"Unable to fetch Json from url \"{url}\"", e);
+                    log.Error($"Unable to fetch JSON from URL \"{url}\"", e);
                     return null;
                 }
             }
             JObject jsonObject = (JObject)JsonConvert.DeserializeObject(json);
             if (string.IsNullOrWhiteSpace(json) || jsonObject["success"] != null)
             {
-                log.Error($"Unable to fetch Json from url \"{url}\"");
+                log.Error($"Unable to fetch JSON from URL \"{url}\"");
                 return null;
             }
             return JsonConvert.DeserializeObject(json);

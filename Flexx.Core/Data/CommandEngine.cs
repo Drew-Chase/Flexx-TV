@@ -53,7 +53,7 @@ namespace Flexx.Data
                 }
                 if (!found)
                 {
-                    log.Error($"Unkown command \"{command}\"");
+                    log.Error($"Unknown command \"{command}\"");
                     CommandHelp();
                 }
                 Run();
