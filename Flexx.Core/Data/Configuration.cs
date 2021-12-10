@@ -16,11 +16,7 @@ namespace Flexx.Core.Data
 
         public Configuration()
         {
-#if DEBUG
-            sysProfile = new(Path.Combine(Paths.Configs, "sys"), false, "FlexxTV");
-#else
-            sysProfile = new(Path.Combine(Paths.Configs, "sys"), true, "FlexxTV");
-#endif
+            sysProfile = new(Path.Combine(Paths.Configs, "sys"), false);
             sysProfile.Add("movies", "");
             sysProfile.Add("tv", "");
             sysProfile.Add("next_scheduled_prefetch", "");

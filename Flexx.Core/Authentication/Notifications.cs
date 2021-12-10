@@ -99,11 +99,7 @@ namespace Flexx.Authentication
 
         public Notifications(User user)
         {
-#if DEBUG
-            notificationManager = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, user.Username)).FullName, "notifications"), false, "FlexxTV");
-#else
-            notificationManager = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, user.Username)).FullName, "notifications"), true, "FlexxTV");
-#endif
+            notificationManager = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, user.Username)).FullName, "notifications"));
             notifications = new();
             User = user;
             LoadFromCache();

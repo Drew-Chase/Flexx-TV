@@ -199,12 +199,7 @@ namespace Flexx.Media.Objects
             Season_Number = season_number;
             _episodes = new();
             Episodes = new();
-
-#if DEBUG
             Metadata = new(Path.Combine(Metadata_Directory, "metadata"));
-#else
-            Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true);
-#endif
             LoadMetaData();
             Episodes.Sort((x, y) => x.Episode_Number.CompareTo(y.Episode_Number));
         }
@@ -259,14 +254,6 @@ namespace Flexx.Media.Objects
 
         #region Public Methods
 
-        public void MarkAsWatched(User user)
-        {
-            Parallel.ForEach(Episodes, episode =>
-            {
-                user.SetHasWatched(episode, true);
-            });
-        }
-
         public EpisodeModel AddEpisode(int episode)
         {
             EpisodeModel model = new(episode, this);
@@ -294,6 +281,14 @@ namespace Flexx.Media.Objects
                 }
             }
             return null;
+        }
+
+        public void MarkAsWatched(User user)
+        {
+            Parallel.ForEach(Episodes, episode =>
+            {
+                user.SetHasWatched(episode, true);
+            });
         }
 
         public void ScanForMissing()
@@ -395,21 +390,13 @@ namespace Flexx.Media.Objects
             if (category == DiscoveryCategory.None)
             {
                 Metadata_Directory = Path.Combine(Paths.TVData, TMDB);
-#if DEBUG
-                Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false, "FlexxTV");
-#else
-                Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true, "FlexxTV");
-#endif
+                Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false);
                 Added = true;
             }
             else
             {
                 Metadata_Directory = Path.Combine(Paths.TVData, "Prefetch", TMDB);
-#if DEBUG
-                Metadata = new(Path.Combine(Metadata_Directory, "prefetch.metadata"), false, "FlexxTV");
-#else
-                Metadata = new(Path.Combine(Metadata_Directory, "prefetch.metadata"), true, "FlexxTV");
-#endif
+                Metadata = new(Path.Combine(Metadata_Directory, "prefetch.metadata"), false);
                 Added = false;
             }
             LoadMetaData();
@@ -557,17 +544,6 @@ namespace Flexx.Media.Objects
 
         #region Public Methods
 
-        public void MarkAsWatched(User user)
-        {
-            Parallel.ForEach(Seasons, season =>
-            {
-                Parallel.ForEach(season.Episodes, episode =>
-                {
-                    user.SetHasWatched(episode, true);
-                });
-            });
-        }
-
         public SeasonModel AddSeason(int season)
         {
             SeasonModel model = new(season, this);
@@ -602,6 +578,17 @@ namespace Flexx.Media.Objects
                 }
             }
             return null;
+        }
+
+        public void MarkAsWatched(User user)
+        {
+            Parallel.ForEach(Seasons, season =>
+            {
+                Parallel.ForEach(season.Episodes, episode =>
+                {
+                    user.SetHasWatched(episode, true);
+                });
+            });
         }
 
         public void ScanForMissing()
@@ -690,7 +677,7 @@ namespace Flexx.Media.Objects
             Metadata.Add("title", Title);
             Metadata.Add("added", Added);
             Metadata.Add("plot", Plot);
-            Metadata.Add("category", Category);
+            Metadata.Add("category", Category.ToString());
             Metadata.Add("studio", Studio);
             Metadata.Add("mpaa", MPAA);
             Metadata.Add("rating", Rating);

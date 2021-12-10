@@ -103,11 +103,7 @@ public class User
     internal User(string username)
     {
         Username = username;
-#if DEBUG
-        userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"), false, "FlexxTV");
-#else
-            userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"), true, "FlexxTV");
-#endif
+        userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"), false);
         HasWatched = new();
         WatchedDuration = new();
         ContinueWatching = new();

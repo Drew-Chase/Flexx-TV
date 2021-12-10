@@ -41,11 +41,7 @@ namespace Flexx.Media.Objects
 
         public MovieModel(string TMDB, DiscoveryCategory Category) : base()
         {
-#if DEBUG
-            Metadata = new(Path.Combine(Path.Combine(Paths.MovieData, "Prefetch"), TMDB, "prefetch.metadata"), false, "FlexxTV");
-#else
-            Metadata = new(Path.Combine(Path.Combine(Paths.MovieData, "Prefetch"), TMDB, "prefetch.metadata"), true, "FlexxTV");
-#endif
+            Metadata = new(Path.Combine(Path.Combine(Paths.MovieData, "Prefetch"), TMDB, "prefetch.metadata"), false);
             Metadata_Directory = Path.Combine(Paths.MovieData, "Prefetch", TMDB);
             Init(TMDB, true, Category);
         }
@@ -253,6 +249,12 @@ namespace Flexx.Media.Objects
 
         public override void UpdateMetaData()
         {
+            if (Metadata == null)
+            {
+                string path = Path.Combine(Metadata_Directory, "metadata");
+                if (File.Exists(path)) File.Delete(path);
+                Metadata = new(path);
+            }
             log.Debug($"Getting metadata for {TMDB}");
             ScannedDate = DateTime.Now;
             JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}?api_key={TMDB_API}");
@@ -306,7 +308,7 @@ namespace Flexx.Media.Objects
             Metadata.Add("id", TMDB);
             Metadata.Add("title", Title);
             Metadata.Add("plot", Plot);
-            Metadata.Add("category", Category);
+            Metadata.Add("category", Category.ToString());
             if (Rating != 0)
             {
                 Metadata.Add("rating", Rating);
@@ -388,11 +390,7 @@ namespace Flexx.Media.Objects
                 Metadata_Directory = Path.Combine(Paths.MovieData, TMDB);
                 try
                 {
-#if DEBUG
-                    Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false, "FlexxTV");
-#else
-                    Metadata = new(Path.Combine(Metadata_Directory, "metadata"), true, "FlexxTV");
-#endif
+                    Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false);
                 }
                 catch (Exception e)
                 {
@@ -436,6 +434,7 @@ namespace Flexx.Media.Objects
                     catch { }
                     ReleaseDate = DateTime.Parse(Metadata.GetConfigByKey("release_date").Value);
                     ScannedDate = DateTime.Parse(Metadata.GetConfigByKey("scanned_date").Value);
+                    Category = Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object value) ? (DiscoveryCategory)value : DiscoveryCategory.None;
                 }
                 catch
                 {
