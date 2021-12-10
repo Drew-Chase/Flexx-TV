@@ -266,7 +266,10 @@ public class Transcoder
                 Thread.Sleep(500);
                 OptimizeImage(input, output, scale);
             }
-            File.Delete(output);
+            else
+            {
+                File.Delete(output);
+            }
         }
 
         Process process = new()
