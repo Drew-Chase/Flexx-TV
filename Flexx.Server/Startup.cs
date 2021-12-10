@@ -8,23 +8,7 @@ namespace Flexx.Server
 {
     public class Startup
     {
-        // This method gets called by the runtime. Use this method to add services to the container.
-        // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddMvc(action =>
-            {
-                action.EnableEndpointRouting = false;
-            });
-            services.AddCors(options =>
-            {
-#if DEBUG
-                options.AddDefaultPolicy(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-#else
-                options.AddDefaultPolicy(builder => builder.WithOrigins("flexx-tv.tk"));
-#endif
-            });
-        }
+        #region Public Methods
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -49,5 +33,21 @@ namespace Flexx.Server
 
             app.UseRouting();
         }
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddMvc(action =>
+            {
+                action.EnableEndpointRouting = false;
+            });
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+            });
+        }
+
+        #endregion Public Methods
     }
 }
