@@ -143,6 +143,7 @@ namespace Flexx.Media.Objects
             Metadata.Add("plot", Plot);
             Metadata.Add("release_date", ReleaseDate.ToString("MM-dd-yyyy"));
             Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
+            Metadata.Add("stills_generated", false);
         }
 
         #endregion Public Methods

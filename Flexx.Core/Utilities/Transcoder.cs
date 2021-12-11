@@ -169,7 +169,7 @@ public class Transcoder
         return Versions.ToArray();
     }
 
-    public static StringBuilder FFmpegArgumentBuilder(string input, string output, int start_duration = 0, int width = -2, int height = 720, string video_codec = "libx264", string audio_codec = "aac", int video_bitrate = 4500, int audio_bitrate = 380, bool UseHardwareAccel = false, EncoderPreset preset = EncoderPreset.ultrafast)
+    public static StringBuilder FFmpegArgumentBuilder(string input, int start_duration = 0, int width = -2, int height = 720, string video_codec = "libx264", string audio_codec = "aac", int video_bitrate = 4500, int audio_bitrate = 380, bool UseHardwareAccel = true, EncoderPreset preset = EncoderPreset.ultrafast)
     {
         StringBuilder builder = new();
         if (UseHardwareAccel)
@@ -177,6 +177,38 @@ public class Transcoder
         builder.Append($"-ss {start_duration} -i \"{input}\" -loglevel quiet -vf scale={width}:{height} -c:v {video_codec} -c:a {audio_codec} -b:v {video_bitrate}K -b:a {audio_bitrate}K -preset {preset} -movflags +faststart");
         return builder;
     }
+
+    public static Task GenerateStills(MediaBase media) =>
+        Task.Run(() =>
+        {
+            if (!media.Downloaded) return;
+            string stillsDirectory = Directory.CreateDirectory(Path.Combine(Directory.GetParent(media.Metadata.PATH).FullName, "stills")).FullName;
+            media.Metadata.GetConfigByKey("stills_generated").Value = Directory.GetFiles(stillsDirectory, "*.png", SearchOption.TopDirectoryOnly).Length >= Math.Ceiling(media.MediaInfo.Duration.TotalSeconds - 60);
+            if (!media.Metadata.GetConfigByKey("stills_generated").Value)
+            {
+                log.Warn($"Movie: \"{media.Title}\", Stills on disk: {Directory.GetFiles(stillsDirectory, "*.png", SearchOption.TopDirectoryOnly).Length}, seconds in movie: {Math.Ceiling(media.MediaInfo.Duration.TotalSeconds)}");
+                log.Debug($"Processing Stills for {media.TMDB}_{media.Title}");
+                string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
+
+                string arguments = $"-hwaccel auto -y -i \"{media.PATH}\" -loglevel quiet -preset ultrafast -vf fps=1,scale=-2:100 -b:v 10k \"{Path.Combine(stillsDirectory, "%d.png")}\"";
+                Process process = new()
+                {
+                    StartInfo = new()
+                    {
+                        FileName = exe,
+                        Arguments = arguments,
+                        UseShellExecute = false,
+                        WorkingDirectory = stillsDirectory,
+                    },
+                    EnableRaisingEvents = true,
+                };
+
+                process.Start();
+                process.WaitForExit();
+            }
+            media.Metadata.GetConfigByKey("stills_generated").Value = Directory.GetFiles(stillsDirectory, "*.png", SearchOption.TopDirectoryOnly).Length >= Math.Ceiling(media.MediaInfo.Duration.TotalSeconds) - 60;
+            media.Stills = Directory.GetFiles(stillsDirectory, "*.png", SearchOption.TopDirectoryOnly);
+        });
 
     public static MediaVersion[] GetAcceptableVersions(MediaBase media)
     {
@@ -218,7 +250,7 @@ public class Transcoder
         if (!File.Exists(fileOutput))
         {
             string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
-            StringBuilder arguments = FFmpegArgumentBuilder(media.PATH, fileOutput, height: version.Height, video_bitrate: version.BitRate, start_duration: start_time);
+            StringBuilder arguments = FFmpegArgumentBuilder(media.PATH, height: version.Height, video_bitrate: version.BitRate, start_duration: start_time);
             arguments.Append($" -hls_list_size 0 -hls_time 10 -hls_playlist_type event -f hls \"{fileOutput}\"");
             Process process = new()
             {

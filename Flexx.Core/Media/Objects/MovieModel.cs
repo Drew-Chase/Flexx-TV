@@ -316,6 +316,7 @@ namespace Flexx.Media.Objects
 
             Metadata.Add("release_date", ReleaseDate.ToString("MM-dd-yyyy"));
             Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
+            Metadata.Add("stills_generated", false);
             if (!string.IsNullOrWhiteSpace(MPAA))
             {
                 Metadata.Add("mpaa", MPAA);

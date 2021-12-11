@@ -48,6 +48,8 @@ namespace Flexx.Media.Objects
 
         public DateTime ScannedDate { get; set; }
 
+        public string[] Stills { get; set; }
+
         public virtual FileStream Stream => string.IsNullOrWhiteSpace(PATH) ? null : new(PATH, FileMode.Open, FileAccess.Read);
 
         public string Title { get; set; }

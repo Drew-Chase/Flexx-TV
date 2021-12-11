@@ -149,7 +149,7 @@ namespace Flexx.Server.Controllers
         /// </param>
         /// <returns> </returns>
         [HttpGet("images")]
-        public IActionResult Images(string id, string library, string type, bool? language, int? season, int? episode)
+        public IActionResult Images(string id, string library, string type, bool? language, int? season, int? episode, int? duration)
         {
             try
             {
@@ -226,7 +226,7 @@ namespace Flexx.Server.Controllers
                                         }
                                         else
                                         {
-                                            return Images(id, library, type, false, season, episode);
+                                            return Images(id, library, type, false, season, episode, duration);
                                         }
                                     }
                                     else
@@ -251,6 +251,12 @@ namespace Flexx.Server.Controllers
                                     {
                                         return NotFound();
                                     }
+                                }
+                                else if (type.Equals("stills"))
+                                {
+                                    if (movie.Stills != null && movie.Stills.Length > duration.GetValueOrDefault(0))
+                                        return File(new FileStream(movie.Stills[duration.GetValueOrDefault(0)], FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                    return Images(id, library, "cover", false, season, episode, duration);
                                 }
                             }
                         }
@@ -343,6 +349,30 @@ namespace Flexx.Server.Controllers
                                     if (!string.IsNullOrWhiteSpace(tvModel.LogoImage) && System.IO.File.Exists(tvModel.LogoImage))
                                     {
                                         return File(new FileStream(tvModel.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                    }
+                                }
+                                else if (type.Equals("stills"))
+                                {
+                                    if (season.HasValue)
+                                    {
+                                        seasonModel = tvModel.GetSeasonByNumber(season.Value);
+                                        if (episode.HasValue)
+                                        {
+                                            episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
+                                            if (episodeModel != null)
+                                            {
+                                                if (episodeModel.Stills != null && episodeModel.Stills.Length > duration.GetValueOrDefault(0))
+                                                    return File(new FileStream(episodeModel.Stills[duration.GetValueOrDefault(0)], FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                                return Images(id, library, "cover", false, season, episode, duration);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
+                                            {
+                                                return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -521,9 +551,7 @@ namespace Flexx.Server.Controllers
         /// <param name="id">       the TMDB ID of the element </param>
         /// <param name="library">  Either "tv" or "movie" </param>
         /// <param name="username"> leave blank for guest user </param>
-        /// <param name="season">  
-        /// TV Shows Season Number (only use with tv library and id specified)
-        /// </param>
+        /// <param name="season">   TV Shows Season Number (only use with tv library and id specified) </param>
         /// <param name="episode"> 
         /// Seasons Episode Number (only use with tv library, id and season specified)
         /// </param>

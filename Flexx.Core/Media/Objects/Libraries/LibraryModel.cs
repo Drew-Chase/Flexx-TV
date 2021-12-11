@@ -1,6 +1,7 @@
 ﻿using Flexx.Media.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using static Flexx.Core.Data.Global;
 
@@ -99,6 +100,18 @@ namespace Flexx.Media.Objects.Libraries
                     }
                 }).Wait();
             }
+            Task.Run(() =>
+            {
+                foreach (var item in medias.Where(m => m.Metadata.GetConfigByKey("stills_generated") != null && m.Metadata.GetConfigByKey("stills_generated").Value))
+                {
+                    Transcoder.GenerateStills(item);
+                }
+
+                Parallel.ForEach(medias, new() { MaxDegreeOfParallelism = 3 }, item =>
+                {
+                    Transcoder.GenerateStills(item).Wait();
+                });
+            });
         }
 
         public virtual void RefreshMetadata()
