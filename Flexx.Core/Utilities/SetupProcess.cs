@@ -45,9 +45,6 @@ namespace Flexx.Utilities
                         log.Info($"Server is Now ACTIVE.", "Type \"help\" for help");
 
                     steps[i].Action.Invoke();
-
-                    //if (i != steps.Length - 1)
-                    //    log.Info($"Done {steps[i].Name}! ({i + 1}/{steps.Length + 1})");
                 }
             });
         }
