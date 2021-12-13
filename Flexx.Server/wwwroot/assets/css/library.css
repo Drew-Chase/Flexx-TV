@@ -1,0 +1,42 @@
+@import url("carousel.css");
+
+#dash-items {
+    transform: translateY(-15vh);
+}
+
+.banner-title img {
+    min-height: 100px;
+    max-height: 25vh;
+    max-width: 50vw;
+}
+
+#featured-banner.banner.xl {
+    position: relative;
+    height: 100vh;
+    min-height: 600px;
+}
+
+#featured-banner::after {
+    content: '';
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    position: absolute;
+    background: linear-gradient(90deg, black, transparent, transparent);
+    z-index: -1;
+}
+
+#featured-banner #progress-bar {
+    position: absolute;
+    max-height: 5px;
+    height: 100vh;
+    max-width: 0%;
+    width: 100%;
+    padding: 0px;
+    background-color: var(--primary);
+    top: 0px;
+    left: 0px;
+    border-radius: 0px 8px 8px 0px;
+    transition: max-width 1s linear;
+}

@@ -1,0 +1,132 @@
+@import url("fonts.css");
+@import url("scrollbar.css");
+@import url("responsive.css");
+@import url("search.css");
+
+:root {
+    --primary-hue: 359;
+    --primary-saturation: 92%;
+    --primary-lightness: 46%;
+    --primary: hsl(var(--primary-hue), var(--primary-saturation), var(--primary-lightness));
+    --primary-alt: hsl(var(--primary-hue), calc(var(--primary-saturation) - 15%), calc(var(--primary-lightness) - 5%));
+    --background: black;
+    font-family: 'Roboto';
+}
+
+body {
+    margin: 0px;
+    padding: 0px;
+    color: rgb(255, 255, 255);
+    background-color: var(--background);
+    overflow: overlay;
+}
+
+.ghost::after {
+    content: '+';
+    font-size: 32px;
+    width: 30px;
+    height: 30px;
+    padding: 0px 0px 10px 10px;
+    background: var(--primary);
+    right: 0;
+    top: 0;
+    position: absolute;
+}
+
+.dropdown {
+    position: relative;
+    background-color: var(--primary);
+    padding: 5px 10px;
+    border-radius: 0px;
+}
+
+.dropdown .dropdown-items {
+    overflow: hidden;
+    max-height: 0px;
+    width: max-content;
+    position: absolute;
+    color: black;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    transform: max-height 1500ms;
+}
+
+.dropdown:hover .dropdown-items {
+    max-height: max-content;
+    margin: 0px;
+    text-align: center;
+}
+
+.dropdown .dropdown-item {
+    padding: 5px 0px;
+    margin: 0px;
+}
+
+.dropdown .dropdown-item:hover {
+    color: white;
+    background-color: var(--primary);
+}
+
+button {
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    min-width: 50px;
+}
+
+button.primary {
+    color: white;
+    background-color: var(--primary);
+}
+
+#loading {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    inset: 0;
+    background-color: black;
+    z-index: 9999;
+    transition: opacity 500ms;
+}
+
+#loading.out {
+    opacity: 0;
+}
+
+.throbber {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 5px solid transparent;
+    border-top: 5px solid var(--primary);
+    animation: throbber 500ms linear infinite;
+}
+
+#popup-menus {
+    display: none;
+}
+
+#popup-menus.active {
+    position: fixed;
+    display: flex;
+    border: 2px solid var(--primary);
+    inset: 0px;
+    background: linear-gradient(45deg, var(--background), #0a0a0a);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    flex-direction: column;
+}
+
+@keyframes throbber {
+    0% {
+        transform: rotate(0deg)
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

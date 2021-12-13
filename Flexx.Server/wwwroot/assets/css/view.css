@@ -1,0 +1,131 @@
+body>.banner-background {
+    position: fixed;
+    height: 100vh;
+    width: 100%;
+    inset: 0;
+    background-size: cover;
+    z-index: -1;
+    filter: brightness(.25);
+}
+
+.episode-background {
+    filter: brightness(1);
+}
+
+#view-banner {
+    padding-top: 150px;
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    background-position: fixed;
+    min-height: 500px;
+    transition: transform 500ms;
+}
+
+.carousel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: calc(100% - 100px);
+    margin: 0px 50px;
+}
+
+#episodes {
+    display: flex;
+    max-width: 100%;
+    min-width: 100%;
+    margin: 0;
+    flex-wrap: wrap;
+    justify-content: start;
+}
+
+#episodes .banner {
+    --size: 20%;
+    max-width: var(--size);
+    min-width: var(--size);
+    margin-bottom: 50px;
+}
+
+.library-item-subtitle {
+    font-size: 14px;
+}
+
+#view-banner #banner-poster {
+    display: flex;
+    height: 50vh;
+    min-height: 320px;
+    aspect-ratio: 2/3;
+    background-size: cover;
+    background-position: center;
+    margin-right: 50px;
+    margin-left: 20px;
+}
+
+.banner.xl .banner-description {
+    padding: 10px 0;
+    max-width: 70%;
+}
+
+button.primary#play {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* aspect-ratio: 4/1; */
+    width: 100x;
+    font-size: 18px;
+}
+
+button.primary#play i {
+    margin-right: 10px;
+}
+
+.cast-member {
+    min-width: 18vw;
+    max-width: 18vw;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    text-align: center;
+}
+
+.cast-member>* {
+    width: 50%;
+    max-width: 50%;
+}
+
+.cast-member-name {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.cast-member-role {
+    font-weight: 300;
+    font-size: 14px;
+    font-style: italic;
+    margin-bottom: 25px;
+}
+
+.view-additional-descriptors {
+    display: flex;
+}
+
+.view-additional-descriptors>* {
+    padding: 10px 15px;
+    margin: 10px 5px;
+}
+
+.view-mpaa {
+    background-color: var(--primary);
+    color: white;
+}
+
+.view-rating {
+    background-color: #0d253f;
+    color: white;
+}
+
+.view-length {
+    background-color: white;
+    color: black;
+}

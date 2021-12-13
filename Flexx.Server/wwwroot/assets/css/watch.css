@@ -1,0 +1,293 @@
+:root {
+    --size: 100px;
+}
+
+body {
+    overflow: hidden;
+}
+
+main {
+    display: flex;
+    justify-content: center;
+    max-height: 100vh;
+    min-height: 100vh;
+    height: 100vh;
+}
+
+.player-subtitle {
+    display: contents;
+    font-size: 24px;
+}
+
+video {
+    height: 99%;
+}
+
+#video-controls {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    inset: 0px;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    z-index: 999;
+    transition: opacity 500ms;
+}
+
+#video-controls.active {
+    opacity: 1;
+}
+
+#top-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#video-title {
+    display: flex;
+    align-items: center;
+    height: 100px;
+    padding-left: 30px;
+    font-size: 32px;
+    width: 100%;
+}
+
+#close-btn {
+    cursor: pointer;
+    --size: 45px;
+    display: flex;
+    font-weight: bolder;
+    border-radius: 50%;
+    justify-content: center;
+    align-items: center;
+    width: var(--size);
+    height: var(--size);
+    font-size: calc(var(--size) / 1.7);
+    margin-right: 25px;
+    background-color: transparent;
+    transition: background-color 500ms;
+}
+
+#close-btn:hover, #close-btn:focus {
+    background-color: var(--primary);
+}
+
+#clickable-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+#video-controls #clickable-area:hover {
+    cursor: none;
+}
+
+#video-controls.active #clickable-area:hover {
+    cursor: pointer;
+}
+
+#large-play-button {
+    width: var(--size);
+    height: var(--size);
+    font-size: calc(var(--size) / 2);
+    justify-content: center;
+    align-items: center;
+    border-radius: 180px;
+    color: white;
+    background-color: var(--primary);
+    display: none;
+}
+
+#large-play-button.active {
+    display: flex;
+}
+
+#controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+}
+
+#controls>div {
+    margin: 0 10px;
+    cursor: pointer;
+    filter: brightness(.75)
+}
+
+#controls>div:hover {
+    filter: brightness(1);
+}
+
+#progress-track {
+    position: relative;
+    width: 100%;
+    background-color: #1c1c1c;
+    height: 20px;
+}
+
+#progress-clickable {
+    cursor: pointer;
+    z-index: 99999;
+    position: absolute;
+    background-color: transparent;
+    width: 100%;
+    height: 100%;
+}
+
+#progress-track:hover #progress-bar::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: -3px;
+    height: 20px;
+    width: 5px;
+    background-color: white;
+    z-index: 5;
+}
+
+#progress-bar {
+    position: absolute;
+    max-width: 00px;
+    width: 0px;
+    transition: max-width 500ms;
+    height: 100%;
+    z-index: 2;
+    background-color: var(--primary);
+}
+
+#potential-progress-bar {
+    position: absolute;
+    width: 0px;
+    height: 100%;
+    z-index: 3;
+    background-color: var(--primary);
+    opacity: .15;
+}
+
+#progress-buffer-bar {
+    position: absolute;
+    max-width: 100%;
+    transition: max-width 500ms, width 500ms;
+    height: 100%;
+    z-index: 1;
+    background-color: #2c2c2c;
+}
+
+#bottom {
+    display: flex;
+    font-size: 24px;
+    justify-content: center;
+    align-items: center;
+    min-width: 100%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#currentTime, #endTimes, #controls {
+    width: 100%;
+}
+
+#endTimes {
+    display: flex;
+    justify-content: end;
+}
+
+#currentTime {
+    margin-left: 10px;
+}
+
+#endTimes>div {
+    margin-right: 10px;
+}
+
+.vjs-modal-dialog, .vjs-hidden, .vjs-text-track-settings, .vjs-error-display, .vjs-modal-dialog, .vjs-hidden, .vjs-control-bar, .vjs-big-play-button, .vjs-loading-spinner, .vjs-text-track-display {
+    display: none;
+}
+
+video {
+    display: unset;
+    position: absolute;
+    left: 0;
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+#volume-control {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#volume-bar {
+    position: absolute;
+    overflow: hidden;
+    max-width: 0px;
+    width: 100px;
+    height: 10px;
+    left: 100%;
+    border-radius: 180px;
+    margin-left: 5px;
+    transition: max-width 500ms;
+}
+
+#volume-bar>div {
+    position: absolute;
+    width: 100px;
+    height: 100%;
+}
+
+#volume-control i {
+    max-width: 30px;
+    min-width: 30px;
+    width: 30px;
+}
+
+#volume-track {
+    background-color: #aaa;
+}
+
+#volume-head {
+    z-index: 1;
+    background-color: var(--primary);
+}
+
+#volume-control:hover #volume-bar, #volume-control:focus #volume-bar {
+    max-width: 100px;
+
+}
+
+#progress-extras {
+    position: relative;
+}
+
+#hover-popup {
+    display: none;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.5);
+    top: -200px;
+    left: 0;
+    min-width: 100px;
+    width: 200px;
+    min-height: 163px;
+}
+
+#hover-popup p {
+    bottom: 0;
+}
+
+#hover-popup img {
+    width: 100%;
+    min-height: 112px;
+}

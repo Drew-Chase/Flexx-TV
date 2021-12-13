@@ -1,0 +1,21 @@
+﻿<div class="banner xl" id="featured-banner">
+    <div class="banner-title"></div>
+    <div class="banner-actions">
+        <button class="primary"></button>
+        <button class="secondary additional-options"><i class="fa-solid fa-ellipsis"></i></button>
+    </div>
+    <div class="banner-description"></div>
+    <div class="banner-background"></div>
+    <div class="banner-background-gradient"></div>
+</div>
+<div id="dash-items">
+</div>
+
+
+<script>
+    (async () => {
+        await loadFeaturedDashboard();
+        await loadSections();
+        EndLoading();
+    }).call();
+</script>

@@ -1,0 +1,44 @@
+﻿@{
+    string category = (string)ViewData["Category"];
+    string search = (string)ViewData["Search"];
+}
+
+<script>
+    let library = "@category";
+</script>
+<div id="search-area">
+    <div id="search-bar-area">
+        <div id="search-title">Search @(category.First().ToString().ToUpper() + category.Substring(1).ToString())</div>
+        <input id="search-bar" type="text">
+    </div>
+    <div id="search-view">
+        <div id="search-query"></div>
+        <div id="search-items">
+        </div>
+    </div>
+</div>
+
+<script src="/assets/javascript/search.js"></script>
+
+@if (category != "actors")
+{
+    <script>
+        $("input[type='text']")[0].value = "@search";
+        $("#search-bar-area")[0].classList.add('active');
+        $("#search-view")[0].classList.add('active');
+        search($("input[type='text']")[0].value);
+    </script>
+}
+else
+{
+    if (search != "")
+    {
+
+        <script>
+            $("input[type='text']")[0].value = "@search";
+            $("#search-bar-area")[0].classList.add('active');
+            $("#search-view")[0].classList.add('active');
+            search($("input[type='text']")[0].value);
+        </script>
+    }
+}

@@ -1,0 +1,72 @@
+nav {
+    position: fixed;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    z-index: 999;
+    transition: min-height 500ms, background 500ms;
+}
+
+nav #brand {
+    min-width: max-content;
+    padding-left: 20px;
+    font-size: 18px;
+    transition: min-width 500ms, font-size 500ms;
+    color: var(--primary);
+}
+
+nav .nav-items {
+    display: flex;
+    align-items: center;
+    margin: 0 20px;
+    font-size: 18px;
+    width: 100%;
+    transition: transform 500ms, font-size 500ms;
+}
+
+nav .nav-items.right {
+    width: 25%;
+}
+
+nav .nav-items .nav-item {
+    margin: 0 10px;
+    opacity: .7;
+    cursor: pointer;
+    transition: opacity 500ms;
+}
+
+nav .nav-items .nav-item:hover, nav .nav-items .nav-item.active {
+    opacity: 1;
+}
+
+#account-nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    width: 30px;
+    height: 30px;
+    position: relative;
+    background-color: var(--primary);
+    padding: 5px 10px;
+    border-radius: 0px;
+}
+
+nav.expanded {
+    background-color: transparent;
+    min-height: 100px;
+}
+
+nav.expanded #brand {
+    font-size: 32px;
+}
+
+nav.expanded .nav-items {
+    font-size: 22px;
+}
+
+nav.collapsed {
+    background-color: var(--background);
+    min-height: 50px;
+}

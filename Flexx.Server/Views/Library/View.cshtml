@@ -1,0 +1,75 @@
+﻿<link rel="stylesheet" href="/assets/css/view.css">
+<div class="banner xl" id="view-banner">
+    <div id="banner-poster"></div>
+    <div class="banner-content">
+
+        <div class="banner-title"></div>
+        <div class="view-additional-descriptors">
+            <div class="view-mpaa"></div>
+            <div class="view-length"></div>
+            <div class="view-rating"></div>
+        </div>
+        <div class="banner-description"></div>
+        <div class="banner-actions">
+            <button class="primary" id="play"></button>
+            <button class="additional-options"><i class="fa-solid fa-ellipsis"></i></button>
+        </div>
+    </div>
+</div>
+
+<div class="banner-background"></div>
+
+<script>
+    let id = "@ViewData["ID"]";
+    let lib = "@ViewData["Library"]";
+    let episode = null;
+    let season = null;
+</script>
+
+<script src="/assets/javascript/view.js"></script>
+@if (ViewData["Library"].ToString().ToLower().Equals("tv"))
+{
+    @if ((int)ViewData["Season"] != -1)
+    {
+        <script>
+            season = @((int)ViewData["Season"]);
+        </script>
+
+        @if ((int)ViewData["Episode"] != -1)
+        {
+            <script>
+                episode = @((int)ViewData["Episode"]);
+            </script>
+        }
+        else
+        {
+            <div class="carousel">
+                <div id="episodes"></div>
+            </div>
+        }
+
+    }
+    else
+    {
+        <div class="library" id="tv-library">
+            <div class="library-items"></div>
+        </div>
+    }
+}
+
+
+
+<div class="carousel" id="cast">
+    <div class="carousel-title">Cast</div>
+    <div class="carousel-items"></div>
+    <div class="carousel-control carousel-left"><i class="fa-solid fa-angle-left"></i></div>
+    <div class="carousel-control carousel-right"><i class="fa-solid fa-angle-right"></i></div>
+</div>
+
+
+<div class="carousel" id="discover-similar">
+    <div class="carousel-title">Similar</div>
+    <div class="carousel-items"></div>
+    <div class="carousel-control carousel-left"><i class="fa-solid fa-angle-left"></i></div>
+    <div class="carousel-control carousel-right"><i class="fa-solid fa-angle-right"></i></div>
+</div>

@@ -1,0 +1,34 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - FlexxTV</title>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/library.css">
+    <link rel="stylesheet" href="/assets/css/context-menu.css">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico" type="image/x-icon">
+    <script src="/assets/lib/jquery.js"></script>
+    <script src="/assets/javascript/contextmenu.js"></script>
+    <script src="/assets/javascript/library.js"></script>
+</head>
+<body>
+
+    <script>
+        let user = "";
+    </script>
+    @if ((bool)ViewData["UseNav"] == true)
+    {
+        @Html.PartialAsync("_Navigation").Result;
+    }
+    @RenderBody()
+
+
+    <div id="context-menu">
+        <div id="back-context-item" class="context-item">Back</div>
+    </div>
+    <script src="/assets/javascript/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,72 @@
+﻿@{
+    System.Text.StringBuilder urlBuilder = new();
+    urlBuilder.Append($"/api/get/{ViewData["Library"]}/{ViewData["ID"]}");
+    if ((bool)ViewData["Trailer"])
+    {
+        urlBuilder.Append("/trailer");
+    }
+}
+<script>
+    let resume = "@ViewData["Resume"].ToString().ToLower()";
+    var season = @ViewData["Season"];
+    var episode = @ViewData["Episode"];
+    var debugMode = @ViewData["Debug"].ToString().ToLower()
+    let isMovie = @ViewData["Library"].Equals("movie").ToString().ToLower();
+    let isTrailer = @ViewData["Trailer"].ToString().ToLower();
+    let id = "@ViewData["ID"]";
+    let skipAmount = 30000;
+    let url = "@urlBuilder.ToString()";
+    let library = "@ViewData["Library"].ToString().ToLower()";
+</script>
+
+
+
+<link rel="stylesheet" href="/assets/css/watch.css">
+<main>
+    <div id="video-controls" class="active">
+        <div id="top-row">
+            <div id="video-title"></div>
+        </div>
+        <div id="clickable-area">
+            <div id="large-play-button" class=""><i class="fa-solid fa-play"></i></div>
+        </div>
+        <div id="progress-track">
+            <div id="progress-extras">
+                <div id="hover-popup">
+                    <img>
+                    <p>00:00:00</p>
+                </div>
+            </div>
+            <div id="progress-clickable"></div>
+            <div id="progress-bar"></div>
+            <div id="potential-progress-bar"></div>
+            <div id="progress-buffer-bar"></div>
+        </div>
+        <div id="bottom">
+            <div id="currentTime" title="Current Play Time">00:00:00</div>
+            <div id="controls">
+                <div id="options-button" title="Options"><i class="fa-solid fa-sliders"></i></div>
+                <div id="skip-backward-button"><i class="fa-solid fa-backward-fast"></i></div>
+                <div id="rewind-button" title="Rewind 30 Seconds"><i class="fa-solid fa-backward"></i></div>
+                <div id="play-button" title="Play"><i class="fa-solid fa-play"></i></div>
+                <div id="fast-forward-button" title="Fast Forward 30 Seconds"><i class="fa-solid fa-forward"></i></div>
+                <div id="skip-forward-button"><i class="fa-solid fa-forward-fast"></i></div>
+                <div id="stop-button" title="Close Player"><i class="fa-solid fa-stop"></i></div>
+                <div id="volume-control">
+                    <i title="Mute" class="fa-solid fa-volume-high"></i>
+                    <div id="volume-bar">
+                        <div id="volume-head"></div>
+                        <div id="volume-track"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="endTimes">
+                <div id="totalTime" title="Video Duration">00:00:00</div>
+                <div>|</div>
+                <div id="endTime" title="End Time">00:00PM</div>
+            </div>
+        </div>
+    </div>
+    <script src="/assets/lib/video-js.js"></script>
+    <script src="/assets/javascript/watch.js"></script>
+</main>

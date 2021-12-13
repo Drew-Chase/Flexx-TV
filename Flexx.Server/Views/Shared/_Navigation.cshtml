@@ -1,0 +1,50 @@
+﻿
+<link rel="stylesheet" href="/assets/css/nav.css">
+<nav class="expanded">
+    <span id="brand">Flexx TV</span>
+    <div class="nav-items left">
+        @if (ViewData["Title"] != null)
+        {
+            @if (ViewData["Title"].Equals("Home"))
+            {
+                <div class="nav-item active" id="nav-home">Home</div>
+            }
+            else
+            {
+                <div class="nav-item" id="nav-home">Home</div>
+            }
+
+            @if (ViewData["Title"].Equals("Movies"))
+            {
+                <div class="nav-item active" id="nav-movie">Movies</div>
+            }
+            else
+            {
+                <div class="nav-item" id="nav-movie">Movies</div>
+            }
+            @if (ViewData["Title"].Equals("TV"))
+            {
+                <div class="nav-item active" id="nav-tv">TV Shows</div>
+            }
+            else
+            {
+                <div class="nav-item" id="nav-tv">TV Shows</div>
+            }
+        }
+        else
+        {
+            <div class="nav-item" id="nav-home">Home</div>
+            <div class="nav-item" id="nav-movie">Movies</div>
+            <div class="nav-item" id="nav-tv">TV Shows</div>
+        }
+    </div>
+    <div class="nav-items right">
+        <div class="nav-item" id="search-nav-item"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <div class="nav-item" id="server-notifications-nav-item"><i class="fa-solid fa-bell"></i></div>
+        <div class="nav-item" id="account-nav-item">
+            <i class="fa-solid fa-user" style="font-size: 24px"></i>
+        </div>
+    </div>
+</nav>
+
+<script src="/assets/javascript/nav.js"></script>
