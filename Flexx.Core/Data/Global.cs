@@ -1,13 +1,13 @@
 ﻿using ChaseLabs.CLLogger;
 using ChaseLabs.CLLogger.Interfaces;
-using Flexx.Media.Utilities;
+using Flexx.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Net.Http;
 
-namespace Flexx.Core.Data;
+namespace Flexx.Data;
 
 public static class Global
 {
@@ -37,6 +37,8 @@ public static class Global
 
     public static class Paths
     {
+        public static string ExecutingBinary => Path.Combine(Directory.GetParent(System.Reflection.Assembly.GetExecutingAssembly().Location).FullName, $"{AppDomain.CurrentDomain.FriendlyName}{(OperatingSystem.IsWindows() ? ".exe" : "")}");
+
         public static string Root => Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LFInteractive", "Flexx")).FullName;
 
         public static string Resources => Directory.CreateDirectory(Path.Combine(Root, "Resources")).FullName;

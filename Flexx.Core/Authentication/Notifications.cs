@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
 namespace Flexx.Authentication
 {

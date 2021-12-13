@@ -2,7 +2,7 @@
 using Flexx.Authentication;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
-using Flexx.Media.Utilities;
+using Flexx.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -12,7 +12,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
 namespace Flexx.Media.Objects
 {

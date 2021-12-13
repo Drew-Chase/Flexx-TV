@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
 namespace Flexx.Media.Objects.Extras
 {

@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
 namespace Flexx.Media.Objects.Extras
 {

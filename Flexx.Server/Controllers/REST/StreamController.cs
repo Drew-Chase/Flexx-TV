@@ -2,15 +2,16 @@
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
-using Flexx.Media.Utilities;
+using Flexx.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
 namespace Flexx.Server.Controllers;
 
@@ -19,6 +20,31 @@ namespace Flexx.Server.Controllers;
 public class StreamController : ControllerBase
 {
     #region Public Methods
+
+    [HttpGet("get/active")]
+    public JsonResult GetAllActiveStreams()
+    {
+        List<object> json = new();
+        foreach (MediaStream stream in ActiveStreams.Instance.Get())
+        {
+            json.Add(new
+            {
+                ID = stream.MediaID,
+                Platform = stream.Platform.ToString(),
+                State = stream.CurrentState.ToString(),
+                stream.Type,
+                stream.CurrentPosition,
+                Episode = stream.Episode.GetValueOrDefault(-1),
+                Season = stream.Season.GetValueOrDefault(-1),
+                Resolution = new
+                {
+                    Name = stream.Version.DisplayName,
+                    BitRate = $"{stream.Version.BitRate / 1000}Mbps"
+                },
+            });
+        }
+        return new(json);
+    }
 
     [HttpGet("trailer")]
     public IActionResult GetMovieTrailer(string id)
@@ -67,12 +93,12 @@ public class StreamController : ControllerBase
     }
 
     [HttpGet("get/stream_info")]
-    public JsonResult GetStreamInfo(string id, string username, string library, long startTime, string version, int? season, int? episode)
+    public JsonResult GetStreamInfo(string id, string username, string library, Platform platform, long startTime, string version, int? season, int? episode)
     {
         MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault(0)).GetEpisodeByNumber(episode.GetValueOrDefault(0)) : null;
         MediaVersion foundVersion = media.AlternativeVersions.FirstOrDefault(m => m.DisplayName.Equals(version), media.AlternativeVersions[0]);
         int ts = 0;
-        MediaStream stream = ActiveStreams.Instance.Get(Users.Instance.Get(username), foundVersion, startTime);
+        MediaStream stream = ActiveStreams.Instance.Get(Users.Instance.Get(username), foundVersion, startTime, platform);
         if (stream != null)
         {
             if (Directory.Exists(stream.WorkingDirectory))
@@ -80,11 +106,20 @@ public class StreamController : ControllerBase
                 ts = Directory.GetFiles(stream.WorkingDirectory, "*.ts", SearchOption.TopDirectoryOnly).Length;
             }
             stream.ResetTimeout();
+            return new(new
+            {
+                mime = config.UseVersionFile ? "video/mp4" : "application/x-mpegURL",
+                currentTranscodedPosition = ts == 0 ? 0 : ts * 10,
+                maxPosition = media.MediaInfo.Duration.TotalSeconds,
+                currentPosition = stream.CurrentPosition,
+                currentPlayState = stream.CurrentState,
+            });
         }
+
         return new(new
         {
             mime = config.UseVersionFile ? "video/mp4" : "application/x-mpegURL",
-            currentPosition = ts == 0 ? 0 : ts * 10,
+            currentTranscodedPosition = ts == 0 ? 0 : ts * 10,
             maxPosition = media.MediaInfo.Duration.TotalSeconds,
         });
     }
@@ -106,7 +141,7 @@ public class StreamController : ControllerBase
     }
 
     [HttpGet("get/version")]
-    public IActionResult GetVideoStream(string id, string username, string library, string version, int? season, int? episode, int? start_time, long? startTick)
+    public IActionResult GetVideoStream(string id, string username, string library, string version, Platform platform, int? season, int? episode, int? start_time, long? startTick)
     {
         MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
         MediaVersion foundVersion = media.AlternativeVersions.FirstOrDefault(m => m.DisplayName.Equals(version), media.AlternativeVersions[0]);
@@ -114,7 +149,7 @@ public class StreamController : ControllerBase
             return File(new FileStream(Paths.GetVersionPath(Directory.GetParent(media.Metadata.PATH).FullName, media.Title, foundVersion.Height, foundVersion.BitRate), FileMode.Open, FileAccess.Read), "video/mp4", true);
         else
         {
-            MediaStream stream = ActiveStreams.Instance.Get(Users.Instance.Get(username), foundVersion, startTick.GetValueOrDefault(0)) ?? Transcoder.GetTranscodedStream(Users.Instance.Get(username), media, foundVersion, start_time.GetValueOrDefault(0), startTick.GetValueOrDefault(0));
+            MediaStream stream = ActiveStreams.Instance.Get(Users.Instance.Get(username), foundVersion, startTick.GetValueOrDefault(0), platform) ?? Transcoder.GetTranscodedStream(Users.Instance.Get(username), media, foundVersion, start_time.GetValueOrDefault(0), startTick.GetValueOrDefault(0), platform);
             if (stream == null)
             {
                 return BadRequest();
@@ -134,7 +169,7 @@ public class StreamController : ControllerBase
     }
 
     [HttpPost("remove")]
-    public IActionResult RemoveFromActiveStream([FromForm] string id, [FromForm] string username, [FromForm] string version, [FromForm] long startTime, [FromForm] string library, [FromForm] int? season, [FromForm] int? episode)
+    public IActionResult RemoveFromActiveStream([FromForm] string id, [FromForm] string username, [FromForm] string version, [FromForm] Platform platform, [FromForm] long startTime, [FromForm] string library, [FromForm] int? season, [FromForm] int? episode)
     {
         MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
         if (media == null)
@@ -143,16 +178,9 @@ public class StreamController : ControllerBase
             return BadRequest(new { message = $"No Media File from Library \"{library}\" and an ID of \"{id}\"" });
         }
         MediaVersion foundVersion = media.AlternativeVersions.FirstOrDefault(m => m.DisplayName.Equals(version), media.AlternativeVersions[0]);
-        var stream = ActiveStreams.Instance.Get(Users.Instance.Get(username), foundVersion, startTime);
+        MediaStream stream = ActiveStreams.Instance.Get(Users.Instance.Get(username), foundVersion, startTime, platform);
         if (stream == null)
         {
-            log.Debug("Stream Info",
-                $"ID: {id}",
-                $"Username: {username}",
-                $"Version: {version}",
-                $"StartTime: {startTime}",
-                $"Library: {library}"
-                );
             log.Error($"Unable to Remove Active Stream because stream provided was null");
             return BadRequest();
         }
@@ -161,11 +189,11 @@ public class StreamController : ControllerBase
     }
 
     [HttpGet("start")]
-    public JsonResult StartStream(string id, string username, string library, string version, int? season, int? episode, int? start_time)
+    public JsonResult StartStream(string id, string username, string library, string version, Platform platform, int? season, int? episode, int? start_time)
     {
         MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
         MediaVersion foundVersion = media.AlternativeVersions.FirstOrDefault(m => m.DisplayName.Equals(version), media.AlternativeVersions[0]);
-        var stream = Transcoder.GetTranscodedStream(Users.Instance.Get(username), media, foundVersion, start_time.GetValueOrDefault(0), 0);
+        MediaStream stream = Transcoder.GetTranscodedStream(Users.Instance.Get(username), media, foundVersion, start_time.GetValueOrDefault(0), 0, platform);
         if (stream == null)
         {
             return new(new
@@ -177,6 +205,27 @@ public class StreamController : ControllerBase
         {
             UUID = stream.StartTime,
         });
+    }
+
+    [HttpPost("update")]
+    public IActionResult UpdateStream([FromForm] string id, [FromForm] string username, [FromForm] string version, [FromForm] long startTime, [FromForm] Platform platform, [FromForm] string library, [FromForm] int? season, [FromForm] int? episode, [FromForm] PlayState state, [FromForm] int currentPosition)
+    {
+        MediaBase media = library.Equals("movie") ? MovieLibraryModel.Instance.GetMovieByTMDB(id) : library.Equals("tv") ? TvLibraryModel.Instance.GetShowByTMDB(id).GetSeasonByNumber(season.GetValueOrDefault()).GetEpisodeByNumber(episode.GetValueOrDefault()) : null;
+        if (media == null)
+        {
+            log.Error($"No Media File from Library \"{library}\" and an ID of \"{id}\"");
+            return BadRequest(new { message = $"No Media File from Library \"{library}\" and an ID of \"{id}\"" });
+        }
+        MediaVersion foundVersion = media.AlternativeVersions.FirstOrDefault(m => m.DisplayName.Equals(version), media.AlternativeVersions[0]);
+        MediaStream stream = ActiveStreams.Instance.Get(Users.Instance.Get(username), foundVersion, startTime, platform);
+        if (stream == null)
+        {
+            return BadRequest();
+        }
+        stream.UpdateState(state);
+        stream.UpdatePlayPosition(currentPosition);
+        stream.ResetTimeout();
+        return Ok(new { message = "Stream Successfully Updated" });
     }
 
     #endregion Public Methods

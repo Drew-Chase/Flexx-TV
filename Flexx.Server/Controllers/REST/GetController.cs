@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
 namespace Flexx.Server.Controllers
 {
@@ -551,7 +551,9 @@ namespace Flexx.Server.Controllers
         /// <param name="id">       the TMDB ID of the element </param>
         /// <param name="library">  Either "tv" or "movie" </param>
         /// <param name="username"> leave blank for guest user </param>
-        /// <param name="season">   TV Shows Season Number (only use with tv library and id specified) </param>
+        /// <param name="season">  
+        /// TV Shows Season Number (only use with tv library and id specified)
+        /// </param>
         /// <param name="episode"> 
         /// Seasons Episode Number (only use with tv library, id and season specified)
         /// </param>

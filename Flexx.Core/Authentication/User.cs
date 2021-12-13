@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
 namespace Flexx.Authentication;
 
@@ -51,7 +51,7 @@ public class Users
     public User Get(string username)
     {
         User value = null;
-        if (string.IsNullOrEmpty(username)) return GetGuestUser();
+        if (string.IsNullOrWhiteSpace(username)) return GetGuestUser();
         Parallel.ForEach(users, user =>
         {
             if (user.Username.Equals(username))

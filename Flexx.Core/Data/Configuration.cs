@@ -1,8 +1,8 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using System.IO;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
-namespace Flexx.Core.Data
+namespace Flexx.Data
 {
     public class Configuration
     {
@@ -18,6 +18,7 @@ namespace Flexx.Core.Data
         {
             sysProfile = new(Path.Combine(Paths.Configs, "sys"), false);
             sysProfile.Add("movies", "");
+            sysProfile.Add("port", 3208);
             sysProfile.Add("tv", "");
             sysProfile.Add("next_scheduled_prefetch", "");
             sysProfile.Add("use_version_file", false);
@@ -27,6 +28,8 @@ namespace Flexx.Core.Data
         #endregion Public Constructors
 
         #region Public Properties
+
+        public int ApiPort { get => sysProfile.GetConfigByKey("port").Value; set => sysProfile.GetConfigByKey("port").Value = value; }
 
         public string LanguagePreference { get => sysProfile.GetConfigByKey("language").Value; set => sysProfile.GetConfigByKey("language").Value = value; }
 

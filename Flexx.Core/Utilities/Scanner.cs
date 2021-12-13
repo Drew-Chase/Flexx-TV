@@ -9,9 +9,9 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using TorrentTitleParser;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
-namespace Flexx.Media.Utilities
+namespace Flexx.Utilities
 {
     public class Scanner
     {

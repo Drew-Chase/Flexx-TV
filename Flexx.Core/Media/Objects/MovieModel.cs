@@ -1,6 +1,6 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Media.Objects.Libraries;
-using Flexx.Media.Utilities;
+using Flexx.Utilities;
 using Flexx.Networking;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,7 +12,7 @@ using TorrentTitleParser;
 using Xabe.FFmpeg;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
 namespace Flexx.Media.Objects
 {
