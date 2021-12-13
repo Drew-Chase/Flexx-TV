@@ -11,9 +11,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
-namespace Flexx.Media.Utilities;
+namespace Flexx.Utilities;
 
 public class Transcoder
 {
@@ -238,7 +238,7 @@ public class Transcoder
         return Versions.ToArray();
     }
 
-    public static MediaStream GetTranscodedStream(User requestedUser, MediaBase media, MediaVersion version, int start_time, long startTick)
+    public static MediaStream GetTranscodedStream(User requestedUser, MediaBase media, MediaVersion version, int start_time, long startTick, Platform platform)
     {
         if (string.IsNullOrWhiteSpace(media.PATH))
         {
@@ -268,7 +268,7 @@ public class Transcoder
             {
             }
             Thread.Sleep(500);
-            return ActiveStreams.Instance.AddStream(new(requestedUser, process, version, directoryOutput, startTime, new(fileOutput, FileMode.Open, FileAccess.Read)));
+            return ActiveStreams.Instance.AddStream(new(requestedUser, process, version, media, platform, directoryOutput, startTime, new(fileOutput, FileMode.Open, FileAccess.Read)));
         }
         return ActiveStreams.Instance.Get(directoryOutput);
     }
@@ -331,61 +331,4 @@ public class Transcoder
     }
 
     #endregion Public Methods
-
-    //public static FileStream GetM3U8(User requestedUser, MediaBase media, MediaVersion version)
-    //{
-    //    string directoryOutput = Directory.CreateDirectory(Path.Combine(Paths.TempData, "streams", "hls", $"{requestedUser}", version.DisplayName)).FullName;
-    //    string fileName = $"{media.TMDB}_{requestedUser}_{version.DisplayName}";
-    //    string fileOutput = Path.Combine(directoryOutput, $"{fileName}.m3u8");
-    //    StringBuilder builder = new();
-    //    builder.Append("#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:EVENT\n");
-    //    int segments = (int)Math.Floor(media.MediaInfo.Duration.TotalSeconds / 10);
-    //    double lastDuration = ((media.MediaInfo.Duration.TotalSeconds / 10) - segments) * 10;
-    //    for (int i = 0; i < segments; i++)
-    //    {
-    //        builder.Append("#EXTINF:10,\n");
-    //        builder.Append($"{fileName}_{i}.ts\n");
-    //    }
-
-    //    builder.Append($"#EXTINF:{lastDuration},\n");
-    //    builder.Append($"{fileName}_{segments + 1}.ts\n");
-    //    builder.Append($"#EXT-X-ENDLIST");
-    //    using (TextWriter writer = new StreamWriter(fileOutput))
-    //    {
-    //        writer.Write(builder);
-    //        writer.Flush();
-    //        writer.Dispose();
-    //        writer.Close();
-    //    }
-    //    return new FileStream(fileOutput, FileMode.Open, FileAccess.Read);
-    //}
-
-    //public static FileStream GetTS(string file)
-    //{
-    //    string[] arguments = file.Split('_');
-    //    string id = arguments[0];
-    //    string user = arguments[1];
-    //    string version = arguments[2];
-    //    int segment = int.Parse(arguments[3]);
-    //    string directoryOutput = Directory.CreateDirectory(Path.Combine(Paths.TempData, "streams", "hls", user, version)).FullName;
-    //    string fileName = $"{id}_{user}_{version}";
-    //    double startPosition = segment * 10;
-
-    // MediaBase media =
-
-    //    string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
-    //    StringBuilder builder = FFmpegArgumentBuilder(media.PATH, file, height: version.Height, video_bitrate: version.BitRate, start_duration: start_time);
-    //    builder.Append($" \"{fileOutput}\"");
-    //    Process process = new()
-    //    {
-    //        StartInfo = new()
-    //        {
-    //            FileName = exe,
-    //            Arguments = builder,
-    //            UseShellExecute = false,
-    //            WorkingDirectory = directoryOutput,
-    //        },
-    //        EnableRaisingEvents = true,
-    //    };
-    //}
 }

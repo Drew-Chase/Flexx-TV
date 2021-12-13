@@ -1,4 +1,5 @@
 ﻿using Flexx.Authentication;
+using Flexx.Media.Objects;
 using Flexx.Media.Objects.Extras;
 using System;
 using System.Collections.Generic;
@@ -7,10 +8,52 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using static Flexx.Core.Data.Global;
+using static Flexx.Data.Global;
 
-namespace Flexx.Media.Utilities
+namespace Flexx.Utilities
 {
+    public enum Platform
+    {
+        Chrome,
+
+        Firefox,
+
+        Safari,
+
+        Edge,
+
+        InternetExplorer,
+
+        Opera,
+
+        Blink,
+
+        GenericWeb,
+
+        AndroidTV,
+
+        FireTV,
+
+        Roku,
+
+        Windows,
+
+        Mac,
+
+        Linux,
+
+        Android,
+    }
+
+    public enum PlayState
+    {
+        Playing,
+
+        Paused,
+
+        Buffering,
+    }
+
     public class ActiveStreams
     {
         #region Private Fields
@@ -71,6 +114,11 @@ namespace Flexx.Media.Utilities
             return value.ToArray();
         }
 
+        public MediaStream[] Get()
+        {
+            return streams.ToArray();
+        }
+
         public MediaStream[] Get(User user, MediaVersion version)
         {
             List<MediaStream> value = new();
@@ -88,13 +136,13 @@ namespace Flexx.Media.Utilities
             return value.ToArray();
         }
 
-        public MediaStream Get(User user, MediaVersion version, long startTime)
+        public MediaStream Get(User user, MediaVersion version, long startTime, Platform platform)
         {
             if (user != null)
             {
                 foreach (MediaStream stream in streams)
                 {
-                    if (stream.User == user && stream.Version == version && stream.StartTime == startTime)
+                    if (stream.User == user && stream.Version == version && stream.StartTime == startTime && stream.Platform == platform)
                     {
                         return stream;
                     }
@@ -125,7 +173,7 @@ namespace Flexx.Media.Utilities
 
         #region Public Constructors
 
-        public MediaStream(User user, Process process, MediaVersion version, string working_directory, long start_time, FileStream fileStream, int timeout = 15000)
+        public MediaStream(User user, Process process, MediaVersion version, MediaBase media, Platform platform, string working_directory, long start_time, FileStream fileStream, int timeout = 15000)
         {
             User = user;
             Process = process;
@@ -134,6 +182,14 @@ namespace Flexx.Media.Utilities
             StartTime = start_time;
             FileStream = fileStream;
             StreamTimeout = timeout;
+            Platform = platform;
+            Type = media.GetType().Equals(typeof(MovieModel)) ? "Movie" : "Episode";
+            MediaID = media.TMDB;
+            if (media.GetType().Equals(typeof(EpisodeModel)))
+            {
+                Episode = ((EpisodeModel)media).Episode_Number;
+                Season = ((EpisodeModel)media).Season.Season_Number;
+            }
             ResetTimeout();
         }
 
@@ -141,13 +197,27 @@ namespace Flexx.Media.Utilities
 
         #region Public Properties
 
+        public int CurrentPosition { get; private set; }
+
+        public PlayState CurrentState { get; private set; }
+
+        public int? Episode { get; }
+
         public FileStream FileStream { get; set; }
 
+        public string MediaID { get; }
+
+        public Platform Platform { get; }
+
         public Process Process { get; init; }
+
+        public int? Season { get; }
 
         public long StartTime { get; init; }
 
         public int StreamTimeout { get; init; }
+
+        public string Type { get; }
 
         public User User { get; init; }
 
@@ -222,6 +292,16 @@ namespace Flexx.Media.Utilities
                 KillAsync();
             };
             _timer.Start();
+        }
+
+        public void UpdatePlayPosition(int pos)
+        {
+            CurrentPosition = pos;
+        }
+
+        public void UpdateState(PlayState state)
+        {
+            CurrentState = state;
         }
 
         #endregion Public Methods
