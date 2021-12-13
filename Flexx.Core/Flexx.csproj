@@ -31,8 +31,9 @@
     <PackageReference Include="bloomtom.DEnc" Version="1.4.2" />
     <PackageReference Include="ChaseLabs.Configuration" Version="0.1.1" />
     <PackageReference Include="ChaseLabs.Logger" Version="0.2.1" />
-    <PackageReference Include="MonoTorrent" Version="2.0.1" />
+    <PackageReference Include="FirewallManager" Version="1.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Open.NAT.Core" Version="2.1.0.5" />
     <PackageReference Include="TorrentTitleParser" Version="1.0.3" />
     <PackageReference Include="Xabe.FFmpeg" Version="5.0.2" />
     <PackageReference Include="Xabe.FFmpeg.Downloader" Version="5.0.2" />
