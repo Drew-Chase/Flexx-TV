@@ -8,8 +8,7 @@ jobs:
   create_release:
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release.upload_url }}
-      version: ${{ steps.tag_version.new_version }}
+      upload_url: ${{ steps.output.upload_url }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -39,86 +38,12 @@ jobs:
           release_name: Release v${{ steps.tag_version.outputs.new_version }}
           tag_name: ${{ steps.tag_version.outputs.new_version }}
           body: ${{ steps.changelog.outputs.changelog }}
-  build-mac:
-    runs-on: macos-latest
+      - name: Generate outputs
+        id: output
+        run: echo "::set-output name=upload_url::"+${{ steps.create_release.upload_url }}
+  test:
     needs: create_release
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 6.0.x
-      - name: Build
-        run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=osx-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
-      - name: Test
-        run: dotnet test --no-build --verbosity normal
-      - name: Build Artifacts
-        id: build_artifacts
-        run: |
-          zip -r /home/runner/work/Flexx-TV/Flexx-TV/osx.zip /home/runner/work/Flexx-TV/Flexx-TV/publish/*
-      - name: Upload Artifact
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: /home/runner/work/Flexx-TV/Flexx-TV/osx.zip
-          asset_name: flexx-server.osx-intel64.zip
-          asset_content_type: application/zip
-  build-linux:
     runs-on: ubuntu-latest
-    needs: create_release
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 6.0.x
-      - name: Build
-        run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=linux-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
-      - name: Test
-        run: dotnet test --no-build --verbosity normal
-      - name: Build Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: Linux
-          path: /home/runner/work/Flexx-TV/Flexx-TV/publish
-      - name: Build Artifacts
-        id: build_artifacts
-        run: |
-          zip -r /home/runner/work/Flexx-TV/Flexx-TV/linux.zip /home/runner/work/Flexx-TV/Flexx-TV/publish/*
-      - name: Upload Artifact
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: /home/runner/work/Flexx-TV/Flexx-TV/linux.zip
-          asset_name: flexx-server.linux-v${{ needs.create_release.outputs.version }}-amd64.zip
-          asset_content_type: application/zip
-  build-windows:
-    runs-on: windows-latest
-    needs: create_release
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 6.0.x
-      - name: Build
-        run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=win-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
-      - name: Test
-        run: dotnet test --no-build --verbosity normal
-      - name: Build Artifacts
-        id: build_artifacts
-        run: |
-          powershell Compress-Archive -CompressionLevel NoCompression -Path D:\a\Flexx-TV\Flexx-TV\publish\* -DestinationPath D:\a\Flexx-TV\Flexx-TV\windows.zip
-      - name: Upload Artifact
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: D:\a\Flexx-TV\Flexx-TV\windows.zip
-          asset_name: flexx-server.windows-v${{ needs.create_release.outputs.version }}-x64.zip
-          asset_content_type: application/zip
+      test:
+        run: echo ${{ needs.create_release.outputs.upload_url }}
