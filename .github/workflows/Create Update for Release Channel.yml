@@ -45,5 +45,6 @@ jobs:
     needs: create_release
     runs-on: ubuntu-latest
     steps:
-      test:
+      - uses: actions/checkout@v2
+      - test:
         run: echo ${{ needs.create_release.outputs.upload_url }}
