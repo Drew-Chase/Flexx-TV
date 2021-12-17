@@ -18,12 +18,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           create_annotated_tag: true
           dry_run: true
-      - name: "Generate Release Changelog"
-        id: changelog
-        uses: heinrichreimer/github-changelog-generator-action@v2.3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }} 
-          output: /home/runner/work/Flexx-TV/Flexx-TV/CHANGELOG.md
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
@@ -133,12 +127,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           create_annotated_tag: true
           dry_run: true
-      - name: "Generate release changelog"
-        id: changelog
-        uses: heinrichreimer/github-changelog-generator-action@v2.3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }} 
-          output: D:\a\Flexx-TV\Flexx-TV\CHANGELOG.md
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
