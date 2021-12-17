@@ -47,20 +47,20 @@ jobs:
         with:
           dotnet-version: 6.0.x
       - name: Build
-        run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=osx-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o /home/runner/work/Flexx-TV/Flexx-TV/publish
+        run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=osx-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
       - name: Test
         run: dotnet test --no-build --verbosity normal
       - name: Build Artifacts
         id: build_artifacts
         run: |
-          zip -r /home/runner/work/Flexx-TV/Flexx-TV/osx.zip /home/runner/work/Flexx-TV/Flexx-TV/publish/*
+          zip -r osx.zip publish/*
       - name: Upload Artifact
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: /home/runner/work/Flexx-TV/Flexx-TV/osx.zip
+          asset_path: osx.zip
           asset_name: flexx-server.osx-intel64.zip
           asset_content_type: application/zip
   build-linux:
