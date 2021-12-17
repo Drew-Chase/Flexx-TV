@@ -11,10 +11,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Generating Version
         id: tag_generation
-        uses: Klemensas/action-autotag@stable
-        with:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          tag_prefix: "v"
+        uses: xom9ikk/version-by-tag@v1
       - name: "Generate Release Changelog"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
@@ -40,8 +37,8 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: Release ${{ steps.tag_generation.outputs.tagname }}
-          tag_name: ${{ steps.tag_generation.outputs.tagname }}
+          release_name: Release ${{ steps.tag_generation.outputs.tag }}
+          tag_name: ${{ steps.tag_generation.outputs.tag }}
           
           body_path: /home/runner/work/Flexx-TV/Flexx-TV/CHANGELOG.md
       - name: Upload Artifact
@@ -58,10 +55,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Generating Version
-        uses: Klemensas/action-autotag@stable
-        with:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          tag_prefix: "v"
+        id: tag_generation
+        uses: xom9ikk/version-by-tag@v1
       - name: "Generate release changelog"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
@@ -92,8 +87,8 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: Release ${{ steps.tag_generation.outputs.tagname }}
-          tag_name: ${{ steps.tag_generation.outputs.tagname }}
+          release_name: Release ${{ steps.tag_generation.outputs.tag }}
+          tag_name: ${{ steps.tag_generation.outputs.tag }}
           body_path: /home/runner/work/Flexx-TV/Flexx-TV/CHANGELOG.md
       - name: Upload Artifact
         uses: actions/upload-release-asset@v1
@@ -110,10 +105,8 @@ jobs:
       - name: Checking Out Branch
         uses: actions/checkout@v2
       - name: Generating Version
-        uses: Klemensas/action-autotag@stable
-        with:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          tag_prefix: "v"
+        id: tag_generation
+        uses: xom9ikk/version-by-tag@v1
       - name: "Generate release changelog"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
@@ -139,8 +132,8 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: Release ${{ steps.tag_generation.outputs.tagname }}
-          tag_name: ${{ steps.tag_generation.outputs.tagname }}
+          release_name: Release ${{ steps.tag_generation.outputs.tag }}
+          tag_name: ${{ steps.tag_generation.outputs.tag }}
           body_path: D:\a\Flexx-TV\Flexx-TV\CHANGELOG.md
       - name: Upload Artifact
         uses: actions/upload-release-asset@v1
