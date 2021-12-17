@@ -16,6 +16,8 @@ jobs:
         uses: miguelfito/github-bump-and-tag-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          create_annotated_tag: true
+          dry_run: true
       - name: "Generate Release Changelog"
         id: changelog
         uses: heinrichreimer/github-changelog-generator-action@v2.3
@@ -72,6 +74,8 @@ jobs:
         uses: miguelfito/github-bump-and-tag-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          create_annotated_tag: true
+          dry_run: true
       - name: "Generate release changelog"
         id: changelog
         uses: heinrichreimer/github-changelog-generator-action@v2.3
@@ -127,6 +131,8 @@ jobs:
         uses: miguelfito/github-bump-and-tag-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          create_annotated_tag: true
+          dry_run: true
       - name: "Generate release changelog"
         id: changelog
         uses: heinrichreimer/github-changelog-generator-action@v2.3
