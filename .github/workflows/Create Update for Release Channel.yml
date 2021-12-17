@@ -2,7 +2,6 @@ name: .NET
 
 on:
   push:
-    branches: [ Release-Channel ]
     tags:
         - 'v*'
 
@@ -55,6 +54,7 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
     - name: Build Artifacts
+      id: build_artifacts
       uses: actions/upload-artifact@v2
       with:
         name: Windows
@@ -73,3 +73,12 @@ jobs:
             Changes in this Release
             - First Change
             - Second Change
+    - name: Upload Artifact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./${{ steps.build_artifacts.name }}.zip
+        asset_name: flexx-server.windows-amd64.zip
+        asset_content_type: application/zip
