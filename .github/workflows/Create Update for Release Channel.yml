@@ -2,8 +2,7 @@ name: .NET
 
 on:
   push:
-    tags:
-        - 'v*'
+    branches: [Release-Channel]
 
 jobs:
   build-mac:
