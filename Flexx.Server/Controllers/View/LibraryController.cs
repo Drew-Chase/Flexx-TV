@@ -2,7 +2,7 @@
 
 namespace Flexx.Server.Controllers.View
 {
-    public class Library : Controller
+    public class LibraryController : Controller
     {
         #region Public Methods
 
