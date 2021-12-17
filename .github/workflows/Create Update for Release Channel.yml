@@ -2,9 +2,28 @@ name: .NET
 
 on:
   push:
-    branches: [ server ]
+    branches: [ Release-Channel ]
+    tags:
+        - 'v*'
 
 jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+    - name: Build
+      run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=osx-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    - name: Build Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: OSX
+        path: /home/runner/work/Flexx-TV/Flexx-TV/publish
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -40,3 +59,17 @@ jobs:
       with:
         name: Windows
         path: D:\a\Flexx-TV\Flexx-TV\publish
+    - name: Create Release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with: 
+          draft: false
+          prerelease: false
+          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref }}
+          body: |
+            Changes in this Release
+            - First Change
+            - Second Change
