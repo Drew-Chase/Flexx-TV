@@ -2,7 +2,10 @@ name: .NET
 
 on:
   push:
-    branches: [Release-Channel]
+    branches:
+      - Release-Channel
+      - Beta-Channel
+      - Alpha-Channel
 
 jobs:
   create_release:
@@ -20,12 +23,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag_prefix: "v"
-      - name: "Generate release changelog"
-        id: changelog
-        uses: heinrichreimer/github-changelog-generator-action@v2.3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          output: /home/runner/work/Flexx-TV/Flexx-TV/CHANGELOG.md
+          dry_run: true
+          release_branches: Release-Channel
       - name: Create Release
         uses: actions/create-release@v1
         id: create_release
@@ -37,7 +36,7 @@ jobs:
           allowUpdates: true
           release_name: Release v${{ steps.tag_version.outputs.new_version }}
           tag_name: ${{ steps.tag_version.outputs.new_version }}
-          body: ${{ steps.changelog.outputs.changelog }}
+          body: ${{ steps.tag_version.outputs.changelog }}
   build-mac:
     runs-on: macos-latest
     needs: create_release
