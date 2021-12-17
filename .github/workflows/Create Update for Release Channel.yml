@@ -9,9 +9,14 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Generating Version
+        with:
+          fetch-depth: '0'
+      - name: Bump version and push tag
         id: tag_generation
-        uses: xom9ikk/version-by-tag@v1
+        uses: anothrNick/github-tag-action@1.36.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
       - name: "Generate Release Changelog"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
@@ -54,9 +59,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Generating Version
+        with:
+          fetch-depth: '0'
+      - name: Bump version and push tag
         id: tag_generation
-        uses: xom9ikk/version-by-tag@v1
+        uses: anothrNick/github-tag-action@1.36.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
       - name: "Generate release changelog"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
@@ -102,11 +112,15 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - name: Checking Out Branch
-        uses: actions/checkout@v2
-      - name: Generating Version
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+      - name: Bump version and push tag
         id: tag_generation
-        uses: xom9ikk/version-by-tag@v1
+        uses: anothrNick/github-tag-action@1.36.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
       - name: "Generate release changelog"
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
