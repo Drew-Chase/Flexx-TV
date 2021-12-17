@@ -32,6 +32,8 @@ namespace Flexx.Server
             app.UseMvc();
 
             app.UseRouting();
+            app.UseStaticFiles();
+            app.UseDefaultFiles();
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
