@@ -1,0 +1,177 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/first_launch.css">
+    <script src="/assets/lib/jquery.js"></script>
+</head>
+
+<body>
+
+    <main>
+        <div class="pages">
+            <div class="page" id="libraries">
+                <p class="title">
+                    Library Setup
+                </p>
+                <div class="page-content">
+                    <div class="card fs-input" id="movie-card">
+                        <div class="card-inner">
+                            <div class="card-front">
+                                <div class="card-icon"><i class="fa-solid fa-film"></i></div>
+                                <div class="card-title">
+                                    Movies
+                                </div>
+                                <div class="card-description">
+                                    Click to choose where your movie content will be located or where you currently keep your movie content
+                                </div>
+                                <div class="cta-icon"><i class="fa-regular fa-circle-xmark"></i></div>
+                            </div>
+                            <div class="card-back">
+                                <div class="fs-input-wrapper">
+                                    <input type="text" class="currentDirectory">
+                                    <button class="primary fs-cd-apply"><i class="fa-solid fa-arrow-right"></i></button>
+                                </div>
+                                <div class="fs">
+                                </div>
+                                <button class="primary fs-apply">Select</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card fs-input" id="tv-card">
+                        <div class="card-inner">
+                            <div class="card-front">
+                                <div class="card-icon"><i class="fa-solid fa-tv"></i></div>
+                                <div class="card-title">
+                                    TV Shows
+                                </div>
+                                <div class="card-description">
+                                    Click to choose where your tv content will be located or where you currently keep your tv content
+                                </div>
+                                <div class="cta-icon"><i class="fa-regular fa-circle-xmark"></i></div>
+                            </div>
+                            <div class="card-back">
+                                <div class="fs-input-wrapper">
+                                    <input type="text" class="currentDirectory">
+                                    <button class="primary fs-cd-apply"><i class="fa-solid fa-arrow-right"></i></button>
+                                </div>
+                                <div class="fs">
+                                </div>
+                                <button class="primary fs-apply">Select</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="networking">
+                <p class="title">
+                    Network Setup
+                </p>
+                <p class="subtitle">
+                    If you don't know what these do... Don't touch it.
+
+                </p>
+                <div class="page-content">
+
+                    <div class="card toggle" id="portForward" data-checked="true">
+                        <div class="card-inner">
+                            <div class="card-front">
+                                <p class="title">Should Auto Port Forward</p>
+                                <i class="fa-regular fa-circle-check"></i>
+                            </div>
+                            <div class="card-back">
+                                <p class="title">Should <b><u>NOT</u></b> Auto Port Forward</p>
+                                <i class="fa-regular fa-circle-xmark"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card noflip">
+                        <div class="card-inner">
+                            <div class="card-front">
+                                <p class="title">Server Port</p>
+                                <input type="number" name="server-port" id="server-port" value="3208">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="page" id="account">
+                <p class="title">
+                    Account Setup
+                </p>
+                <div class="page-content">
+                    <div class="card">
+                        <div class="card-inner">
+                            <div class="card-front">
+                                <div class="card-icon"><i class="fa-regular fa-user"></i></div>
+                                <div class="card-title">
+                                    Login
+                                </div>
+                                <div class="card-description">
+                                    Already have an account? Login HERE
+                                </div>
+                                <div class="cta-icon"><i class="fa-regular fa-circle-right"></i></div>
+                            </div>
+                            <div class="card-back">
+                                <div class="card-icon"><i class="fa-regular fa-user"></i></div>
+                                <div class="card-title">
+                                    Login
+                                </div>
+                                <div class="login-form">
+                                    <input type="email" placeholder="john.doe@example.com" required>
+                                    <input type="password" placeholder="*********" required>
+                                    <button class="primary">Login</button>
+                                    <p class="error"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" onclick="window.open('https://flexx-tv.tk')">
+                        <div class="card-inner">
+                            <div class="card-front">
+                                <div class="card-icon"><i class="fa-solid fa-user-plus"></i></div>
+                                <div class="card-title">
+                                    Create an Account
+                                </div>
+                                <div class="card-description">
+                                    Don't Have an account? Click here to open Flexx Home page and create an account.
+                                </div>
+                                <div class="cta-icon"><i class="fa-regular fa-circle-right"></i></div>
+                            </div>
+                            <div class="card-back">
+                                <div class="card-icon"><i class="fa-solid fa-user-plus"></i></div>
+                                <div class="card-title">
+                                    Create an Account
+                                </div>
+                                <div class="card-description">
+                                    FlexxTV registration page should be opening in another tab.  If this takes more than 5 seconds click <a href="https://flexx-tv.tk" target="_blank" rel="noopener noreferrer">HERE</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="pagination">
+            <button class="secondary" id="previous" disabled>
+                Previous
+            </button>
+            <button class="primary" id="next">
+                Next
+            </button>
+
+        </div>
+    </main>
+
+    <script src="/assets/javascript/first_launch.js"></script>
+</body>
+
+</html>

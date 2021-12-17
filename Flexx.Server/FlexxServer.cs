@@ -7,6 +7,8 @@ using System.Runtime.InteropServices;
 using System;
 using System.Diagnostics;
 using System.IO;
+using Flexx.Networking;
+using Flexx.Authentication;
 
 namespace Flexx.Server;
 
@@ -37,15 +39,31 @@ public class FlexxServer
     {
         if (args.Length == 0)
         {
-            if (!File.Exists(Path.Combine(Directory.GetParent(Paths.ExecutingBinary).FullName, "first_launch")))
+            if (!config.Setup)
             {
                 log.Warn("Adding FlexxTV Media Server to Firewall");
-                AddToFirewall();
-            }
 
-            SetupProcess.Run().Wait();
-            ModifyWindow(true);
-            StartHttpServer().Wait();
+                AddToFirewall();
+                if (OperatingSystem.IsWindows())
+                {
+                    new Process()
+                    {
+                        StartInfo = new()
+                        {
+                            FileName = $"http://127.0.0.1:{config.ApiPort}/Setup",
+                            Verb = "open",
+                            UseShellExecute = true,
+                        }
+                    }.Start();
+                }
+                StartHttpServer().Wait();
+            }
+            else
+            {
+                SetupProcess.Run().Wait();
+                ModifyWindow(true);
+                StartHttpServer().Wait();
+            }
         }
         else
         {
@@ -56,8 +74,6 @@ public class FlexxServer
                     case "-firewall":
                         FirewallManager.FirewallCom firewall = new();
                         firewall.AddAuthorizeApp(new("FlexxTV Media Server", Paths.ExecutingBinary) { Enabled = true });
-                        if (!File.Exists(Path.Combine(Directory.GetParent(Paths.ExecutingBinary).FullName, "first_launch")))
-                            File.CreateText(Path.Combine(Directory.GetParent(Paths.ExecutingBinary).FullName, "first_launch")).Close();
                         Environment.Exit(0);
                         continue;
                     default:
@@ -95,16 +111,6 @@ public class FlexxServer
                 webBuilder.UseKestrel(options =>
                 {
                     options.ListenAnyIP(config.ApiPort);
-                    new Process()
-                    {
-                        StartInfo = new()
-                        {
-                            FileName = $"http://127.0.0.1:{config.ApiPort}",
-                            Verb = "open",
-                            UseShellExecute = true,
-                        }
-                    }.Start();
-
                     ModifyWindow(true);
                 });
                 webBuilder.UseStartup<Startup>();
