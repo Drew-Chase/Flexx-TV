@@ -40,45 +40,52 @@ body {
     border-radius: 0px;
 }
 
-.dropdown .dropdown-items {
-    overflow: hidden;
-    max-height: 0px;
-    width: max-content;
-    position: absolute;
-    color: black;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-    transform: max-height 1500ms;
-}
+    .dropdown .dropdown-items {
+        overflow: hidden;
+        max-height: 0px;
+        width: max-content;
+        position: absolute;
+        color: black;
+        background-color: white;
+        display: flex;
+        flex-direction: column;
+        transform: max-height 1500ms;
+    }
 
-.dropdown:hover .dropdown-items {
-    max-height: max-content;
-    margin: 0px;
-    text-align: center;
-}
+    .dropdown:hover .dropdown-items {
+        max-height: max-content;
+        margin: 0px;
+        text-align: center;
+    }
 
-.dropdown .dropdown-item {
-    padding: 5px 0px;
-    margin: 0px;
-}
+    .dropdown .dropdown-item {
+        padding: 5px 0px;
+        margin: 0px;
+    }
 
-.dropdown .dropdown-item:hover {
-    color: white;
-    background-color: var(--primary);
-}
+        .dropdown .dropdown-item:hover {
+            color: white;
+            background-color: var(--primary);
+        }
 
-button {
+button, input[type="submit"] {
     border: none;
     padding: 10px;
     cursor: pointer;
     min-width: 50px;
+    opacity: 1;
+    transition: opacity 200ms;
 }
 
-button.primary {
-    color: white;
-    background-color: var(--primary);
-}
+    button.primary, input[type="submit"].primary {
+        color: white;
+        background-color: var(--primary);
+    }
+
+    button:disabled {
+        opacity: 0;
+        cursor: default;
+    }
 
 #loading {
     position: fixed;
@@ -91,9 +98,9 @@ button.primary {
     transition: opacity 500ms;
 }
 
-#loading.out {
-    opacity: 0;
-}
+    #loading.out {
+        opacity: 0;
+    }
 
 .throbber {
     width: 100px;
@@ -108,18 +115,18 @@ button.primary {
     display: none;
 }
 
-#popup-menus.active {
-    position: fixed;
-    display: flex;
-    border: 2px solid var(--primary);
-    inset: 0px;
-    background: linear-gradient(45deg, var(--background), #0a0a0a);
-    z-index: 9999;
-    justify-content: center;
-    align-items: center;
-    pointer-events: none;
-    flex-direction: column;
-}
+    #popup-menus.active {
+        position: fixed;
+        display: flex;
+        border: 2px solid var(--primary);
+        inset: 0px;
+        background: linear-gradient(45deg, var(--background), #0a0a0a);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+        flex-direction: column;
+    }
 
 @keyframes throbber {
     0% {
@@ -129,4 +136,10 @@ button.primary {
     100% {
         transform: rotate(360deg);
     }
+}
+
+.error {
+    color: red;
+    font-style: italic;
+    font-weight: bold;
 }
