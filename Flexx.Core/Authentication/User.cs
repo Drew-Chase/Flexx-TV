@@ -1,14 +1,29 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Libraries;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using static Flexx.Data.Global;
 
 namespace Flexx.Authentication;
+
+public enum PlanTier
+{
+    Free,
+
+    Rust,
+
+    Crimson,
+
+    Hotrod
+}
 
 public class Users
 {
@@ -48,18 +63,18 @@ public class Users
         return user;
     }
 
-    public User Get(string username)
+    public User Get(string delimiter)
     {
         User value = null;
-        if (string.IsNullOrWhiteSpace(username)) return GetGuestUser();
+        if (string.IsNullOrWhiteSpace(delimiter)) return GetGuestUser();
         Parallel.ForEach(users, user =>
         {
-            if (user.Username.Equals(username))
+            if (user.Username.Equals(delimiter) || user.Token.Equals(delimiter))
             {
                 value = user;
             }
         });
-        return value ?? Add(username);
+        return value ?? Add(delimiter);
     }
 
     public User GetGuestUser()
@@ -102,23 +117,34 @@ public class User
 
     internal User(string username)
     {
+        Plan = PlanTier.Free;
         Username = username;
-        userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"), false);
+        userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"), true);
+        userProfile.Add("token", "");
         HasWatched = new();
         WatchedDuration = new();
         ContinueWatching = new();
         Notifications = new(this);
         UpdateDictionaries();
-        IsAuthorized = CheckIfAuthorized();
+        Token = userProfile.GetConfigByKey("token").Value;
+        LoginWithToken();
     }
 
     #endregion Internal Constructors
 
     #region Public Properties
 
-    public bool IsAuthorized { get; private set; }
+    public string Email { get; private set; }
+
+    public string FirstName { get; private set; }
+
+    public string LastName { get; private set; }
 
     public Notifications Notifications { get; }
+
+    public PlanTier Plan { get; private set; }
+
+    public string Token { get; private set; }
 
     public string Username { get; }
 
@@ -171,6 +197,50 @@ public class User
             }
         }
         return list.ToArray();
+    }
+
+    public object GenerateToken(string password)
+    {
+        if (!string.IsNullOrEmpty(password))
+        {
+            HttpResponseMessage response = new HttpClient().PostAsync($"http://localhost/login.php", new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string,string>("email", Username),
+                new KeyValuePair<string,string>("password", password),
+            })).Result;
+            if (response.IsSuccessStatusCode)
+            {
+                string content = response.Content.ReadAsStringAsync().Result;
+                JObject json = (JObject)JsonConvert.DeserializeObject(content);
+                if (json.ContainsKey("token"))
+                {
+                    try
+                    {
+                        Token = (string)json["token"];
+                        FirstName = (string)json["fname"];
+                        LastName = (string)json["lname"];
+                        Email = (string)json["email"];
+                        Plan = Enum.TryParse(typeof(PlanTier), (string)json["plan"], out object planTier) ? (PlanTier)planTier : PlanTier.Free;
+                        userProfile.GetConfigByKey("token").Value = Token;
+                        return new
+                        {
+                            Token,
+                        };
+                    }
+                    catch
+                    {
+                    }
+                }
+                else if (json.ContainsKey("error"))
+                {
+                    return new
+                    {
+                        error = (string)json["error"]
+                    };
+                }
+            }
+        }
+        return null;
     }
 
     public bool GetHasWatched(MediaBase media)
@@ -234,6 +304,8 @@ public class User
             return cfg.Value;
         }
     }
+
+    public bool IsAuthorized(PlanTier plan = PlanTier.Free) => !string.IsNullOrWhiteSpace(Token) && plan >= Plan;
 
     public void RemoveFromContinueWatching(MediaBase media)
     {
@@ -362,9 +434,34 @@ public class User
 
     #region Private Methods
 
-    private bool CheckIfAuthorized()
+    private void LoginWithToken()
     {
-        return false;
+        if (!string.IsNullOrEmpty(Token))
+        {
+            object formData = new
+            {
+                token = Token,
+            };
+            HttpResponseMessage response = new HttpClient().PostAsync($"http://localhost/login.php", new StringContent(JsonConvert.SerializeObject(formData), Encoding.UTF8, "application/json")).Result;
+            if (response.IsSuccessStatusCode)
+            {
+                JObject json = (JObject)JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result);
+                if (json.ContainsKey("token"))
+                {
+                    try
+                    {
+                        Token = (string)json["token"];
+                        FirstName = (string)json["fname"];
+                        LastName = (string)json["lname"];
+                        Email = (string)json["email"];
+                        Plan = Enum.TryParse(typeof(PlanTier), (string)json["plan"], out object planTier) ? (PlanTier)planTier : PlanTier.Free;
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+        }
     }
 
     private void UpdateDictionaries()
