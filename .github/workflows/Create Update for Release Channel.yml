@@ -12,12 +12,12 @@ jobs:
         with:
           fetch-depth: '0'
       - name: Bump version and push tag
-        id: tag_generation
-        uses: anothrNick/github-tag-action@1.36.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
+        id: tag_version
+        uses: miguelfito/github-bump-and-tag-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: "Generate Release Changelog"
+        id: changelog
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }} 
@@ -30,6 +30,12 @@ jobs:
         run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=osx-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
       - name: Test
         run: dotnet test --no-build --verbosity normal
+      - name: Bump versions
+        id: tag_generation
+        uses: SiqiLu/dotnet-bump-version@master
+        with:
+            version_files: "**/*.csproj"
+            github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Artifacts
         id: build_artifacts
         run: |
@@ -42,10 +48,10 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: Release ${{ steps.tag_generation.outputs.tag }}
-          tag_name: ${{ steps.tag_generation.outputs.tag }}
-          
-          body_path: /home/runner/work/Flexx-TV/Flexx-TV/CHANGELOG.md
+          allowUpdates: true
+          release_name: Release ${{ steps.tag_version.outputs.new_tag  }}
+          tag_name: ${{ steps.tag_version.outputs.new_tag  }}
+          body: ${{ steps.changelog.outputs.changelog }}
       - name: Upload Artifact
         uses: actions/upload-release-asset@v1
         env:
@@ -62,12 +68,12 @@ jobs:
         with:
           fetch-depth: '0'
       - name: Bump version and push tag
-        id: tag_generation
-        uses: anothrNick/github-tag-action@1.36.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
+        id: tag_version
+        uses: miguelfito/github-bump-and-tag-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: "Generate release changelog"
+        id: changelog
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }} 
@@ -97,9 +103,10 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: Release ${{ steps.tag_generation.outputs.tag }}
-          tag_name: ${{ steps.tag_generation.outputs.tag }}
-          body_path: /home/runner/work/Flexx-TV/Flexx-TV/CHANGELOG.md
+          allowUpdates: true
+          release_name: Release ${{ steps.tag_version.outputs.new_tag  }}
+          tag_name: ${{ steps.tag_version.outputs.new_tag  }}
+          body: ${{ steps.changelog.outputs.changelog }}
       - name: Upload Artifact
         uses: actions/upload-release-asset@v1
         env:
@@ -116,12 +123,12 @@ jobs:
         with:
           fetch-depth: '0'
       - name: Bump version and push tag
-        id: tag_generation
-        uses: anothrNick/github-tag-action@1.36.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
+        id: tag_version
+        uses: miguelfito/github-bump-and-tag-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: "Generate release changelog"
+        id: changelog
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }} 
@@ -146,9 +153,10 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: Release ${{ steps.tag_generation.outputs.tag }}
-          tag_name: ${{ steps.tag_generation.outputs.tag }}
-          body_path: D:\a\Flexx-TV\Flexx-TV\CHANGELOG.md
+          allowUpdates: true
+          release_name: Release ${{ steps.tag_version.outputs.new_tag  }}
+          tag_name: ${{ steps.tag_version.outputs.new_tag  }}
+          body: ${{ steps.changelog.outputs.changelog }}
       - name: Upload Artifact
         uses: actions/upload-release-asset@v1
         env:
