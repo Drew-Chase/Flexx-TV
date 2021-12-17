@@ -5,41 +5,6 @@ on:
     branches: [Release-Channel]
 
 jobs:
-  build-mac:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.x
-    - name: Build
-      run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=osx-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
-    - name: Build Artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: OSX
-        path: /home/runner/work/Flexx-TV/Flexx-TV/publish
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.x
-    - name: Build
-      run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=linux-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
-    - name: Build Artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: Linux
-        path: /home/runner/work/Flexx-TV/Flexx-TV/publish
-        
   build-windows:
     runs-on: windows-latest
     steps:
@@ -54,10 +19,8 @@ jobs:
       run: dotnet test --no-build --verbosity normal
     - name: Build Artifacts
       id: build_artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: Windows
-        path: D:\a\Flexx-TV\Flexx-TV\publish
+      run: |
+        powershell Compress-Archive -CompressionLevel NoCompression -Path D:\a\Flexx-TV\Flexx-TV\publish\* -DestinationPath D:\a\Flexx-TV\Flexx-TV\windows.zip
     - name: Create Release
       uses: actions/create-release@v1
       id: create_release
@@ -78,6 +41,6 @@ jobs:
         GITHUB_TOKEN: ${{ github.token }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./${{ steps.build_artifacts.name }}.zip
+        asset_path: D:\a\Flexx-TV\Flexx-TV\windows.zip
         asset_name: flexx-server.windows-amd64.zip
         asset_content_type: application/zip
