@@ -8,7 +8,8 @@ jobs:
   create_release:
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.output.upload_url }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.tag_version.outputs.new_version }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -38,9 +39,7 @@ jobs:
           release_name: Release v${{ steps.tag_version.outputs.new_version }}
           tag_name: ${{ steps.tag_version.outputs.new_version }}
           body: ${{ steps.changelog.outputs.changelog }}
-      - name: Generate outputs
-        id: output
-        run: echo "::set-output name=upload_url::"+${{ steps.create_release.upload_url }}
+
   test:
     needs: create_release
     runs-on: ubuntu-latest
