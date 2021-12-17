@@ -35,9 +35,9 @@ video {
     transition: opacity 500ms;
 }
 
-#video-controls.active {
-    opacity: 1;
-}
+    #video-controls.active {
+        opacity: 1;
+    }
 
 #top-row {
     display: flex;
@@ -71,9 +71,9 @@ video {
     transition: background-color 500ms;
 }
 
-#close-btn:hover, #close-btn:focus {
-    background-color: var(--primary);
-}
+    #close-btn:hover, #close-btn:focus {
+        background-color: var(--primary);
+    }
 
 #clickable-area {
     display: flex;
@@ -102,9 +102,9 @@ video {
     display: none;
 }
 
-#large-play-button.active {
-    display: flex;
-}
+    #large-play-button.active {
+        display: flex;
+    }
 
 #controls {
     display: flex;
@@ -113,15 +113,15 @@ video {
     padding: 20px 0;
 }
 
-#controls>div {
-    margin: 0 10px;
-    cursor: pointer;
-    filter: brightness(.75)
-}
+    #controls > div {
+        margin: 0 10px;
+        cursor: pointer;
+        filter: brightness(.75)
+    }
 
-#controls>div:hover {
-    filter: brightness(1);
-}
+        #controls > div:hover {
+            filter: brightness(1);
+        }
 
 #progress-track {
     position: relative;
@@ -201,7 +201,7 @@ video {
     margin-left: 10px;
 }
 
-#endTimes>div {
+#endTimes > div {
     margin-right: 10px;
 }
 
@@ -238,11 +238,11 @@ video {
     transition: max-width 500ms;
 }
 
-#volume-bar>div {
-    position: absolute;
-    width: 100px;
-    height: 100%;
-}
+    #volume-bar > div {
+        position: absolute;
+        width: 100px;
+        height: 100%;
+    }
 
 #volume-control i {
     max-width: 30px;
@@ -261,7 +261,6 @@ video {
 
 #volume-control:hover #volume-bar, #volume-control:focus #volume-bar {
     max-width: 100px;
-
 }
 
 #progress-extras {
@@ -283,11 +282,11 @@ video {
     min-height: 163px;
 }
 
-#hover-popup p {
-    bottom: 0;
-}
+    #hover-popup p {
+        bottom: 0;
+    }
 
-#hover-popup img {
-    width: 100%;
-    min-height: 112px;
-}
+    #hover-popup img {
+        width: 100%;
+        min-height: 112px;
+    }

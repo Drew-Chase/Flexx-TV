@@ -1,7 +1,7 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Media.Objects.Libraries;
-using Flexx.Utilities;
 using Flexx.Networking;
+using Flexx.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;

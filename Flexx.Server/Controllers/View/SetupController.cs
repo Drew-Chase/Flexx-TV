@@ -1,14 +1,9 @@
 ﻿using Flexx.Authentication;
 using Flexx.Networking;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
-using System.Threading;
 using static Flexx.Data.Global;
 
 namespace Flexx.Server.Controllers.View

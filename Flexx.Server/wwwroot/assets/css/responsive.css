@@ -1,5 +1,5 @@
 @media (max-width:800px) {
-    #view-banner{
+    #view-banner {
         overflow: hidden;
         transform: translateX(-350px);
         width: calc(100% + 300px);

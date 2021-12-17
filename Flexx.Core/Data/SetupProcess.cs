@@ -1,9 +1,9 @@
 ﻿using Flexx.Authentication;
 using Flexx.Media.Objects.Libraries;
+using Flexx.Networking;
 using Flexx.Utilities;
 using System;
 using System.Threading.Tasks;
-using Flexx.Networking;
 using static Flexx.Data.Global;
 
 namespace Flexx.Data

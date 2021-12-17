@@ -1,7 +1,6 @@
 ﻿using Flexx.Authentication;
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Libraries;
-using Flexx.Utilities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Flexx.Server.Controllers;

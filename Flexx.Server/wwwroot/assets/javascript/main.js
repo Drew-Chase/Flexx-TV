@@ -1,11 +1,12 @@
 function GetBrowser() {
+
     // Opera 8.0+
     var isOpera = (!!window.opr && !!opr.addons) || !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
 
     // Firefox 1.0+
     var isFirefox = typeof InstallTrigger !== 'undefined';
 
-    // Safari 3.0+ "[object HTMLElementConstructor]" 
+    // Safari 3.0+ "[object HTMLElementConstructor]"
     var isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
 
     // Internet Explorer 6-11
@@ -22,7 +23,6 @@ function GetBrowser() {
 
     return isOpera ? "Opera" : isFirefox ? "Firefox" : isSafari ? "Safari" : isIE ? "InternetExplorer" : isEdge ? "Edge" : isChrome ? "Chrome" : isBlink ? "Blink" : "GenericWeb";
 }
-
 
 function GetBrowserIcon(browser = GetBrowser()) {
     switch (browser.toLowerCase()) {

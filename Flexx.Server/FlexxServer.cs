@@ -1,14 +1,12 @@
 ﻿using Flexx.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using System.Threading.Tasks;
-using static Flexx.Data.Global;
-using System.Runtime.InteropServices;
 using System;
 using System.Diagnostics;
 using System.IO;
-using Flexx.Networking;
-using Flexx.Authentication;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using static Flexx.Data.Global;
 
 namespace Flexx.Server;
 

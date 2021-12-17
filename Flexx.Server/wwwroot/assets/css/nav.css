@@ -8,37 +8,37 @@ nav {
     transition: min-height 500ms, background 500ms;
 }
 
-nav #brand {
-    min-width: max-content;
-    padding-left: 20px;
-    font-size: 18px;
-    transition: min-width 500ms, font-size 500ms;
-    color: var(--primary);
-}
+    nav #brand {
+        min-width: max-content;
+        padding-left: 20px;
+        font-size: 18px;
+        transition: min-width 500ms, font-size 500ms;
+        color: var(--primary);
+    }
 
-nav .nav-items {
-    display: flex;
-    align-items: center;
-    margin: 0 20px;
-    font-size: 18px;
-    width: 100%;
-    transition: transform 500ms, font-size 500ms;
-}
+    nav .nav-items {
+        display: flex;
+        align-items: center;
+        margin: 0 20px;
+        font-size: 18px;
+        width: 100%;
+        transition: transform 500ms, font-size 500ms;
+    }
 
-nav .nav-items.right {
-    width: 25%;
-}
+        nav .nav-items.right {
+            width: 25%;
+        }
 
-nav .nav-items .nav-item {
-    margin: 0 10px;
-    opacity: .7;
-    cursor: pointer;
-    transition: opacity 500ms;
-}
+        nav .nav-items .nav-item {
+            margin: 0 10px;
+            opacity: .7;
+            cursor: pointer;
+            transition: opacity 500ms;
+        }
 
-nav .nav-items .nav-item:hover, nav .nav-items .nav-item.active {
-    opacity: 1;
-}
+            nav .nav-items .nav-item:hover, nav .nav-items .nav-item.active {
+                opacity: 1;
+            }
 
 #account-nav-item {
     display: flex;
@@ -58,13 +58,13 @@ nav.expanded {
     min-height: 100px;
 }
 
-nav.expanded #brand {
-    font-size: 32px;
-}
+    nav.expanded #brand {
+        font-size: 32px;
+    }
 
-nav.expanded .nav-items {
-    font-size: 22px;
-}
+    nav.expanded .nav-items {
+        font-size: 22px;
+    }
 
 nav.collapsed {
     background-color: var(--background);

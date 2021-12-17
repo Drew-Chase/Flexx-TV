@@ -4,22 +4,22 @@
     position: relative;
 }
 
-.carousel .carousel-title, .library-title {
-    padding: 10px;
-}
+    .carousel .carousel-title, .library-title {
+        padding: 10px;
+    }
 
-.carousel .carousel-items::-webkit-scrollbar {
-    display: none;
-}
+    .carousel .carousel-items::-webkit-scrollbar {
+        display: none;
+    }
 
-.carousel .carousel-items {
-    display: flex;
-    flex-direction: row;
-    overflow-x: scroll;
-    overflow-y: hidden;
-    scroll-behavior: smooth;
-    padding: 15px 0px;
-}
+    .carousel .carousel-items {
+        display: flex;
+        flex-direction: row;
+        overflow-x: scroll;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        padding: 15px 0px;
+    }
 
 .carousel-controls {
     position: absolute;
@@ -81,33 +81,33 @@
     transition: transform 500ms;
 }
 
-.banner.circular {
-    border-radius: 180%;
-    aspect-ratio: 1/1;
-    background-position: center;
-    background-size: cover;
-    width: 100%;
-    border-radius: 180%;
-    aspect-ratio: 1/1;
-    background-position: center;
-    background-size: cover;
-}
+    .banner.circular {
+        border-radius: 180%;
+        aspect-ratio: 1/1;
+        background-position: center;
+        background-size: cover;
+        width: 100%;
+        border-radius: 180%;
+        aspect-ratio: 1/1;
+        background-position: center;
+        background-size: cover;
+    }
 
 #banner-poster {
     position: relative;
 }
 
-.banner[data-watched="false"][data-watched_percentage="0"]:after, .library-item[data-watched="false"][data-watched_percentage="0"]:after, #banner-poster[data-watched="false"][data-watched_percentage="0"]:after {
-    content: '';
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 0 30px 30px 0;
-    border-color: transparent var(--primary) transparent transparent;
-    right: 0;
-    top: 0;
-    position: absolute;
-}
+    .banner[data-watched="false"][data-watched_percentage="0"]:after, .library-item[data-watched="false"][data-watched_percentage="0"]:after, #banner-poster[data-watched="false"][data-watched_percentage="0"]:after {
+        content: '';
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 30px 30px 0;
+        border-color: transparent var(--primary) transparent transparent;
+        right: 0;
+        top: 0;
+        position: absolute;
+    }
 
 .watched_percentage {
     position: absolute;
@@ -145,22 +145,22 @@
     flex-direction: row;
 }
 
-.banner-actions button {
-    margin-right: 5px;
-    padding: 8px 15px;
-    font-size: 14px;
-}
+    .banner-actions button {
+        margin-right: 5px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
 
-.banner-actions button:hover {
-    filter: brightness(.9)
-}
+        .banner-actions button:hover {
+            filter: brightness(.9)
+        }
 
 .banner.xl:hover {
     cursor: default;
     transform: unset;
 }
 
-.banner.xl>* {
+.banner.xl > * {
     padding-bottom: 10px;
 }
 
@@ -176,12 +176,12 @@
     min-width: 33vw;
 }
 
-.banner.lg .banner-title, .library-item-title {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    font-size: 20px;
-}
+    .banner.lg .banner-title, .library-item-title {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        font-size: 20px;
+    }
 
 .banner.xl .banner-background {
     border-radius: 0;
@@ -214,9 +214,9 @@
     transform: scale(1.06);
 }
 
-.banner:hover .banner-background, .banner.xl .banner-background, .library-item:hover .library-item-background {
-    filter: brightness(.5);
-}
+    .banner:hover .banner-background, .banner.xl .banner-background, .library-item:hover .library-item-background {
+        filter: brightness(.5);
+    }
 
 .banner .banner-title, .library-item-title {
     opacity: 0;
@@ -243,6 +243,6 @@
     transition: transform 500ms;
 }
 
-.banner[data-downloading="true"], .library-item[data-downloading="true"] {
-    filter: contrast(0);
-}
+    .banner[data-downloading="true"], .library-item[data-downloading="true"] {
+        filter: contrast(0);
+    }

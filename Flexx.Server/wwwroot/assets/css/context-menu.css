@@ -56,12 +56,12 @@
     transition: color 300ms, background-color 300ms, transform 300ms, font-weight 100ms;
 }
 
-.context-item:hover, .context-item:focus {
-    opacity: 1;
-    cursor: pointer;
-    font-weight: unset;
-    /* transform: translateX(50px); */
-}
+    .context-item:hover, .context-item:focus {
+        opacity: 1;
+        cursor: pointer;
+        font-weight: unset;
+        /* transform: translateX(50px); */
+    }
 
 /* .context-item:after {
     content: '»';

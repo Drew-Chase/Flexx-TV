@@ -9,43 +9,43 @@
     min-height: 100vh;
 }
 
-#search-area #search-bar-area {
-    position: fixed;
-    display: flex;
-    flex-direction: column;
-    top: 33%;
-    left: 10%;
-    width: 80%;
-    transition: top 500ms;
-}
+    #search-area #search-bar-area {
+        position: fixed;
+        display: flex;
+        flex-direction: column;
+        top: 33%;
+        left: 10%;
+        width: 80%;
+        transition: top 500ms;
+    }
 
-#search-area #search-bar-area.active {
-    top: 100px;
-    z-index: 9;
-}
+        #search-area #search-bar-area.active {
+            top: 100px;
+            z-index: 9;
+        }
 
-#search-area #search-bar-area.active #search-title {
-    max-height: 0px;
-    opacity: 0;
-}
+            #search-area #search-bar-area.active #search-title {
+                max-height: 0px;
+                opacity: 0;
+            }
 
-#search-area #search-title {
-    position: relative;
-    font-size: 55px;
-    font-weight: 100;
-    text-align: center;
-    transition: opacity 500ms, max-height 500ms 500ms;
-}
+    #search-area #search-title {
+        position: relative;
+        font-size: 55px;
+        font-weight: 100;
+        text-align: center;
+        transition: opacity 500ms, max-height 500ms 500ms;
+    }
 
-#search-area input[type="text"]#search-bar {
-    position: relative;
-    height: 50px;
-    border-radius: 180px;
-    outline: none;
-    border: none;
-    font-size: 18px;
-    padding: 0 25px;
-}
+    #search-area input[type="text"]#search-bar {
+        position: relative;
+        height: 50px;
+        border-radius: 180px;
+        outline: none;
+        border: none;
+        font-size: 18px;
+        padding: 0 25px;
+    }
 
 #search-view {
     display: none;
@@ -57,9 +57,9 @@
     overflow: scroll;
 }
 
-#search-view.active {
-    display: unset;
-}
+    #search-view.active {
+        display: unset;
+    }
 
 #search-query {
     font-size: 32px;
@@ -83,20 +83,20 @@
     z-index: 1;
 }
 
-.search-item img.poster {
-    max-height: 100%;
-    height: 100%;
-    margin-right: 50px;
-}
+    .search-item img.poster {
+        max-height: 100%;
+        height: 100%;
+        margin-right: 50px;
+    }
 
-.search-item img.background {
-    position: absolute;
-    background-position: center;
-    background-size: cover;
-    filter: blur(7px) brightness(.5);
-    z-index: -1;
-    right: -5px;
-}
+    .search-item img.background {
+        position: absolute;
+        background-position: center;
+        background-size: cover;
+        filter: blur(7px) brightness(.5);
+        z-index: -1;
+        right: -5px;
+    }
 
 .search-item-title {
     font-size: 32px;
@@ -135,38 +135,38 @@
     margin-top: 50px;
 }
 
-#search-area #options>* {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    max-height: 70vh;
-    height: 70vh;
-    font-size: 48px;
-    font-weight: 100;
-    aspect-ratio: 2/3;
-    overflow: hidden;
-    transition: font-weight 100ms, transform 500ms;
-    margin: 10px 50px;
-}
+    #search-area #options > * {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-height: 70vh;
+        height: 70vh;
+        font-size: 48px;
+        font-weight: 100;
+        aspect-ratio: 2/3;
+        overflow: hidden;
+        transition: font-weight 100ms, transform 500ms;
+        margin: 10px 50px;
+    }
 
-#search-area #options>*:hover {
-    font-weight: 400;
-    cursor: pointer;
-    transform: translateY(-10px);
-}
+        #search-area #options > *:hover {
+            font-weight: 400;
+            cursor: pointer;
+            transform: translateY(-10px);
+        }
 
-#search-area #options>*:hover .background {
-    filter: blur(4px) contrast(100%) brightness(70%);
-}
+            #search-area #options > *:hover .background {
+                filter: blur(4px) contrast(100%) brightness(70%);
+            }
 
-#search-area #options .background {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    background-position: center;
-    background-size: cover;
-    z-index: -1;
-    filter: blur(4px) contrast(50%) brightness(50%);
-    transition: filter 500ms;
-}
+    #search-area #options .background {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        background-position: center;
+        background-size: cover;
+        z-index: -1;
+        filter: blur(4px) contrast(50%) brightness(50%);
+        transition: filter 500ms;
+    }

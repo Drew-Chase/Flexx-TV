@@ -1,4 +1,4 @@
-body>.banner-background {
+body > .banner-background {
     position: fixed;
     height: 100vh;
     width: 100%;
@@ -40,12 +40,12 @@ body>.banner-background {
     justify-content: start;
 }
 
-#episodes .banner {
-    --size: 20%;
-    max-width: var(--size);
-    min-width: var(--size);
-    margin-bottom: 50px;
-}
+    #episodes .banner {
+        --size: 20%;
+        max-width: var(--size);
+        min-width: var(--size);
+        margin-bottom: 50px;
+    }
 
 .library-item-subtitle {
     font-size: 14px;
@@ -76,9 +76,9 @@ button.primary#play {
     font-size: 18px;
 }
 
-button.primary#play i {
-    margin-right: 10px;
-}
+    button.primary#play i {
+        margin-right: 10px;
+    }
 
 .cast-member {
     min-width: 18vw;
@@ -89,10 +89,10 @@ button.primary#play i {
     text-align: center;
 }
 
-.cast-member>* {
-    width: 50%;
-    max-width: 50%;
-}
+    .cast-member > * {
+        width: 50%;
+        max-width: 50%;
+    }
 
 .cast-member-name {
     font-weight: 700;
@@ -110,10 +110,10 @@ button.primary#play i {
     display: flex;
 }
 
-.view-additional-descriptors>* {
-    padding: 10px 15px;
-    margin: 10px 5px;
-}
+    .view-additional-descriptors > * {
+        padding: 10px 15px;
+        margin: 10px 5px;
+    }
 
 .view-mpaa {
     background-color: var(--primary);
