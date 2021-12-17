@@ -6,7 +6,7 @@ on:
 
 jobs:
   create-release:
-    runs-on: linux-x64
+    runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.upload_url }}
       version: ${{ steps.tag_version.new_version }}
