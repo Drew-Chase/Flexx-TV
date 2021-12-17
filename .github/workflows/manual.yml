@@ -16,7 +16,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=linux-x64 -p:PublishReadyToRun=true -c Release --self-contained true --no-restore -o publish
+      run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=linux-x64 -p:PublishReadyToRun=true -c Release --self-contained true --no-restore -f net6.0 -o publish
     - name: Test
       run: dotnet test --no-build --verbosity normal
     - name: Build Artifacts
@@ -36,7 +36,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=win-x64 -p:PublishReadyToRun=true -c Release --self-contained true --no-restore -o publish
+      run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=win-x64 -p:PublishReadyToRun=true -c Release --self-contained true --no-restore -f net6.0 -o publish
     - name: Test
       run: dotnet test --no-build --verbosity normal
     - name: Build Artifacts
