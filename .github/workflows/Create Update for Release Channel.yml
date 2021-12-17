@@ -19,8 +19,7 @@ jobs:
         uses: miguelfito/github-bump-and-tag-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          create_annotated_tag: true
-          dry_run: true
+          tag_prefix: "v"
       - name: "Generate release changelog"
         id: changelog
         uses: heinrichreimer/github-changelog-generator-action@v2.3
@@ -49,7 +48,7 @@ jobs:
         with:
           dotnet-version: 6.0.x
       - name: Build
-        run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=osx-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
+        run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=osx-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o /home/runner/work/Flexx-TV/Flexx-TV/publish
       - name: Test
         run: dotnet test --no-build --verbosity normal
       - name: Build Artifacts
@@ -78,11 +77,6 @@ jobs:
         run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=linux-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
       - name: Test
         run: dotnet test --no-build --verbosity normal
-      - name: Build Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: Linux
-          path: /home/runner/work/Flexx-TV/Flexx-TV/publish
       - name: Build Artifacts
         id: build_artifacts
         run: |
