@@ -1,0 +1,45 @@
+name: .NET
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    - name: Build Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Linux
+        path: /home/runner/work/Flexx-TV/Flexx-TV/Flexx.Server/bin/Release/net6.0/
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+    - name: Build Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Windows
+        path: D:\a\Flexx-TV\Flexx-TV\Flexx.Server\bin\Release\net6.0\
