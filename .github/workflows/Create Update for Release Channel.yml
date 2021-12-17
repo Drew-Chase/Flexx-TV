@@ -5,42 +5,149 @@ on:
     branches: [Release-Channel]
 
 jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Generating Version
+        id: tag_generation
+        uses: Klemensas/action-autotag@stable
+        with:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          tag_prefix: "v"
+      - name: "Generate Release Changelog"
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} 
+          output: /home/runner/work/Flexx-TV/Flexx-TV/CHANGELOG.md
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
+      - name: Build
+        run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=osx-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+      - name: Build Artifacts
+        id: build_artifacts
+        run: |
+          zip -r /home/runner/work/Flexx-TV/Flexx-TV/osx.zip /home/runner/work/Flexx-TV/Flexx-TV/publish/*
+      - name: Create Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: false
+          prerelease: false
+          release_name: Release ${{ steps.tag_generation.outputs.tagname }}
+          tag_name: ${{ steps.tag_generation.outputs.tagname }}
+          
+          body_path: /home/runner/work/Flexx-TV/Flexx-TV/CHANGELOG.md
+      - name: Upload Artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /home/runner/work/Flexx-TV/Flexx-TV/osx.zip
+          asset_name: flexx-server.osx-intel64.zip
+          asset_content_type: application/zip
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Generating Version
+        uses: Klemensas/action-autotag@stable
+        with:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          tag_prefix: "v"
+      - name: "Generate release changelog"
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} 
+          output: /home/runner/work/Flexx-TV/Flexx-TV/CHANGELOG.md
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
+      - name: Build
+        run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=linux-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+      - name: Build Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Linux
+          path: /home/runner/work/Flexx-TV/Flexx-TV/publish
+      - name: Build Artifacts
+        id: build_artifacts
+        run: |
+          zip -r /home/runner/work/Flexx-TV/Flexx-TV/linux.zip /home/runner/work/Flexx-TV/Flexx-TV/publish/*
+      - name: Create Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: false
+          prerelease: false
+          release_name: Release ${{ steps.tag_generation.outputs.tagname }}
+          tag_name: ${{ steps.tag_generation.outputs.tagname }}
+          body_path: /home/runner/work/Flexx-TV/Flexx-TV/CHANGELOG.md
+      - name: Upload Artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /home/runner/work/Flexx-TV/Flexx-TV/linux.zip
+          asset_name: flexx-server.linux-amd64.zip
+          asset_content_type: application/zip
   build-windows:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.x
-    - name: Build
-      run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=win-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
-    - name: Build Artifacts
-      id: build_artifacts
-      run: |
-        powershell Compress-Archive -CompressionLevel NoCompression -Path D:\a\Flexx-TV\Flexx-TV\publish\* -DestinationPath D:\a\Flexx-TV\Flexx-TV\windows.zip
-    - name: Create Release
-      uses: actions/create-release@v1
-      id: create_release
-      env:
+      - name: Checking Out Branch
+        uses: actions/checkout@v2
+      - name: Generating Version
+        uses: Klemensas/action-autotag@stable
+        with:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          tag_prefix: "v"
+      - name: "Generate release changelog"
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} 
+          output: D:\a\Flexx-TV\Flexx-TV\CHANGELOG.md
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
+      - name: Build
+        run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=win-x64 -p:PublishReadyToRun=true -c Release --self-contained true -f net6.0 -o publish
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+      - name: Build Artifacts
+        id: build_artifacts
+        run: |
+          powershell Compress-Archive -CompressionLevel NoCompression -Path D:\a\Flexx-TV\Flexx-TV\publish\* -DestinationPath D:\a\Flexx-TV\Flexx-TV\windows.zip
+      - name: Create Release
+        uses: actions/create-release@v1
+        id: create_release
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with: 
+        with:
           draft: false
           prerelease: false
-          release_name: Release ${{ github.ref }}
-          tag_name: ${{ github.ref }}
-          body: |
-            Changes in this Release
-            - First Change
-            - Second Change
-    - name: Upload Artifact
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: D:\a\Flexx-TV\Flexx-TV\windows.zip
-        asset_name: flexx-server.windows-amd64.zip
-        asset_content_type: application/zip
+          release_name: Release ${{ steps.tag_generation.outputs.tagname }}
+          tag_name: ${{ steps.tag_generation.outputs.tagname }}
+          body_path: D:\a\Flexx-TV\Flexx-TV\CHANGELOG.md
+      - name: Upload Artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: D:\a\Flexx-TV\Flexx-TV\windows.zip
+          asset_name: flexx-server.windows-x64.zip
+          asset_content_type: application/zip
