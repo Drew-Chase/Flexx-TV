@@ -16,14 +16,15 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=linux-x64 -p:PublishReadyToRun=true -c Release --self-contained true -o publish
     - name: Test
       run: dotnet test --no-build --verbosity normal
     - name: Build Artifacts
       uses: actions/upload-artifact@v2
       with:
         name: Linux
-        path: /home/runner/work/Flexx-TV/Flexx-TV/Flexx.Server/bin/Release/net6.0/
+        path: /home/runner/work/Flexx-TV/Flexx-TV/publish
+        
   build-windows:
     runs-on: windows-latest
     steps:
@@ -35,11 +36,11 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet publish -p:PublishTrimmed=true -p:RuntimeIdentifier=win-x64 -p:PublishReadyToRun=true -c Release --self-contained true -o publish
     - name: Test
       run: dotnet test --no-build --verbosity normal
     - name: Build Artifacts
       uses: actions/upload-artifact@v2
       with:
         name: Windows
-        path: D:\a\Flexx-TV\Flexx-TV\Flexx.Server\bin\Release\net6.0\
+        path: D:\a\Flexx-TV\Flexx-TV\publish
