@@ -1,0 +1,58 @@
+﻿<div class="section" id="directories">
+    <p class="section-title">Directories</p>
+    <div class="page-content">
+        <div class="card fs-input" id="movie-card" data-cd="@Flexx.Data.Global.config.MovieLibraryPath">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="card-icon"><i class="fa-solid fa-film"></i></div>
+                    <div class="card-title">
+                        Movies
+                    </div>
+                    <div class="card-description">
+                        Click to choose where your movie content will be located or where you currently keep your movie content
+                    </div>
+                    <div class="cta-text">C:\</div>
+                </div>
+                <div class="card-back">
+                    <div class="fs-input-wrapper">
+                        <input type="text" class="currentDirectory">
+                        <button class="primary fs-cd-apply"><i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                    <div class="fs">
+                    </div>
+                    <button class="primary fs-apply">Select</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card fs-input" id="tv-card" data-cd="@Flexx.Data.Global.config.TVLibraryPath">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="card-icon"><i class="fa-solid fa-tv"></i></div>
+                    <div class="card-title">
+                        TV Shows
+                    </div>
+                    <div class="card-description">
+                        Click to choose where your tv content will be located or where you currently keep your tv content
+                    </div>
+                    <div class="cta-text">C:\</div>
+                </div>
+                <div class="card-back">
+                    <div class="fs-input-wrapper">
+                        <input type="text" class="currentDirectory">
+                        <button class="primary fs-cd-apply"><i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                    <div class="fs">
+                    </div>
+                    <button class="primary fs-apply">Select</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function Init(){
+        LoadEvents();
+    }
+</script>
