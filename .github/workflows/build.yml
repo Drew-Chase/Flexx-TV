@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - Release-Channel
-      - Beta-Channel
-      - Alpha-Channel
+      # - Beta-Channel
+      # - Alpha-Channel
 
 jobs:
   create_release:
