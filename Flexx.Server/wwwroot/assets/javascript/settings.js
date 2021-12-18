@@ -50,13 +50,10 @@ if (window.location.pathname == "/settings") {
             let button = document.createElement('div')
             button.classList.add("sidebar-item");
             button.innerText = item.text;
-            let url = `/assets/php/settings/${item.text.toLowerCase()}.php`;
-            if (item.page != null) {
-                url = `/assets/php/settings/${item.page}`
-            }
-
             $(button).on('click', e => {
-                $("#view").load(url)
+                $("#view").load(`/settings/page?page=${item.text.toLowerCase()}`, () => {
+                    Init();
+                })
                 Array.from(sidebarItems.children).forEach(c => c.classList.remove('active'))
                 e.target.classList.add('active')
                 window.history.replaceState('', ``, `?c=${item.text.toLowerCase()}`)
@@ -65,7 +62,7 @@ if (window.location.pathname == "/settings") {
             if (item.active != null && item.active && page == "") {
                 button.click();
             }
-            if (item.text.toLowerCase() == page) {
+            if (item.text.toLowerCase() == page.toLowerCase()) {
                 button.click();
             }
             sidebarItems.appendChild(button);
@@ -74,11 +71,7 @@ if (window.location.pathname == "/settings") {
     sidebar.appendChild(sidebarItems)
     $("#view")[0].before(sidebar)
 }
-
 EndLoading();
-
-LoadNowPlaying()
-
 async function LoadNowPlaying() {
     let url = `${window.location.origin}/api/stream/get/active`
     let response = await fetch(url);
@@ -196,6 +189,62 @@ async function LoadNowPlaying() {
     setTimeout(() => LoadNowPlaying(), 1000)
 }
 
+function LoadEvents() {
+    $(".fs-input").on('click', e => {
+        if (!e.currentTarget.classList.contains('active')) {
+            if (e.currentTarget.dataset.cd != null && e.currentTarget.dataset.cd != "")
+                LoadFS(e.currentTarget, e.currentTarget.dataset.cd)
+            else
+                LoadFS(e.currentTarget)
+        }
+    })
+    Array.from($(".fs-input .cta-text")).forEach(e => {
+        e.innerText = e.parentElement.parentElement.parentElement.dataset.cd
+    })
+    $(".fs-apply").on('click', e => {
+        setTimeout(() => {
+            e.currentTarget.parentElement.parentElement.parentElement.classList.remove('active');
+        }, 50)
+    })
+    $(".card:not(.toggle):not(.noflip)").on('click', e => {
+        Array.from($(".card")).forEach(item => item.classList.remove('active'))
+        e.currentTarget.classList.add('active')
+    })
+
+    $(".card.toggle").on('click', e => {
+        e.currentTarget.classList.toggle('active')
+        e.currentTarget.dataset.checked = !e.currentTarget.dataset.checked;
+    })
+}
+
+async function LoadFS(e, d = "") {
+    let data = new FormData();
+    data.append("dir", d)
+    let response = await fetch("/settings/fs", { method: 'POST', body: data })
+    let json = await response.json();
+    e.dataset.cd = json.cd;
+    let fs = e.querySelector(".fs")
+    let icon = e.querySelector(".cta-icon")
+    if (icon != null)
+        icon.innerHTML = `<i class="fa-regular fa-circle-check"></i>`
+    let input = fs.parentElement.querySelector("input");
+    input.value = json.cd;
+    $(input).on('focusout', () => LoadFS(e, input.value));
+    $(input.parentElement.querySelector('.fs-cd-apply')).on('click', () => LoadFS(e, input.value));
+    fs.innerHTML = "";
+    let back = document.createElement("div");
+    back.classList.add("directory");
+    back.innerText = "..";
+    fs.appendChild(back)
+    $(back).on('click', () => LoadFS(e, json.parent))
+    Array.from(json.directories).forEach(item => {
+        let directory = document.createElement("div");
+        directory.classList.add("directory");
+        directory.innerText = item;
+        fs.appendChild(directory)
+        $(directory).on('click', () => LoadFS(e, d + (d.endsWith('/') ? "" : "/") + item));
+    })
+}
 function GetStringTimeFromSeconds(seconds) {
     let totalHours = Math.floor(seconds / 60 / 60);
     let totalMinutes = Math.floor(seconds / 60) - (totalHours * 60);
