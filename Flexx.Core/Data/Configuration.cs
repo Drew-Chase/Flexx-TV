@@ -16,7 +16,7 @@ namespace Flexx.Data
 
         public Configuration()
         {
-            sysProfile = new(Path.Combine(Paths.Configs, "sys"), true);
+            sysProfile = new(Path.Combine(Paths.Configs, "sys"));
             sysProfile.Add("movies", "");
             sysProfile.Add("port", 3208);
             sysProfile.Add("tv", "");
@@ -36,7 +36,7 @@ namespace Flexx.Data
 
         public string LanguagePreference { get => sysProfile.GetConfigByKey("language").Value; set => sysProfile.GetConfigByKey("language").Value = value; }
 
-        public string MovieLibraryPath { get => sysProfile.GetConfigByKey("movies").Value; set => sysProfile.GetConfigByKey("movies").Value = value; }
+        public string MovieLibraryPath { get => sysProfile.GetConfigByKey("movies").Value.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar); set => sysProfile.GetConfigByKey("movies").Value = value.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar); }
 
         public string NextScheduledPrefetch { get => sysProfile.GetConfigByKey("next_scheduled_prefetch").Value; set => sysProfile.GetConfigByKey("next_scheduled_prefetch").Value = value; }
 
@@ -50,7 +50,7 @@ namespace Flexx.Data
 
         public string Token { get => sysProfile.GetConfigByKey("token").Value; set => sysProfile.GetConfigByKey("token").Value = value; }
 
-        public string TVLibraryPath { get => sysProfile.GetConfigByKey("tv").Value; set => sysProfile.GetConfigByKey("tv").Value = value; }
+        public string TVLibraryPath { get => sysProfile.GetConfigByKey("tv").Value.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar); set => sysProfile.GetConfigByKey("tv").Value = value.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar); }
 
         public bool UseVersionFile { get => sysProfile.GetConfigByKey("use_version_file").Value; set => sysProfile.GetConfigByKey("use_version_file").Value = value; }
 
