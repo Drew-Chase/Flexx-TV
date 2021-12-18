@@ -34,7 +34,7 @@ jobs:
           draft: false
           prerelease: false
           allowUpdates: true
-          release_name: Release v${{ steps.tag_version.outputs.new_version }}
+          release_name: v${{ steps.tag_version.outputs.new_version }}
           tag_name: ${{ steps.tag_version.outputs.new_version }}
           body: ${{ steps.tag_version.outputs.changelog }}
   build-mac:
@@ -61,7 +61,7 @@ jobs:
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: osx.zip
-          asset_name: flexx-server.osx-intel64.zip
+          asset_name: flexx-server.osx-v${{ needs.create_release.outputs.version }}-intel64.zip
           asset_content_type: application/zip
   build-linux:
     runs-on: ubuntu-latest
