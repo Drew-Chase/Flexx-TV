@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Net.Http;
+using static Flexx.Data.Global;
 
 namespace Flexx.Networking;
 
@@ -19,6 +20,7 @@ public static class Remote
                 new KeyValuePair<string,string>("host", user.Token),
                 new KeyValuePair<string,string>("public", Firewall.GetPublicIP().ToString()),
                 new KeyValuePair<string,string>("local", Firewall.GetLocalIP().ToString()),
+                new KeyValuePair<string,string>("port", config.ApiPort.ToString()),
             })).Result;
             if (response.IsSuccessStatusCode)
             {

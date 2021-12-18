@@ -20,6 +20,11 @@
         <script>
             window.location.href = `${window.location.origin}/Setup`;
         </script>
+    }else if(Flexx.Data.Global.config.Setup && ViewData["Title"] == "Setup")
+    {
+        <script>
+            window.location.href = `${window.location.origin}`;
+        </script>
     }
     <script>
         let user = "";
@@ -27,7 +32,6 @@
     @if ((bool)ViewData["UseNav"] == true)
     {
         @Html.PartialAsync("_Navigation").Result
-        ;
     }
     @RenderBody()
 

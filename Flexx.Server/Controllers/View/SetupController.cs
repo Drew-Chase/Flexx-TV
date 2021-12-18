@@ -35,9 +35,7 @@ namespace Flexx.Server.Controllers.View
                         UseShellExecute = true,
                     }
                 }.Start();
-                var timer = new System.Timers.Timer(1500) { Enabled = true };
-                timer.Elapsed += (s, e) => Environment.Exit(0);
-                timer.Start();
+                Environment.Exit(0);
                 return RedirectToAction("Index", "Library");
             }
             else

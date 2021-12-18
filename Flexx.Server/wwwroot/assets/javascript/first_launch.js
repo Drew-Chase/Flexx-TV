@@ -10,7 +10,6 @@ $(".fs-input").on('click', e => {
 $(".fs-apply").on('click', e => {
     setTimeout(() => {
         e.currentTarget.parentElement.parentElement.parentElement.classList.remove('active');
-        console.log(e.currentTarget.parentElement.parentElement.parentElement)
     }, 50)
 })
 $(".card:not(.toggle):not(.noflip)").on('click', e => {
@@ -50,9 +49,7 @@ $(".login-form button").on("click", async () => {
     formData.append("username", email)
     formData.append("password", password)
     let response = await fetch(`/login`, { method: "POST", body: formData });
-    console.log(response)
     let json = await response.json();
-    console.log(json)
     let error = $(".login-form .error")[0];
     if (json.hasOwnProperty("error")) {
         error.innerHTML = json["error"];
@@ -93,14 +90,27 @@ async function LoadFS(e, d = "") {
 }
 
 async function finish() {
+    let parent = document.createElement('div');
+    parent.id = "loading";
+    let throbber = document.createElement('div');
+    throbber.classList.add("throbber");
+    parent.appendChild(throbber)
+    $("body")[0].appendChild(parent)
+    $("body")[0].style.overflow = "hidden"
     let data = new FormData();
     data.append("movie", $("#movie-card")[0].dataset.cd)
     data.append("tv", $("#tv-card")[0].dataset.cd)
     data.append("portForward", $("#portForward")[0].dataset.checked)
     data.append("port", $("#server-port")[0].value)
     data.append("token", $(".login-form")[0].dataset.token)
-    await fetch("/finish", { method: 'POST', body: data })
-    window.location.href = `${window.location.hostname}:${$("#server-port")[0].value}`;
+    await fetch("/finish", { method: 'POST', body: data }).catch(e => {
+        let load = setInterval(async () => {
+            if ((await fetch(`${window.location.protocol}//${window.location.hostname}:${$("#server-port")[0].value}/api/status`)).status == 200) {
+                clearInterval(load);
+                window.location.href = `${window.location.protocol}//${window.location.hostname}:${$("#server-port")[0].value}`;
+            }
+        }, 5 * 1000);
+    })
 }
 
 setInterval(() => {
