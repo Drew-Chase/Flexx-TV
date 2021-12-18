@@ -3,17 +3,16 @@ using Flexx.Networking;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Diagnostics;
-using System.IO;
 using static Flexx.Data.Global;
 
 namespace Flexx.Server.Controllers.View
 {
-    [Route("/Setup")]
+    [Route("/Setup/")]
     public class SetupController : Controller
     {
         #region Public Methods
 
-        [HttpPost("/finish")]
+        [HttpPost("finish")]
         public IActionResult Finish([FromForm] string movie, [FromForm] string tv, [FromForm] bool portForward, [FromForm] int port, [FromForm] string token)
         {
             ViewData["UseNav"] = false;
@@ -44,31 +43,6 @@ namespace Flexx.Server.Controllers.View
             }
         }
 
-        [HttpPost("/fs")]
-        public JsonResult GetFS([FromForm] string dir)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(dir))
-                    dir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                string[] dirLongs = Directory.GetDirectories(dir);
-                for (int i = 0; i < dirLongs.Length; i++)
-                {
-                    dirLongs[i] = new DirectoryInfo(dirLongs[i]).Name;
-                }
-                return new JsonResult(new
-                {
-                    cd = dir,
-                    parent = Directory.GetParent(dir).FullName,
-                    directories = dirLongs
-                });
-            }
-            catch
-            {
-                return GetFS("");
-            }
-        }
-
         public IActionResult Index()
         {
             if (config.Setup)
@@ -78,7 +52,7 @@ namespace Flexx.Server.Controllers.View
             return View();
         }
 
-        [HttpPost("/login")]
+        [HttpPost("login")]
         public IActionResult Login([FromForm] string username, [FromForm] string password)
         {
             return new JsonResult(Users.Instance.Get(username).GenerateToken(password));
