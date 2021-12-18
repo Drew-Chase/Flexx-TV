@@ -119,7 +119,7 @@ public class User
     {
         Plan = PlanTier.Free;
         Username = username;
-        userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"), true);
+        userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"));
         userProfile.Add("token", "");
         HasWatched = new();
         WatchedDuration = new();
