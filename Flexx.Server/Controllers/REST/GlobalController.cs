@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Flexx.Utilities;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Flexx.Server.Controllers
 {
@@ -14,6 +15,7 @@ namespace Flexx.Server.Controllers
             return new JsonResult(new
             {
                 status = "Online",
+                usage = ApplicationMonitor.CurrentUsage
             });
         }
 
