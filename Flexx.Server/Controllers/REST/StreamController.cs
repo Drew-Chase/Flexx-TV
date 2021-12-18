@@ -39,7 +39,7 @@ public class StreamController : ControllerBase
                 Resolution = new
                 {
                     Name = stream.Version.DisplayName,
-                    BitRate = $"{stream.Version.BitRate / 1000}Mbps"
+                    BitRate = $"{Math.Round(stream.Version.BitRate / 1000d, 2)}Mbps"
                 },
             });
         }
