@@ -292,7 +292,7 @@ public class Transcoder
 
     public static string OptimizeImage(string input, int scale)
     {
-        string output = $"optimized_{new FileInfo(input).Name}.{new FileInfo(input).Extension}";
+        string output = Path.Combine(Directory.GetParent(input).FullName, $"optimized_{new FileInfo(input).Name}");
         string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
         if (File.Exists(output))
         {
