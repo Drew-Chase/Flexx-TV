@@ -1,4 +1,5 @@
 ﻿using Flexx.Data;
+using Flexx.Networking;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -14,34 +15,20 @@ public class FlexxServer
 {
     #region Public Methods
 
-    public static void AddToFirewall()
+    public static void Main(string[] args)
     {
         if (OperatingSystem.IsWindows())
         {
-            Process process = new()
-            {
-                StartInfo = new()
-                {
-                    FileName = Paths.ExecutingBinary,
-                    Arguments = "-firewall",
-                    Verb = "runas",
-                    UseShellExecute = true,
-                }
-            };
-            process.Start();
-            process.WaitForExit();
-        }
-    }
+            Console.Title = "FlexxTV Media Server";
 
-    public static void Main(string[] args)
-    {
+            Firewall.AddToFirewall();
+        }
         if (args.Length == 0)
         {
-            if (!config.Setup)
+            if (!config.Setup || string.IsNullOrWhiteSpace(config.MovieLibraryPath) || string.IsNullOrWhiteSpace(config.TVLibraryPath))
             {
-                log.Warn("Adding FlexxTV Media Server to Firewall");
+                ModifyWindow(false);
 
-                AddToFirewall();
                 if (OperatingSystem.IsWindows())
                 {
                     new Process()
@@ -58,8 +45,9 @@ public class FlexxServer
             }
             else
             {
-                SetupProcess.Run().Wait();
                 ModifyWindow(true);
+                SetupProcess.Run().Wait();
+                ModifyWindow(false);
                 StartHttpServer().Wait();
             }
         }
@@ -70,10 +58,15 @@ public class FlexxServer
                 switch (item)
                 {
                     case "-firewall":
-                        FirewallManager.FirewallCom firewall = new();
-                        firewall.AddAuthorizeApp(new("FlexxTV Media Server", Paths.ExecutingBinary) { Enabled = true });
+                        Firewall.AddToFirewall();
                         Environment.Exit(0);
                         continue;
+                    case "-show":
+                        SetupProcess.Run().Wait();
+                        ModifyWindow(true);
+                        StartHttpServer().Wait();
+                        break;
+
                     default:
                         continue;
                 }
@@ -108,8 +101,11 @@ public class FlexxServer
                 webBuilder.UseContentRoot(Directory.GetCurrentDirectory());
                 webBuilder.UseKestrel(options =>
                 {
+                    //options.ListenLocalhost(config.ApiPort, listen =>
+                    //{
+                    //    listen.UseHttps(Path.Combine(Directory.GetParent(Paths.ExecutingBinary).FullName, "wwwroot", "certificate.pfx"));
+                    //});
                     options.ListenAnyIP(config.ApiPort);
-                    ModifyWindow(true);
                 });
                 webBuilder.UseStartup<Startup>();
                 log.Debug("HTTP Server is Now Active!!!");
