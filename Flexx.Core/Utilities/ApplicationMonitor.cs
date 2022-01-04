@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Flexx.Utilities
@@ -34,7 +31,6 @@ namespace Flexx.Utilities
                     return Math.Round((Process.GetCurrentProcess().TotalProcessorTime - startCPU).TotalMilliseconds / (Environment.ProcessorCount * (DateTime.Now - startTime).TotalMilliseconds) * 100, 2);
                 }
                 catch { }
-
                 return 0;
             }).Result;
 
