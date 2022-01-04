@@ -30,10 +30,11 @@ namespace Flexx.Data
                     new("Initializing Movie Library", () => MovieLibraryModel.Instance.Initialize()),
                     new("Initializing TV Library", () => TvLibraryModel.Instance.Initialize()),
                     new("Fetching Movie Trailers", () => MovieLibraryModel.Instance.FetchAllTrailers()),
-                    new("Fetching Movie Discovery Categories", () => Scanner.Prefetch(true, true)),
-                    new("Fetching TV Discovery Categories", () => Scanner.Prefetch(false, true)),
+                    new("Fetching Movie Discovery Categories", () => Scanner.Prefetch(true, false)),
+                    new("Fetching TV Discovery Categories", () => Scanner.Prefetch(false, false)),
                     new("Running Movie Post Initialization Event", () => MovieLibraryModel.Instance.PostInitializationEvent()),
                     new("Running TV Post Initialization Event", () => TvLibraryModel.Instance.PostInitializationEvent()),
+
                     new ("Running Network Initialization Event", ()=> Firewall.OpenPort(config.ApiPort).Wait()),
                     new("Initializing Command Engine", () => CommandEngine.Run()),
                 };
