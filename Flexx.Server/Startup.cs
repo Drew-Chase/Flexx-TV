@@ -44,6 +44,7 @@ namespace Flexx.Server
             {
                 action.EnableEndpointRouting = false;
             });
+
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
