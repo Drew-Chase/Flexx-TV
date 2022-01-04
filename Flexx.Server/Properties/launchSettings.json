@@ -5,5 +5,25 @@
     "environmentVariables": {
       "ASPNETCORE_ENVIRONMENT": "Development"
     }
+  },
+  "profiles": {
+    "Web Server with Console": {
+      "commandName": "Project",
+      "commandLineArgs": "-show",
+      "nativeDebugging": true
+    },
+    "Web Server Add to Firewall": {
+      "commandName": "Project",
+      "commandLineArgs": "-firewall",
+      "environmentVariables": {
+        "runas": "true"
+      },
+      "nativeDebugging": true
+    },
+    "Web Server": {
+      "commandName": "Project",
+      "commandLineArgs": "",
+      "nativeDebugging": true
+    }
   }
 }
