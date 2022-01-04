@@ -101,10 +101,6 @@ public class FlexxServer
                 webBuilder.UseContentRoot(Directory.GetCurrentDirectory());
                 webBuilder.UseKestrel(options =>
                 {
-                    //options.ListenLocalhost(config.ApiPort, listen =>
-                    //{
-                    //    listen.UseHttps(Path.Combine(Directory.GetParent(Paths.ExecutingBinary).FullName, "wwwroot", "certificate.pfx"));
-                    //});
                     options.ListenAnyIP(config.ApiPort);
                 });
                 webBuilder.UseStartup<Startup>();
