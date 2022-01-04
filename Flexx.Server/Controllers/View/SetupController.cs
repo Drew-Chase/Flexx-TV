@@ -26,6 +26,7 @@ namespace Flexx.Server.Controllers.View
             config.Token = token;
             if (Remote.RegisterServer(Users.Instance.Get(token)))
             {
+                Users.Instance.Get(token).IsHost = true;
                 new Process()
                 {
                     StartInfo = new()
