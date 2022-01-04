@@ -2,6 +2,7 @@
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Extras;
 using Flexx.Media.Objects.Libraries;
+using Flexx.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -207,22 +208,22 @@ namespace Flexx.Server.Controllers
                             {
                                 if (type.Equals("poster"))
                                 {
-                                    if (!string.IsNullOrWhiteSpace(movie.PosterImage) && System.IO.File.Exists(movie.PosterImage))
+                                    if (!string.IsNullOrWhiteSpace(movie.PosterImage))
                                     {
-                                        return File(new FileStream(movie.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                        return new JsonResult(new { @base = movie.PosterImage });
                                     }
                                     else
                                     {
-                                        return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read), "image/jpg", false);
+                                        return new JsonResult(new { @base = Paths.MissingPoster });
                                     }
                                 }
                                 else if (type.Equals("cover"))
                                 {
                                     if (language.GetValueOrDefault(false))
                                     {
-                                        if (!string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage) && System.IO.File.Exists(movie.CoverImageWithLanguage))
+                                        if (!string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage))
                                         {
-                                            return File(new FileStream(movie.CoverImageWithLanguage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                            return new JsonResult(new { @base = movie.CoverImageWithLanguage });
                                         }
                                         else
                                         {
@@ -231,21 +232,21 @@ namespace Flexx.Server.Controllers
                                     }
                                     else
                                     {
-                                        if (!string.IsNullOrWhiteSpace(movie.CoverImage) && System.IO.File.Exists(movie.CoverImage))
+                                        if (!string.IsNullOrWhiteSpace(movie.CoverImage))
                                         {
-                                            return File(new FileStream(movie.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                            return new JsonResult(new { @base = movie.CoverImage });
                                         }
                                         else
                                         {
-                                            return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read), "image/jpg", false);
+                                            return new JsonResult(new { @base = Paths.MissingCover });
                                         }
                                     }
                                 }
                                 else if (type.Equals("logo"))
                                 {
-                                    if (!string.IsNullOrWhiteSpace(movie.LogoImage) && System.IO.File.Exists(movie.LogoImage))
+                                    if (!string.IsNullOrWhiteSpace(movie.LogoImage))
                                     {
-                                        return File(new FileStream(movie.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                        return new JsonResult(new { @base = movie.LogoImage });
                                     }
                                     else
                                     {
@@ -255,7 +256,9 @@ namespace Flexx.Server.Controllers
                                 else if (type.Equals("stills"))
                                 {
                                     if (movie.Stills != null && movie.Stills.Length > duration.GetValueOrDefault(0))
-                                        return File(new FileStream(movie.Stills[duration.GetValueOrDefault(0)], FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                    {
+                                        return new JsonResult(new { @base = Transcoder.ImageToBase(movie.Stills[duration.GetValueOrDefault(0)]) });
+                                    }
                                     return Images(id, library, "cover", false, season, episode, duration);
                                 }
                             }
@@ -277,9 +280,9 @@ namespace Flexx.Server.Controllers
                                             if (tvModel.Added)
                                             {
                                                 episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
-                                                if (episodeModel != null && !string.IsNullOrWhiteSpace(episodeModel.PosterImage) && System.IO.File.Exists(episodeModel.PosterImage))
+                                                if (episodeModel != null && !string.IsNullOrWhiteSpace(episodeModel.PosterImage))
                                                 {
-                                                    return File(new FileStream(episodeModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                                    return new JsonResult(new { @base = episodeModel.PosterImage });
                                                 }
                                                 else
                                                 {
@@ -301,17 +304,17 @@ namespace Flexx.Server.Controllers
                                         }
                                         else
                                         {
-                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(seasonModel.PosterImage) && System.IO.File.Exists(seasonModel.PosterImage))
+                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(seasonModel.PosterImage))
                                             {
-                                                return File(new FileStream(seasonModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                                return new JsonResult(new { @base = seasonModel.PosterImage });
                                             }
                                         }
                                     }
                                     else
                                     {
-                                        if (!string.IsNullOrWhiteSpace(tvModel.PosterImage) && System.IO.File.Exists(tvModel.PosterImage))
+                                        if (!string.IsNullOrWhiteSpace(tvModel.PosterImage))
                                         {
-                                            return File(new FileStream(tvModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                            return new JsonResult(new { @base = tvModel.PosterImage });
                                         }
                                     }
                                 }
@@ -323,32 +326,32 @@ namespace Flexx.Server.Controllers
                                         if (episode.HasValue)
                                         {
                                             episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
-                                            if (episodeModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
+                                            if (episodeModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage))
                                             {
-                                                return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                                return new JsonResult(new { @base = tvModel.CoverImage });
                                             }
                                         }
                                         else
                                         {
-                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
+                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage))
                                             {
-                                                return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                                return new JsonResult(new { @base = tvModel.CoverImage });
                                             }
                                         }
                                     }
                                     else
                                     {
-                                        if (!string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
+                                        if (!string.IsNullOrWhiteSpace(tvModel.CoverImage))
                                         {
-                                            return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                            return new JsonResult(new { @base = tvModel.CoverImage });
                                         }
                                     }
                                 }
                                 else if (type.Equals("logo"))
                                 {
-                                    if (!string.IsNullOrWhiteSpace(tvModel.LogoImage) && System.IO.File.Exists(tvModel.LogoImage))
+                                    if (!string.IsNullOrWhiteSpace(tvModel.LogoImage))
                                     {
-                                        return File(new FileStream(tvModel.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                        return new JsonResult(new { @base = tvModel.LogoImage });
                                     }
                                 }
                                 else if (type.Equals("stills"))
@@ -362,7 +365,7 @@ namespace Flexx.Server.Controllers
                                             if (episodeModel != null)
                                             {
                                                 if (episodeModel.Stills != null && episodeModel.Stills.Length > duration.GetValueOrDefault(0))
-                                                    return File(new FileStream(episodeModel.Stills[duration.GetValueOrDefault(0)], FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                                    return new JsonResult(new { @base = Transcoder.ImageToBase(episodeModel.Stills[duration.GetValueOrDefault(0)]) });
                                                 return Images(id, library, "cover", false, season, episode, duration);
                                             }
                                         }
@@ -370,7 +373,7 @@ namespace Flexx.Server.Controllers
                                         {
                                             if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
                                             {
-                                                return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
+                                                return new JsonResult(new { @base = tvModel.CoverImage });
                                             }
                                         }
                                     }
@@ -551,9 +554,7 @@ namespace Flexx.Server.Controllers
         /// <param name="id">       the TMDB ID of the element </param>
         /// <param name="library">  Either "tv" or "movie" </param>
         /// <param name="username"> leave blank for guest user </param>
-        /// <param name="season">  
-        /// TV Shows Season Number (only use with tv library and id specified)
-        /// </param>
+        /// <param name="season">   TV Shows Season Number (only use with tv library and id specified) </param>
         /// <param name="episode"> 
         /// Seasons Episode Number (only use with tv library, id and season specified)
         /// </param>

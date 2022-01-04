@@ -68,8 +68,7 @@ public static class Global
         {
             get
             {
-                string path = Path.Combine(MetaData, "missing_poster.jpg");
-                if (!File.Exists(path))
+                if (string.IsNullOrWhiteSpace(config.MissingPoster))
                 {
                     log.Debug($"Downloading Missing Poster Artwork");
                     HttpClient client = new();
@@ -81,11 +80,11 @@ public static class Global
                         using FileStream fs = new(temp, FileMode.CreateNew, FileAccess.ReadWrite);
                         response.Content.CopyToAsync(fs).Wait();
                         log.Debug($"Optimizing Missing Poster Artwork");
-                        Transcoder.OptimizePoster(temp, path);
+                        config.MissingPoster = Transcoder.OptimizePoster(temp);
                         log.Debug($"Done Processing Missing Poster Artwork");
                     }
                 }
-                return path;
+                return config.MissingPoster;
             }
         }
 
@@ -93,8 +92,7 @@ public static class Global
         {
             get
             {
-                string path = Path.Combine(MetaData, "missing_cover.jpg");
-                if (!File.Exists(path))
+                if (string.IsNullOrWhiteSpace(config.MissingCover))
                 {
                     log.Debug($"Downloading Missing Cover Artwork");
                     HttpClient client = new();
@@ -106,11 +104,11 @@ public static class Global
                         using FileStream fs = new(temp, FileMode.CreateNew, FileAccess.ReadWrite);
                         response.Content.CopyToAsync(fs).Wait();
                         log.Debug($"Optimizing Missing Cover Artwork");
-                        Transcoder.OptimizeCover(temp, path);
+                        config.MissingCover = Transcoder.OptimizeCover(temp);
                         log.Debug($"Done Processing Missing Cover Artwork");
                     }
                 }
-                return path;
+                return config.MissingCover;
             }
         }
 
@@ -146,15 +144,20 @@ public static class Global
             client.Timeout = new(0, 0, 20);
             using (HttpResponseMessage response = client.GetAsync(url).Result)
             {
-                try
+                if (response.IsSuccessStatusCode)
                 {
-                    json = response.Content.ReadAsStringAsync().Result;
+                    try
+                    {
+                        json = response.Content.ReadAsStringAsync().Result;
+                    }
+                    catch (Exception e)
+                    {
+                        log.Error($"Unable to fetch JSON from URL \"{url}\"", e);
+                        return null;
+                    }
                 }
-                catch (Exception e)
-                {
-                    log.Error($"Unable to fetch JSON from URL \"{url}\"", e);
+                else
                     return null;
-                }
             }
             JObject jsonObject = (JObject)JsonConvert.DeserializeObject(json);
             if (string.IsNullOrWhiteSpace(json) || jsonObject["success"] != null)

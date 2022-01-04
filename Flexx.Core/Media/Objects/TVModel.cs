@@ -18,6 +18,12 @@ namespace Flexx.Media.Objects
 {
     public class EpisodeModel : MediaBase
     {
+        #region Private Fields
+
+        private string posterBase = null;
+
+        #endregion Private Fields
+
         #region Public Constructors
 
         public EpisodeModel(int number, SeasonModel season) : base()
@@ -57,7 +63,7 @@ namespace Flexx.Media.Objects
                     UpdateMetaData();
                 }
 
-                return path;
+                return posterBase ??= Transcoder.ImageToBase(path);
             }
             set
             {
@@ -190,6 +196,8 @@ namespace Flexx.Media.Objects
 
         private readonly List<EpisodeModel> _episodes;
 
+        private string posterBase = null;
+
         #endregion Private Fields
 
         #region Public Constructors
@@ -227,7 +235,7 @@ namespace Flexx.Media.Objects
                     UpdateMetaData();
                 }
 
-                return path;
+                return posterBase ??= Transcoder.ImageToBase(path);
             }
             set
             {
@@ -400,6 +408,10 @@ namespace Flexx.Media.Objects
                 Metadata = new(Path.Combine(Metadata_Directory, "prefetch.metadata"), false);
                 Added = false;
             }
+            Metadata.Add("coverLanguage", "");
+            Metadata.Add("logo", "");
+            Metadata.Add("poster", "");
+            Metadata.Add("cover", "");
             LoadMetaData();
             MainCast = new("tv", TMDB);
         }
@@ -409,6 +421,12 @@ namespace Flexx.Media.Objects
             Metadata = metadata;
             Metadata_Directory = Directory.GetParent(metadata.PATH).FullName;
             Seasons = new();
+
+            Metadata.Add("coverLanguage", "");
+            Metadata.Add("logo", "");
+            Metadata.Add("poster", "");
+            Metadata.Add("cover", "");
+
             Category = Metadata.GetConfigByKey("category") != null ? (Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object cat) ? (DiscoveryCategory)cat : DiscoveryCategory.None) : DiscoveryCategory.None;
             if (Metadata.GetConfigByKey("id") == null)
             {
@@ -424,6 +442,18 @@ namespace Flexx.Media.Objects
 
         #endregion Public Constructors
 
+        #region Private Fields
+
+        private string coverBase { get => Metadata.GetConfigByKey("cover").Value; set => Metadata.GetConfigByKey("cover").Value = value; }
+
+        private string coverLanguageBase { get => Metadata.GetConfigByKey("coverLanguage").Value; set => Metadata.GetConfigByKey("coverLanguage").Value = value; }
+
+        private string logoBase { get => Metadata.GetConfigByKey("logo").Value; set => Metadata.GetConfigByKey("logo").Value = value; }
+
+        private string posterBase { get => Metadata.GetConfigByKey("poster").Value; set => Metadata.GetConfigByKey("poster").Value = value; }
+
+        #endregion Private Fields
+
         #region Public Properties
 
         public bool Added { get; private set; }
@@ -434,20 +464,13 @@ namespace Flexx.Media.Objects
         {
             get
             {
-                string path = Path.Combine(Metadata_Directory, "cover.jpg");
-                if (!File.Exists(path))
-                {
-                    UpdateMetaData();
-                }
-
-                return path;
+                return coverBase;
             }
             set
             {
-                string path = Path.Combine(Metadata_Directory, "cover.jpg");
                 string tmp = Path.Combine(Paths.TempData, $"sc_{TMDB}.jpg");
                 new System.Net.WebClient().DownloadFile(value, tmp);
-                Transcoder.OptimizeCover(tmp, path);
+                coverBase = Transcoder.OptimizeCover(tmp);
             }
         }
 
@@ -455,13 +478,7 @@ namespace Flexx.Media.Objects
         {
             get
             {
-                string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
-                if (!File.Exists(path))
-                {
-                    return CoverImage;
-                }
-
-                return path;
+                return coverLanguageBase;
             }
             set
             {
@@ -471,7 +488,7 @@ namespace Flexx.Media.Objects
                     string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
                     string tmp = Path.Combine(Paths.TempData, $"scl_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
-                    Transcoder.OptimizeCover(tmp, path);
+                    coverLanguageBase = Transcoder.OptimizeCover(tmp);
                 }
                 catch { }
             }
@@ -483,18 +500,16 @@ namespace Flexx.Media.Objects
         {
             get
             {
-                string path = Path.Combine(Metadata_Directory, "logo.png");
-                return path;
+                return logoBase;
             }
             set
             {
                 try
                 {
                     log.Debug($"Optimizing Logo Image for {TMDB}");
-                    string path = Path.Combine(Metadata_Directory, "logo.png");
                     string tmp = Path.Combine(Paths.TempData, $"ml_{TMDB}.png");
                     new System.Net.WebClient().DownloadFile(value, tmp);
-                    Transcoder.OptimizeLogo(tmp, path);
+                    logoBase = Transcoder.OptimizeLogo(tmp);
                 }
                 catch { }
             }
@@ -512,20 +527,13 @@ namespace Flexx.Media.Objects
         {
             get
             {
-                string path = Path.Combine(Metadata_Directory, "poster.jpg");
-                if (!File.Exists(path))
-                {
-                    UpdateMetaData();
-                }
-
-                return path;
+                return posterBase;
             }
             set
             {
-                string path = Path.Combine(Metadata_Directory, "poster.jpg");
                 string tmp = Path.Combine(Paths.TempData, $"sp_{TMDB}.jpg");
                 new System.Net.WebClient().DownloadFile(value, tmp);
-                Transcoder.OptimizePoster(tmp, path);
+                posterBase = Transcoder.OptimizePoster(tmp);
             }
         }
 
@@ -549,7 +557,13 @@ namespace Flexx.Media.Objects
         {
             SeasonModel model = new(season, this);
             Seasons.Add(model);
-            Seasons = Seasons.OrderBy(s => s.Season_Number).ToList();
+            try
+            {
+                Seasons = Seasons.OrderBy(s => s.Season_Number).ToList();
+            }
+            catch
+            {
+            }
             return model;
         }
 

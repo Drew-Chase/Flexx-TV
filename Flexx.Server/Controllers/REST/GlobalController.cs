@@ -1,5 +1,6 @@
 ﻿using Flexx.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using static Flexx.Data.Global;
 
 namespace Flexx.Server.Controllers
 {
@@ -12,6 +13,10 @@ namespace Flexx.Server.Controllers
         [HttpGet("status")]
         public IActionResult GetStatus()
         {
+            if (!config.Setup)
+            {
+                return NotFound();
+            }
             return new JsonResult(new
             {
                 status = "Online",
