@@ -1,5 +1,6 @@
 ﻿using Open.Nat;
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -12,6 +13,59 @@ namespace Flexx.Networking;
 public static class Firewall
 {
     #region Public Methods
+
+    public static bool IsAddedToFirewall
+    {
+        get
+        {
+            FirewallManager.FirewallCom firewall = new();
+            foreach (var added in firewall.GetAuthorizeApps())
+            {
+                if (added.Name.Equals("FlexxTV Media Server"))
+                {
+                    if (!added.ProcessImageFileName.Equals(Paths.ExecutingBinary) && IsAdministrator)
+                    {
+                        firewall.RemoveAuthorizeApp(added.Name);
+                        return IsAddedToFirewall;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    public static bool IsAdministrator => !OperatingSystem.IsWindows() ||
+       new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent())
+       .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+
+    public static void AddToFirewall()
+    {
+        if (OperatingSystem.IsWindows() && !IsAddedToFirewall)
+        {
+            if (IsAdministrator)
+            {
+                FirewallManager.FirewallCom firewall = new();
+                firewall.AddAuthorizeApp(new("FlexxTV Media Server", Paths.ExecutingBinary) { Enabled = true, IpVersion = FirewallManager.IpVersion.Any, Scope = FirewallManager.Scope.All });
+            }
+            else
+            {
+                log.Warn("Adding FlexxTV Media Server to Firewall");
+                Process process = new()
+                {
+                    StartInfo = new()
+                    {
+                        FileName = Paths.ExecutingBinary,
+                        Arguments = "-firewall",
+                        Verb = "runas",
+                        UseShellExecute = true,
+                    }
+                };
+                process.Start();
+                process.WaitForExit();
+            }
+        }
+    }
 
     public static async Task ClosePort(int port)
     {
@@ -115,13 +169,15 @@ public static class Firewall
             NatDevice device = await new NatDiscoverer().DiscoverDeviceAsync(PortMapper.Upnp, new(10000));
             Mapping map = new(Protocol.Tcp, port, port, description);
             await device.CreatePortMapAsync(map);
+            log.Debug($"Created {map}");
             map = new(Protocol.Udp, port, port, description);
             await device.CreatePortMapAsync(map);
             log.Debug($"Created {map}");
+            await ListPorts();
         }
         catch (Exception e)
         {
-            log.Error(e);
+            log.Error($"Had an Issue opening port: {port}", e);
         }
     }
 
