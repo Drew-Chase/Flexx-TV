@@ -19,11 +19,34 @@ namespace Flexx.Utilities
 
         public static void Prefetch(bool movies, bool force = false)
         {
-            string prefetch_dir = Directory.CreateDirectory(Path.Combine(movies ? Paths.MovieData : Paths.TVData, "Prefetch")).FullName;
+            string prefetch_dir = Path.Combine(movies ? Paths.MovieData : Paths.TVData, "Prefetch");
+            if (!Directory.Exists(prefetch_dir))
+            {
+                Directory.CreateDirectory(prefetch_dir);
+                Prefetch(movies, true);
+                return;
+            }
             if (force)
             {
+                config.NextScheduledPrefetch = DateTime.Now.AddDays(7).ToString("MM-dd-yyyy");
                 Directory.Delete(prefetch_dir, true);
                 Directory.CreateDirectory(prefetch_dir);
+            }
+            else
+            {
+                if (DateTime.TryParse(config.NextScheduledPrefetch, out DateTime result))
+                {
+                    if (DateTime.Compare(result, DateTime.Now) <= 0)
+                    {
+                        Prefetch(movies, true);
+                        return;
+                    }
+                }
+                else
+                {
+                    Prefetch(movies, true);
+                    return;
+                }
             }
             log.Debug($"Loading Cached Prefetched Data");
             Parallel.ForEach(Directory.GetFiles(prefetch_dir, "prefetch.metadata", SearchOption.AllDirectories), file =>
@@ -66,8 +89,9 @@ namespace Flexx.Utilities
 
                 log.Debug($"Prefetching {category} {(movies ? "Movies" : "TV Shows")}");
                 string url = $"https://api.themoviedb.org/3/{(movies ? "movie" : "tv")}/{category}?api_key={TMDB_API}&language={config.LanguagePreference}";
-
-                JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
+                object tmp = Functions.GetJsonObjectFromURL(url);
+                if (tmp == null) continue;
+                JArray results = (JArray)((JObject)tmp)["results"];
                 if (results == null || !results.Any())
                 {
                     continue;
