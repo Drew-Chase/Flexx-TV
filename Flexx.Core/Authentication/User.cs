@@ -1,6 +1,7 @@
 ﻿using ChaseLabs.CLConfiguration.List;
 using Flexx.Media.Objects;
 using Flexx.Media.Objects.Libraries;
+using Flexx.Networking;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -120,14 +121,22 @@ public class User
         Plan = PlanTier.Free;
         Username = username;
         userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"));
-        userProfile.Add("token", "");
         HasWatched = new();
         WatchedDuration = new();
         ContinueWatching = new();
         Notifications = new(this);
         UpdateDictionaries();
+
+        userProfile.Add("isHost", false);
+        userProfile.Add("token", "");
         Token = userProfile.GetConfigByKey("token").Value;
+        IsLocal = string.IsNullOrWhiteSpace(Token);
         LoginWithToken();
+
+        if (IsHost && !Remote.IsServerRegistered(this))
+        {
+            Remote.RegisterServer(this);
+        }
     }
 
     #endregion Internal Constructors
@@ -137,6 +146,10 @@ public class User
     public string Email { get; private set; }
 
     public string FirstName { get; private set; }
+
+    public bool IsHost { get => userProfile.GetConfigByKey("isHost").Value; set => userProfile.GetConfigByKey("isHost").Value = value; }
+
+    public bool IsLocal { get; private set; }
 
     public string LastName { get; private set; }
 
@@ -203,7 +216,7 @@ public class User
     {
         if (!string.IsNullOrEmpty(password))
         {
-            HttpResponseMessage response = new HttpClient().PostAsync($"http://localhost/login.php", new FormUrlEncodedContent(new[]
+            HttpResponseMessage response = new HttpClient().PostAsync($"https://auth.flexx-tv.tk/login.php", new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string,string>("email", Username),
                 new KeyValuePair<string,string>("password", password),
@@ -222,6 +235,7 @@ public class User
                         Email = (string)json["email"];
                         Plan = Enum.TryParse(typeof(PlanTier), (string)json["plan"], out object planTier) ? (PlanTier)planTier : PlanTier.Free;
                         userProfile.GetConfigByKey("token").Value = Token;
+                        IsLocal = false;
                         return new
                         {
                             Token,
@@ -442,7 +456,7 @@ public class User
             {
                 token = Token,
             };
-            HttpResponseMessage response = new HttpClient().PostAsync($"http://localhost/login.php", new StringContent(JsonConvert.SerializeObject(formData), Encoding.UTF8, "application/json")).Result;
+            HttpResponseMessage response = new HttpClient().PostAsync($"https://auth.flexx-tv.tk/login.php", new StringContent(JsonConvert.SerializeObject(formData), Encoding.UTF8, "application/json")).Result;
             if (response.IsSuccessStatusCode)
             {
                 JObject json = (JObject)JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result);
@@ -455,6 +469,7 @@ public class User
                         LastName = (string)json["lname"];
                         Email = (string)json["email"];
                         Plan = Enum.TryParse(typeof(PlanTier), (string)json["plan"], out object planTier) ? (PlanTier)planTier : PlanTier.Free;
+                        IsLocal = false;
                     }
                     catch
                     {
