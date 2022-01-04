@@ -11,11 +11,25 @@ public static class Remote
 {
     #region Public Methods
 
+    public static bool IsServerRegistered(User user)
+    {
+        if (user != null && string.IsNullOrWhiteSpace(user.Token) && user.IsHost)
+        {
+            HttpResponseMessage response = new HttpClient().GetAsync($"https://auth.flexx-tv.tk/getServer.php?{user.Token}").Result;
+            if (response.IsSuccessStatusCode)
+            {
+                JObject json = JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
+                return json.ContainsKey("exists") && (bool)json["exists"];
+            }
+        }
+        return false;
+    }
+
     public static bool RegisterServer(User user)
     {
         if (user.IsAuthorized(PlanTier.Free))
         {
-            HttpResponseMessage response = new HttpClient().PostAsync($"http://localhost/addServer.php", new FormUrlEncodedContent(new[]
+            HttpResponseMessage response = new HttpClient().PostAsync($"https://auth.flexx-tv.tk/addServer.php", new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string,string>("host", user.Token),
                 new KeyValuePair<string,string>("public", Firewall.GetPublicIP().ToString()),
@@ -26,7 +40,12 @@ public static class Remote
             {
                 string content = response.Content.ReadAsStringAsync().Result;
                 JObject json = (JObject)JsonConvert.DeserializeObject(content);
-                return json.ContainsKey("token");
+                return json.ContainsKey("token") && new HttpClient().PostAsync("https://auth.flexx-tv.tk/updateAccount.php", new FormUrlEncodedContent(new[]
+                {
+                        new KeyValuePair<string,string>("token", user.Token),
+                        new KeyValuePair<string,string>("property", "servers"),
+                        new KeyValuePair<string,string>("value", user.Token),
+                })).Result.IsSuccessStatusCode;
             }
         }
         return false;
