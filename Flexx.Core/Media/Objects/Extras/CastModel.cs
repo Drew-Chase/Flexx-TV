@@ -52,6 +52,7 @@ namespace Flexx.Media.Objects.Extras
             {
                 foreach (var member in movie.MainCast)
                 {
+                    if (member == null) continue;
                     if (member.Name == actor)
                     {
                         if (!list.Contains(movie))
@@ -64,6 +65,7 @@ namespace Flexx.Media.Objects.Extras
             {
                 foreach (var member in show.MainCast)
                 {
+                    if (member == null) continue;
                     if (member.Name == actor)
                     {
                         if (!list.Contains(show))
