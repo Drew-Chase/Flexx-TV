@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
+using static Flexx.Data.Global;
 
 namespace Flexx.Server.Controllers.View;
 
@@ -10,12 +11,11 @@ public class ServerSettingsController : Controller
     #region Public Methods
 
     [HttpPost("fs")]
-    public JsonResult GetFS([FromForm] string dir)
+    public JsonResult GetFS([FromForm] string dir, [FromForm] bool? movie)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(dir))
-                dir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            dir = movie.HasValue ? (movie.Value ? config.MovieLibraryPath : config.TVLibraryPath) : string.IsNullOrWhiteSpace(dir) ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) : dir;
             string[] dirLongs = Directory.GetDirectories(dir);
             for (int i = 0; i < dirLongs.Length; i++)
             {
@@ -30,7 +30,7 @@ public class ServerSettingsController : Controller
         }
         catch
         {
-            return GetFS("");
+            return GetFS("", movie);
         }
     }
 
