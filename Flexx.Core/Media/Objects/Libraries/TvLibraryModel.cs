@@ -239,11 +239,11 @@ namespace Flexx.Media.Objects.Libraries
             return null;
         }
 
-        public TVModel GetTVShowByName(string name)
+        public TVModel GetTVShowByName(string name, int year = -1)
         {
             foreach (TVModel model in TVShows)
             {
-                if (model.Title.Equals(name))
+                if (model.Title.Equals(name) && (year == -1 || (year != -1 && year == model.StartDate.Year)))
                 {
                     return model;
                 }

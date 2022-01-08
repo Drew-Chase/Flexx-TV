@@ -93,6 +93,23 @@ namespace Flexx.Media.Objects.Libraries
             return list.OrderBy(m => m.Title).ToArray();
         }
 
+        public MovieModel GetMovieByName(string name, int year = -1)
+        {
+            foreach (MovieModel movie in medias)
+            {
+                if (movie.TMDB == null)
+                {
+                    RemoveMedia(movie);
+                    continue;
+                }
+                if (movie.Title.Equals(name) && (year == -1 || (year != -1 && year == movie.ReleaseDate.Year)))
+                {
+                    return movie;
+                }
+            }
+            return null;
+        }
+
         public MovieModel GetMovieByTMDB(string tmdb)
         {
             foreach (MovieModel movie in medias)
