@@ -40,7 +40,14 @@ namespace Flexx.Server.Controllers
                 {
                     object[] results = null;
                     User user = Users.Instance.Get(username);
-                    if (category.Equals("similar"))
+                    if (category.Equals("downloading"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(library))
+                        {
+                            results = SonarrRadarrSupport.GetDownloading(library.Equals("movie"));
+                        }
+                    }
+                    else if (category.Equals("similar"))
                     {
                         if (!string.IsNullOrWhiteSpace(id))
                         {
@@ -208,22 +215,22 @@ namespace Flexx.Server.Controllers
                             {
                                 if (type.Equals("poster"))
                                 {
-                                    if (!string.IsNullOrWhiteSpace(movie.PosterImage))
+                                    if (!string.IsNullOrWhiteSpace(movie.PosterImage) && System.IO.File.Exists(movie.PosterImage))
                                     {
-                                        return new JsonResult(new { @base = movie.PosterImage });
+                                        return File(new FileStream(movie.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                     }
                                     else
                                     {
-                                        return new JsonResult(new { @base = Paths.MissingPoster });
+                                        return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read), "image/jpg", false);
                                     }
                                 }
                                 else if (type.Equals("cover"))
                                 {
                                     if (language.GetValueOrDefault(false))
                                     {
-                                        if (!string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage))
+                                        if (!string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage) && System.IO.File.Exists(movie.CoverImageWithLanguage))
                                         {
-                                            return new JsonResult(new { @base = movie.CoverImageWithLanguage });
+                                            return File(new FileStream(movie.CoverImageWithLanguage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                         }
                                         else
                                         {
@@ -232,21 +239,21 @@ namespace Flexx.Server.Controllers
                                     }
                                     else
                                     {
-                                        if (!string.IsNullOrWhiteSpace(movie.CoverImage))
+                                        if (!string.IsNullOrWhiteSpace(movie.CoverImage) && System.IO.File.Exists(movie.CoverImage))
                                         {
-                                            return new JsonResult(new { @base = movie.CoverImage });
+                                            return File(new FileStream(movie.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                         }
                                         else
                                         {
-                                            return new JsonResult(new { @base = Paths.MissingCover });
+                                            return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read), "image/jpg", false);
                                         }
                                     }
                                 }
                                 else if (type.Equals("logo"))
                                 {
-                                    if (!string.IsNullOrWhiteSpace(movie.LogoImage))
+                                    if (!string.IsNullOrWhiteSpace(movie.LogoImage) && System.IO.File.Exists(movie.LogoImage))
                                     {
-                                        return new JsonResult(new { @base = movie.LogoImage });
+                                        return File(new FileStream(movie.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                     }
                                     else
                                     {
@@ -256,9 +263,7 @@ namespace Flexx.Server.Controllers
                                 else if (type.Equals("stills"))
                                 {
                                     if (movie.Stills != null && movie.Stills.Length > duration.GetValueOrDefault(0))
-                                    {
-                                        return new JsonResult(new { @base = Transcoder.ImageToBase(movie.Stills[duration.GetValueOrDefault(0)]) });
-                                    }
+                                        return File(new FileStream(movie.Stills[duration.GetValueOrDefault(0)], FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                     return Images(id, library, "cover", false, season, episode, duration);
                                 }
                             }
@@ -280,9 +285,9 @@ namespace Flexx.Server.Controllers
                                             if (tvModel.Added)
                                             {
                                                 episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
-                                                if (episodeModel != null && !string.IsNullOrWhiteSpace(episodeModel.PosterImage))
+                                                if (episodeModel != null && !string.IsNullOrWhiteSpace(episodeModel.PosterImage) && System.IO.File.Exists(episodeModel.PosterImage))
                                                 {
-                                                    return new JsonResult(new { @base = episodeModel.PosterImage });
+                                                    return File(new FileStream(episodeModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                                 }
                                                 else
                                                 {
@@ -304,17 +309,17 @@ namespace Flexx.Server.Controllers
                                         }
                                         else
                                         {
-                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(seasonModel.PosterImage))
+                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(seasonModel.PosterImage) && System.IO.File.Exists(seasonModel.PosterImage))
                                             {
-                                                return new JsonResult(new { @base = seasonModel.PosterImage });
+                                                return File(new FileStream(seasonModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                             }
                                         }
                                     }
                                     else
                                     {
-                                        if (!string.IsNullOrWhiteSpace(tvModel.PosterImage))
+                                        if (!string.IsNullOrWhiteSpace(tvModel.PosterImage) && System.IO.File.Exists(tvModel.PosterImage))
                                         {
-                                            return new JsonResult(new { @base = tvModel.PosterImage });
+                                            return File(new FileStream(tvModel.PosterImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                         }
                                     }
                                 }
@@ -326,32 +331,32 @@ namespace Flexx.Server.Controllers
                                         if (episode.HasValue)
                                         {
                                             episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
-                                            if (episodeModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage))
+                                            if (episodeModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
                                             {
-                                                return new JsonResult(new { @base = tvModel.CoverImage });
+                                                return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                             }
                                         }
                                         else
                                         {
-                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage))
+                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
                                             {
-                                                return new JsonResult(new { @base = tvModel.CoverImage });
+                                                return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                             }
                                         }
                                     }
                                     else
                                     {
-                                        if (!string.IsNullOrWhiteSpace(tvModel.CoverImage))
+                                        if (!string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
                                         {
-                                            return new JsonResult(new { @base = tvModel.CoverImage });
+                                            return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                         }
                                     }
                                 }
                                 else if (type.Equals("logo"))
                                 {
-                                    if (!string.IsNullOrWhiteSpace(tvModel.LogoImage))
+                                    if (!string.IsNullOrWhiteSpace(tvModel.LogoImage) && System.IO.File.Exists(tvModel.LogoImage))
                                     {
-                                        return new JsonResult(new { @base = tvModel.LogoImage });
+                                        return File(new FileStream(tvModel.LogoImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                     }
                                 }
                                 else if (type.Equals("stills"))
@@ -365,7 +370,7 @@ namespace Flexx.Server.Controllers
                                             if (episodeModel != null)
                                             {
                                                 if (episodeModel.Stills != null && episodeModel.Stills.Length > duration.GetValueOrDefault(0))
-                                                    return new JsonResult(new { @base = Transcoder.ImageToBase(episodeModel.Stills[duration.GetValueOrDefault(0)]) });
+                                                    return File(new FileStream(episodeModel.Stills[duration.GetValueOrDefault(0)], FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                                 return Images(id, library, "cover", false, season, episode, duration);
                                             }
                                         }
@@ -373,7 +378,7 @@ namespace Flexx.Server.Controllers
                                         {
                                             if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
                                             {
-                                                return new JsonResult(new { @base = tvModel.CoverImage });
+                                                return File(new FileStream(tvModel.CoverImage, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                             }
                                         }
                                     }
@@ -460,6 +465,319 @@ namespace Flexx.Server.Controllers
                 return BadRequest();
             }
         }
+
+        /*
+        public IActionResult Images(string id, string library, string type, bool? language, int? season, int? episode)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(library) || !string.IsNullOrWhiteSpace(id) || !string.IsNullOrWhiteSpace(type))
+                {
+                    object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(season.HasValue ? $"/season/{season.Value}{(episode.HasValue ? $"/episode/{episode.Value}" : "")}" : "")}/images?api_key={TMDB_API}{(language.GetValueOrDefault(false) ? $"&include_image_language={config.LanguagePreference}" : "")}");
+                    JArray images;
+                    string key = "";
+                    if (obj != null)
+                    {
+                        JObject json = (JObject)obj;
+                        if (library.Equals("movie"))
+                        {
+                            var movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
+                            if (movie == null)
+                            {
+                                if (type.Equals("poster"))
+                                {
+                                    images = (JArray)json["posters"];
+                                    if (images.Any())
+                                    {
+                                        key = (string)images[0]["file_path"];
+                                    }
+                                    else
+                                    {
+                                        return new JsonResult(new { @base = Paths.MissingPoster });
+                                    }
+                                }
+                                else if (type.Equals("cover"))
+                                {
+                                    images = (JArray)json["backdrops"];
+                                    if (images.Any())
+                                    {
+                                        key = (string)images[0]["file_path"];
+                                    }
+                                    else
+                                    {
+                                        return new JsonResult(new { @base = Paths.MissingCover });
+                                    }
+                                }
+                                else if (type.Equals("logo"))
+                                {
+                                    images = (JArray)json["logos"];
+                                    if (images.Any())
+                                    {
+                                        key = (string)images[0]["file_path"];
+                                    }
+                                    else
+                                    {
+                                        return NotFound();
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (type.Equals("poster"))
+                                {
+                                    if (!string.IsNullOrWhiteSpace(movie.PosterImage))
+                                    {
+                                        return new JsonResult(new { @base = movie.PosterImage });
+                                    }
+                                    else
+                                    {
+                                        return new JsonResult(new { @base = Paths.MissingPoster });
+                                    }
+                                }
+                                else if (type.Equals("cover"))
+                                {
+                                    if (language.GetValueOrDefault(false))
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage))
+                                        {
+                                            return new JsonResult(new { @base = movie.CoverImageWithLanguage });
+                                        }
+                                        else
+                                        {
+                                            return Images(id, library, type, false, season, episode);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(movie.CoverImage))
+                                        {
+                                            return new JsonResult(new { @base = movie.CoverImage });
+                                        }
+                                        else
+                                        {
+                                            return new JsonResult(new { @base = Paths.MissingCover });
+                                        }
+                                    }
+                                }
+                                else if (type.Equals("logo"))
+                                {
+                                    if (!string.IsNullOrWhiteSpace(movie.LogoImage))
+                                    {
+                                        return new JsonResult(new { @base = movie.LogoImage });
+                                    }
+                                    else
+                                    {
+                                        return NotFound();
+                                    }
+                                }
+                                else if (type.Equals("stills"))
+                                {
+                                    if (movie.Stills != null)
+                                    {
+                                        return new JsonResult(new { movie.Stills });
+                                    }
+                                    return Images(id, library, "cover", false, season, episode);
+                                }
+                            }
+                        }
+                        else if (library.Equals("tv"))
+                        {
+                            TVModel tvModel = TvLibraryModel.Instance.GetShowByTMDB(id);
+                            SeasonModel seasonModel;
+                            EpisodeModel episodeModel;
+                            if (tvModel != null)
+                            {
+                                if (type.Equals("poster"))
+                                {
+                                    if (season.HasValue)
+                                    {
+                                        seasonModel = tvModel.GetSeasonByNumber(season.Value);
+                                        if (episode.HasValue)
+                                        {
+                                            if (tvModel.Added)
+                                            {
+                                                episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
+                                                if (episodeModel != null && !string.IsNullOrWhiteSpace(episodeModel.PosterImage))
+                                                {
+                                                    return new JsonResult(new { @base = episodeModel.PosterImage });
+                                                }
+                                                else
+                                                {
+                                                    return BadRequest();
+                                                }
+                                            }
+                                            else
+                                            {
+                                                images = (JArray)json["stills"];
+                                                if (!images.Any())
+                                                {
+                                                    return new JsonResult(new { @base = Paths.MissingCover });
+                                                }
+                                                else
+                                                {
+                                                    key = (string)images[0]["file_path"];
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(seasonModel.PosterImage))
+                                            {
+                                                return new JsonResult(new { @base = seasonModel.PosterImage });
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(tvModel.PosterImage))
+                                        {
+                                            return new JsonResult(new { @base = tvModel.PosterImage });
+                                        }
+                                    }
+                                }
+                                else if (type.Equals("cover"))
+                                {
+                                    if (season.HasValue)
+                                    {
+                                        seasonModel = tvModel.GetSeasonByNumber(season.Value);
+                                        if (episode.HasValue)
+                                        {
+                                            episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
+                                            if (episodeModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage))
+                                            {
+                                                return new JsonResult(new { @base = tvModel.CoverImage });
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage))
+                                            {
+                                                return new JsonResult(new { @base = tvModel.CoverImage });
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(tvModel.CoverImage))
+                                        {
+                                            return new JsonResult(new { @base = tvModel.CoverImage });
+                                        }
+                                    }
+                                }
+                                else if (type.Equals("logo"))
+                                {
+                                    if (!string.IsNullOrWhiteSpace(tvModel.LogoImage))
+                                    {
+                                        return new JsonResult(new { @base = tvModel.LogoImage });
+                                    }
+                                }
+                                else if (type.Equals("stills"))
+                                {
+                                    if (season.HasValue)
+                                    {
+                                        seasonModel = tvModel.GetSeasonByNumber(season.Value);
+                                        if (episode.HasValue)
+                                        {
+                                            episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
+                                            if (episodeModel != null)
+                                            {
+                                                if (episodeModel.Stills != null)
+                                                    return new JsonResult(new { @base = episodeModel.Stills });
+                                                return Images(id, library, "cover", false, season, episode);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
+                                            {
+                                                return new JsonResult(new { @base = tvModel.CoverImage });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (type.Equals("poster"))
+                            {
+                                if (season.HasValue)
+                                {
+                                    if (episode.HasValue)
+                                    {
+                                        images = (JArray)json["stills"];
+                                        if (!images.Any())
+                                        {
+                                            return new JsonResult(new { @base = Paths.MissingCover });
+                                        }
+                                        else
+                                        {
+                                            key = (string)images[0]["file_path"];
+                                        }
+                                    }
+                                    else
+                                    {
+                                        images = (JArray)json["posters"];
+                                        if (!images.Any())
+                                        {
+                                            return new JsonResult(new { @base = Paths.MissingPoster });
+                                        }
+                                        else
+                                        {
+                                            key = (string)images[0]["file_path"];
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    images = (JArray)json["posters"];
+                                    if (!images.Any())
+                                    {
+                                        return new JsonResult(new { @base = Paths.MissingPoster });
+                                    }
+                                    else
+                                    {
+                                        key = (string)images[0]["file_path"];
+                                    }
+                                }
+                            }
+                            else if (type.Equals("cover"))
+                            {
+                                images = (JArray)json["backdrops"];
+                                if (images.Any())
+                                {
+                                    key = (string)images[0]["file_path"];
+                                }
+                                else
+                                {
+                                    return new JsonResult(new { @base = Paths.MissingCover });
+                                }
+                            }
+                            else if (type.Equals("logo"))
+                            {
+                                images = (JArray)json["logos"];
+                                if (images.Any())
+                                {
+                                    key = (string)images[0]["file_path"];
+                                }
+                                else
+                                {
+                                    return NotFound();
+                                }
+                            }
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(key))
+                        {
+                            return File(new HttpClient().GetAsync($"https://image.tmdb.org/t/p/original{key}").Result.Content.ReadAsStream(), "image/png");
+                        }
+                    }
+                }
+                return new JsonResult(new { @base = Paths.MissingCover });
+            }
+            catch
+            {
+                return BadRequest();
+            }
+        }
+        */
 
         /// <summary>
         /// Will retrieve All <b> <u> <see cref="MovieObject"> Movies </see></u></b>, <b> <u> <see
@@ -554,7 +872,9 @@ namespace Flexx.Server.Controllers
         /// <param name="id">       the TMDB ID of the element </param>
         /// <param name="library">  Either "tv" or "movie" </param>
         /// <param name="username"> leave blank for guest user </param>
-        /// <param name="season">   TV Shows Season Number (only use with tv library and id specified) </param>
+        /// <param name="season">  
+        /// TV Shows Season Number (only use with tv library and id specified)
+        /// </param>
         /// <param name="episode"> 
         /// Seasons Episode Number (only use with tv library, id and season specified)
         /// </param>

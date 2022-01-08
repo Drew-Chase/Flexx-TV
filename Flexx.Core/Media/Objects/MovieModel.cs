@@ -18,18 +18,6 @@ namespace Flexx.Media.Objects
 {
     public class MovieModel : MediaBase
     {
-        #region Private Properties
-
-        private string coverBase { get => Metadata.GetConfigByKey("cover").Value; set => Metadata.GetConfigByKey("cover").Value = value; }
-
-        private string coverLanguageBase { get => Metadata.GetConfigByKey("coverLanguage").Value; set => Metadata.GetConfigByKey("coverLanguage").Value = value; }
-
-        private string logoBase { get => Metadata.GetConfigByKey("logo").Value; set => Metadata.GetConfigByKey("logo").Value = value; }
-
-        private string posterBase { get => Metadata.GetConfigByKey("poster").Value; set => Metadata.GetConfigByKey("poster").Value = value; }
-
-        #endregion Private Properties
-
         #region Private Fields
 
         private string Metadata_Directory;
@@ -74,21 +62,22 @@ namespace Flexx.Media.Objects
             get
             {
                 string path = Path.Combine(Metadata_Directory, "cover.jpg");
-                if (string.IsNullOrWhiteSpace(coverBase))
+                if (!File.Exists(path))
                 {
                     UpdateMetaData();
                 }
 
-                return coverBase;
+                return path;
             }
             set
             {
                 try
                 {
                     log.Debug($"Optimizing Cover Image for {TMDB}");
+                    string path = Path.Combine(Metadata_Directory, "cover.jpg");
                     string tmp = Path.Combine(Paths.TempData, $"mc_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
-                    coverBase = Transcoder.OptimizeCover(tmp);
+                    Transcoder.OptimizeCover(tmp, path);
                 }
                 catch { }
             }
@@ -98,21 +87,23 @@ namespace Flexx.Media.Objects
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(coverLanguageBase))
+                string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
+                if (!File.Exists(path))
                 {
                     return CoverImage;
                 }
 
-                return coverLanguageBase;
+                return path;
             }
             set
             {
                 try
                 {
                     log.Debug($"Optimizing Language Cover Image for {TMDB}");
+                    string path = Path.Combine(Metadata_Directory, "cover-lang.jpg");
                     string tmp = Path.Combine(Paths.TempData, $"mcl_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
-                    coverLanguageBase = Transcoder.OptimizeCover(tmp);
+                    Transcoder.OptimizeCover(tmp, path);
                 }
                 catch { }
             }
@@ -124,16 +115,18 @@ namespace Flexx.Media.Objects
         {
             get
             {
-                return logoBase;
+                string path = Path.Combine(Metadata_Directory, "logo.png");
+                return path;
             }
             set
             {
                 try
                 {
                     log.Debug($"Optimizing Logo Image for {TMDB}");
+                    string path = Path.Combine(Metadata_Directory, "logo.png");
                     string tmp = Path.Combine(Paths.TempData, $"ml_{TMDB}.png");
                     new System.Net.WebClient().DownloadFile(value, tmp);
-                    logoBase = Transcoder.OptimizeLogo(tmp);
+                    Transcoder.OptimizeLogo(tmp, path);
                 }
                 catch { }
             }
@@ -143,21 +136,23 @@ namespace Flexx.Media.Objects
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(posterBase))
+                string path = Path.Combine(Metadata_Directory, "poster.jpg");
+                if (!File.Exists(path))
                 {
                     UpdateMetaData();
                 }
 
-                return posterBase;
+                return path;
             }
             set
             {
                 try
                 {
                     log.Debug($"Optimizing Poster for {TMDB}");
+                    string path = Path.Combine(Metadata_Directory, "poster.jpg");
                     string tmp = Path.Combine(Paths.TempData, $"mp_{TMDB}.jpg");
                     new System.Net.WebClient().DownloadFile(value, tmp);
-                    posterBase = Transcoder.OptimizePoster(tmp);
+                    Transcoder.OptimizePoster(tmp, path);
                 }
                 catch
                 {

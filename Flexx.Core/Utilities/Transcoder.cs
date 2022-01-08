@@ -273,8 +273,6 @@ public class Transcoder
         return ActiveStreams.Instance.Get(directoryOutput);
     }
 
-    public static string ImageToBase(string input) => $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes(input))}";
-
     public static void Init()
     {
         if (Instance != null)
@@ -285,29 +283,24 @@ public class Transcoder
         Instance = new Transcoder();
     }
 
-    public static string OptimizeCover(string input)
+    public static void OptimizeCover(string input, string output)
     {
-        return OptimizeImage(input, 1280);
+        OptimizeImage(input, output, 1280);
     }
 
-    public static string OptimizeImage(string input, int scale)
+    public static void OptimizeImage(string input, string output, int scale)
     {
-        string output = Path.Combine(Directory.GetParent(input).FullName, $"optimized_{new FileInfo(input).Name}");
         string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
         if (File.Exists(output))
         {
             if (Functions.IsFileLocked(new FileInfo(output)))
             {
-                Thread.Sleep(1500);
-                OptimizeImage(input, scale);
+                Thread.Sleep(500);
+                OptimizeImage(input, output, scale);
             }
             else
             {
-                try
-                {
-                    File.Delete(output);
-                }
-                catch { }
+                File.Delete(output);
             }
         }
 
@@ -323,26 +316,18 @@ public class Transcoder
             },
             EnableRaisingEvents = true,
         };
+        process.Exited += (s, e) => File.Delete(input);
         process.Start();
-        process.WaitForExit();
-        Thread.Sleep(500);
-
-        try
-        {
-            File.Delete(input);
-        }
-        catch { };
-        return ImageToBase(output);
     }
 
-    public static string OptimizeLogo(string input)
+    public static void OptimizeLogo(string input, string output)
     {
-        return OptimizeImage(input, 500);
+        OptimizeImage(input, output, 500);
     }
 
-    public static string OptimizePoster(string input)
+    public static void OptimizePoster(string input, string output)
     {
-        return OptimizeImage(input, 320);
+        OptimizeImage(input, output, 320);
     }
 
     #endregion Public Methods

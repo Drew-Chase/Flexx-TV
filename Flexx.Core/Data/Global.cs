@@ -68,7 +68,8 @@ public static class Global
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(config.MissingPoster))
+                string path = Path.Combine(MetaData, "missing_poster.jpg");
+                if (!File.Exists(path))
                 {
                     log.Debug($"Downloading Missing Poster Artwork");
                     HttpClient client = new();
@@ -80,11 +81,11 @@ public static class Global
                         using FileStream fs = new(temp, FileMode.CreateNew, FileAccess.ReadWrite);
                         response.Content.CopyToAsync(fs).Wait();
                         log.Debug($"Optimizing Missing Poster Artwork");
-                        config.MissingPoster = Transcoder.OptimizePoster(temp);
+                        Transcoder.OptimizePoster(temp, path);
                         log.Debug($"Done Processing Missing Poster Artwork");
                     }
                 }
-                return config.MissingPoster;
+                return path;
             }
         }
 
@@ -92,7 +93,8 @@ public static class Global
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(config.MissingCover))
+                string path = Path.Combine(MetaData, "missing_cover.jpg");
+                if (!File.Exists(path))
                 {
                     log.Debug($"Downloading Missing Cover Artwork");
                     HttpClient client = new();
@@ -104,11 +106,11 @@ public static class Global
                         using FileStream fs = new(temp, FileMode.CreateNew, FileAccess.ReadWrite);
                         response.Content.CopyToAsync(fs).Wait();
                         log.Debug($"Optimizing Missing Cover Artwork");
-                        config.MissingCover = Transcoder.OptimizeCover(temp);
+                        Transcoder.OptimizeCover(temp, path);
                         log.Debug($"Done Processing Missing Cover Artwork");
                     }
                 }
-                return config.MissingCover;
+                return path;
             }
         }
 
