@@ -6,11 +6,15 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using static Flexx.Data.Global;
 
 namespace Flexx.Server;
 
+/// <summary>
+/// Entry Point
+/// </summary>
 public class FlexxServer
 {
     #region Public Methods
@@ -25,29 +29,29 @@ public class FlexxServer
         }
         if (args.Length == 0)
         {
-            if (!config.Setup || string.IsNullOrWhiteSpace(config.MovieLibraryPath) || string.IsNullOrWhiteSpace(config.TVLibraryPath))
+            if (!config.Setup)
             {
-                ModifyWindow(false);
-
                 if (OperatingSystem.IsWindows())
                 {
-                    new Process()
+                    Task.Run(() =>
                     {
-                        StartInfo = new()
+                        Thread.Sleep(3 * 1000);
+                        new Process()
                         {
-                            FileName = $"http://127.0.0.1:{config.ApiPort}/Setup",
-                            Verb = "open",
-                            UseShellExecute = true,
-                        }
-                    }.Start();
+                            StartInfo = new()
+                            {
+                                FileName = $"http://127.0.0.1:{config.ApiPort}/Setup", // Opens the Web Setup Page
+                                Verb = "open",
+                                UseShellExecute = true,
+                            }
+                        }.Start();
+                    });
                 }
                 StartHttpServer().Wait();
             }
             else
             {
-                ModifyWindow(true);
                 SetupProcess.Run().Wait();
-                ModifyWindow(false);
                 StartHttpServer().Wait();
             }
         }
@@ -61,10 +65,10 @@ public class FlexxServer
                         Firewall.AddToFirewall();
                         Environment.Exit(0);
                         continue;
-                    case "-show":
+                    case "-hidden":
+                        ModifyWindow(false);
                         SetupProcess.Run().Wait();
-                        ModifyWindow(true);
-                        StartHttpServer().Wait();
+                        StartHttpServer(true).Wait();
                         break;
 
                     default:
@@ -83,14 +87,15 @@ public class FlexxServer
 
             [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-            const int SW_HIDE = 0; const int SW_SHOW = 5;
+            const int SW_HIDE = 0;
+            const int SW_SHOW = 5;
 
             IntPtr handle = GetConsoleWindow();
             ShowWindow(handle, show ? SW_SHOW : SW_HIDE);
         }
     }
 
-    private static Task StartHttpServer() =>
+    private static Task StartHttpServer(bool open_on_launch = false) =>
             Task.Run(() =>
         {
             log.Debug("HTTP Server is Starting...");
@@ -105,6 +110,25 @@ public class FlexxServer
                 });
                 webBuilder.UseStartup<Startup>();
                 log.Debug("HTTP Server is Now Active!!!");
+                if (open_on_launch)
+                {
+                    if (OperatingSystem.IsWindows())
+                    {
+                        Task.Run(() =>
+                        {
+                            Thread.Sleep(3 * 1000);
+                            new Process()
+                            {
+                                StartInfo = new()
+                                {
+                                    FileName = $"http://127.0.0.1:{config.ApiPort}",
+                                    Verb = "open",
+                                    UseShellExecute = true,
+                                }
+                            }.Start();
+                        });
+                    }
+                }
             }).Build().Run();
         });
 
