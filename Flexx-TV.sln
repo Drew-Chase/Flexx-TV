@@ -7,6 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flexx.Server", "Flexx.Serve
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flexx", "Flexx.Core\Flexx.csproj", "{1D80C613-98BD-4A7E-85ED-632FD970C6BC}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Flexx.Updater", "Flexx.Updater\Flexx.Updater.csproj", "{075840A4-5A92-42B6-8583-B1F392DAA841}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flexx.Binary.Windows", "Flexx.Binary.Windows\Flexx.Binary.Windows.csproj", "{8992D851-DF1A-417D-BBB7-EFE2EB3FAD27}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C8E33CC6-7216-4FF7-A32B-806BC18D270E} = {C8E33CC6-7216-4FF7-A32B-806BC18D270E}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +28,14 @@ Global
 		{1D80C613-98BD-4A7E-85ED-632FD970C6BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D80C613-98BD-4A7E-85ED-632FD970C6BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D80C613-98BD-4A7E-85ED-632FD970C6BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{075840A4-5A92-42B6-8583-B1F392DAA841}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{075840A4-5A92-42B6-8583-B1F392DAA841}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{075840A4-5A92-42B6-8583-B1F392DAA841}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{075840A4-5A92-42B6-8583-B1F392DAA841}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8992D851-DF1A-417D-BBB7-EFE2EB3FAD27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8992D851-DF1A-417D-BBB7-EFE2EB3FAD27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8992D851-DF1A-417D-BBB7-EFE2EB3FAD27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8992D851-DF1A-417D-BBB7-EFE2EB3FAD27}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
