@@ -22,7 +22,6 @@ namespace Flexx.Server.Controllers.View
             config.TVLibraryPath = tv;
             config.ApiPort = port;
             config.PortForward = portForward;
-            config.Setup = true;
             config.Token = token;
             if (Remote.RegisterServer(Users.Instance.Get(token)))
             {
@@ -56,7 +55,9 @@ namespace Flexx.Server.Controllers.View
         [HttpPost("login")]
         public IActionResult Login([FromForm] string username, [FromForm] string password)
         {
-            return new JsonResult(Users.Instance.Get(username).GenerateToken(password));
+            User user = Users.Instance.Get(username);
+            var token = user.GenerateToken(password);
+            return new JsonResult(token);
         }
 
         #endregion Public Methods
