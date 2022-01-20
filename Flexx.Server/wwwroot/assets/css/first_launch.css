@@ -2,8 +2,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 99vh;
-    width: 99vw;
+    height: 99.8vh;
     min-height: max-content;
     background: linear-gradient(120deg, black, hsl(0, 0%, 3%));
     border-width: 1px;
