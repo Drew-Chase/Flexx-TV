@@ -22,22 +22,22 @@ namespace Flexx.Media.Objects.Extras
         public CastListModel(string media_type, string tmdb)
         {
             List<CastModel> cast = new();
-            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{media_type}/{tmdb}/credits?api_key={TMDB_API}");
-            if (jresult == null) return;
-            JObject json = (JObject)jresult;
-            Parallel.ForEach((JArray)json["cast"], token =>
+            if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/{media_type}/{tmdb}/credits?api_key={TMDB_API}", out JObject json))
             {
-                var c = new CastModel((string)token["name"], (string)token["character"], (string)token["profile_path"], "Actor");
-                if (c != null && !string.IsNullOrWhiteSpace((string)token["profile_path"]))
-                    cast.Add(c);
-            });
-            Parallel.ForEach((JArray)json["crew"], token =>
-            {
-                var c = new CastModel((string)token["name"], (string)token["department"], (string)token["profile_path"], (string)token["job"]);
-                if (c != null && !string.IsNullOrWhiteSpace((string)token["profile_path"]))
-                    cast.Add(c);
-            });
-            FullCast = cast.ToArray();
+                Parallel.ForEach((JArray) json["cast"], token =>
+                 {
+                     var c = new CastModel((string) token["name"], (string) token["character"], (string) token["profile_path"], "Actor");
+                     if (c != null && !string.IsNullOrWhiteSpace((string) token["profile_path"]))
+                         cast.Add(c);
+                 });
+                Parallel.ForEach((JArray) json["crew"], token =>
+                 {
+                     var c = new CastModel((string) token["name"], (string) token["department"], (string) token["profile_path"], (string) token["job"]);
+                     if (c != null && !string.IsNullOrWhiteSpace((string) token["profile_path"]))
+                         cast.Add(c);
+                 });
+                FullCast = cast.ToArray();
+            }
         }
 
         #endregion Public Constructors
@@ -52,7 +52,8 @@ namespace Flexx.Media.Objects.Extras
             {
                 foreach (var member in movie.MainCast)
                 {
-                    if (member == null) continue;
+                    if (member == null)
+                        continue;
                     if (member.Name == actor)
                     {
                         if (!list.Contains(movie))
@@ -65,7 +66,8 @@ namespace Flexx.Media.Objects.Extras
             {
                 foreach (var member in show.MainCast)
                 {
-                    if (member == null) continue;
+                    if (member == null)
+                        continue;
                     if (member.Name == actor)
                     {
                         if (!list.Contains(show))
@@ -73,14 +75,12 @@ namespace Flexx.Media.Objects.Extras
                     }
                 }
             }
-            object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/search/person?api_key={TMDB_API}&language={config.LanguagePreference}&query={actor}&page=1&include_adult=false");
-            if (obj != null)
+            if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/search/person?api_key={TMDB_API}&language={config.LanguagePreference}&query={actor}&page=1&include_adult=false", out JToken obj))
             {
-                foreach (JObject json in (JArray)((JToken)obj)["results"][0]["known_for"])
+                foreach (JObject json in (JArray) obj["results"][0]["known_for"])
                 {
-                    string type = (string)json["media_type"];
-                    object jobj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{type}/{(json["id"])}?api_key={TMDB_API}");
-                    if (jobj != null)
+                    string type = (string) json["media_type"];
+                    if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/{type}/{(json["id"])}?api_key={TMDB_API}", out JObject jobj))
                     {
                         string knownFor = JsonConvert.SerializeObject(jobj);
                         list.Add(type.Equals("movie") ? new MovieObject(knownFor) : new SeriesObject(knownFor));

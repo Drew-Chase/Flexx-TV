@@ -19,7 +19,7 @@ public static class Remote
             if (response.IsSuccessStatusCode)
             {
                 JObject json = JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
-                return json.ContainsKey("exists") && (bool)json["exists"];
+                return json.ContainsKey("exists") && (bool) json["exists"];
             }
         }
         return false;
@@ -39,13 +39,13 @@ public static class Remote
             if (response.IsSuccessStatusCode)
             {
                 string content = response.Content.ReadAsStringAsync().Result;
-                JObject json = (JObject)JsonConvert.DeserializeObject(content);
-                return json.ContainsKey("token") && new HttpClient().PostAsync("https://auth.flexx-tv.tk/updateAccount.php", new FormUrlEncodedContent(new[]
+                JObject json = (JObject) JsonConvert.DeserializeObject(content);
+                return (json.ContainsKey("error") && (string) json["error"] == "Server already exists") || (json.ContainsKey("token") && new HttpClient().PostAsync("https://auth.flexx-tv.tk/updateAccount.php", new FormUrlEncodedContent(new[]
                 {
                         new KeyValuePair<string,string>("token", user.Token),
                         new KeyValuePair<string,string>("property", "servers"),
                         new KeyValuePair<string,string>("value", user.Token),
-                })).Result.IsSuccessStatusCode;
+                })).Result.IsSuccessStatusCode);
             }
         }
         return false;

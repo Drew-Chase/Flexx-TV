@@ -25,7 +25,8 @@ namespace Flexx.Media.Objects.Libraries
         {
             get
             {
-                if (_instance == null) _instance = new MovieLibraryModel();
+                if (_instance == null)
+                    _instance = new MovieLibraryModel();
                 return _instance;
             }
         }
@@ -44,7 +45,7 @@ namespace Flexx.Media.Objects.Libraries
             log.Debug($"Fetching All Movie Trailers");
             Parallel.ForEach(medias, movie =>
             {
-                ((MovieModel)movie).GetTrailer();
+                ((MovieModel) movie).GetTrailer();
             });
             log.Debug($"Done Fetching Movie Trailers");
         }
@@ -52,19 +53,20 @@ namespace Flexx.Media.Objects.Libraries
         public MovieObject[] FindSimilar(string id)
         {
             List<MovieObject> model = new();
-            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/similar?api_key={TMDB_API}");
-            if (jresult == null) return model.ToArray();
-            JArray results = (JArray)((JObject)jresult)["results"];
-            if (results != null && results.Any())
+            if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/similar?api_key={TMDB_API}", out JObject jresult))
             {
-                foreach (JToken result in results)
+                JArray results = (JArray) jresult["results"];
+                if (results != null && results.Any())
                 {
-                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace((string)result["release_date"]))
+                    foreach (JToken result in results)
                     {
-                        continue;
-                    }
+                        if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace((string) result["release_date"]))
+                        {
+                            continue;
+                        }
 
-                    model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
+                        model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
+                    }
                 }
             }
             return model.ToArray();
@@ -135,7 +137,7 @@ namespace Flexx.Media.Objects.Libraries
             {
                 if (movies[i] != null)
                 {
-                    model[i] = new MovieObject((MovieModel)movies[i], user);
+                    model[i] = new MovieObject((MovieModel) movies[i], user);
                 }
             }
             return model;
@@ -165,21 +167,21 @@ namespace Flexx.Media.Objects.Libraries
             {
                 url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}";
             }
-            object jresult = Functions.GetJsonObjectFromURL(url);
             List<MovieObject> model = new();
-            if (jresult == null)
-                return model.ToArray();
-            JArray results = (JArray)((JObject)jresult)["results"];
-            if (results != null && results.Any())
+            if (Functions.TryGetJsonObjectFromURL(url, out JObject jresult))
             {
-                foreach (JToken result in results)
+                JArray results = (JArray) jresult["results"];
+                if (results != null && results.Any())
                 {
-                    if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace((string)result["release_date"]))
+                    foreach (JToken result in results)
                     {
-                        continue;
-                    }
+                        if (result == null || result["release_date"] == null || string.IsNullOrWhiteSpace((string) result["release_date"]))
+                        {
+                            continue;
+                        }
 
-                    model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
+                        model.Add(new MovieObject(JsonConvert.SerializeObject(result)));
+                    }
                 }
             }
             return model.ToArray();

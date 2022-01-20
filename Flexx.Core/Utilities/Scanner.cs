@@ -88,40 +88,40 @@ namespace Flexx.Utilities
                 }
 
                 log.Debug($"Prefetching {category} {(movies ? "Movies" : "TV Shows")}");
-                string url = $"https://api.themoviedb.org/3/{(movies ? "movie" : "tv")}/{category}?api_key={TMDB_API}&language={config.LanguagePreference}";
-                object tmp = Functions.GetJsonObjectFromURL(url);
-                if (tmp == null) continue;
-                JArray results = (JArray)((JObject)tmp)["results"];
-                if (results == null || !results.Any())
+                if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/{(movies ? "movie" : "tv")}/{category}?api_key={TMDB_API}&language={config.LanguagePreference}", out JObject json))
                 {
-                    continue;
-                }
-                Parallel.ForEach(results, result =>
-                {
-                    if (result["id"] != null && !string.IsNullOrWhiteSpace((string)result["id"]) && movies ? (MovieLibraryModel.Instance.GetMovieByTMDB((string)result["id"]) == null) : (TvLibraryModel.Instance.GetShowByTMDB((string)result["id"]) == null))
+                    JArray results = (JArray) json["results"];
+                    if (results == null || !results.Any())
                     {
-                        object model = null;
-                        try
-                        {
-                            model = movies ? new MovieModel((string)result["id"], category) : new TVModel((string)result["id"], category);
-                        }
-                        catch (Exception e)
-                        {
-                            log.Error($"Issue with Prefetching Remote {(movies ? "Movies" : "TV Shows")}", e);
-                        }
-                        if (model != null)
-                        {
-                            if (movies)
-                            {
-                                MovieLibraryModel.Instance.AddMedia((MovieModel)model);
-                            }
-                            else
-                            {
-                                TvLibraryModel.Instance.AddMedia((TVModel)model);
-                            }
-                        }
+                        continue;
                     }
-                });
+                    Parallel.ForEach(results, result =>
+                    {
+                        if (result["id"] != null && !string.IsNullOrWhiteSpace((string) result["id"]) && movies ? (MovieLibraryModel.Instance.GetMovieByTMDB((string) result["id"]) == null) : (TvLibraryModel.Instance.GetShowByTMDB((string) result["id"]) == null))
+                        {
+                            object model = null;
+                            try
+                            {
+                                model = movies ? new MovieModel((string) result["id"], category) : new TVModel((string) result["id"], category);
+                            }
+                            catch (Exception e)
+                            {
+                                log.Error($"Issue with Prefetching Remote {(movies ? "Movies" : "TV Shows")}", e);
+                            }
+                            if (model != null)
+                            {
+                                if (movies)
+                                {
+                                    MovieLibraryModel.Instance.AddMedia((MovieModel) model);
+                                }
+                                else
+                                {
+                                    TvLibraryModel.Instance.AddMedia((TVModel) model);
+                                }
+                            }
+                        }
+                    });
+                }
             }
         }
 
@@ -160,7 +160,7 @@ namespace Flexx.Utilities
                     }
                     return false;
                 }).ToArray();
-            Parallel.ForEach(files, new() { MaxDegreeOfParallelism = 24 }, file =>
+            Parallel.ForEach(files, file =>
               {
                   try
                   {
@@ -231,17 +231,17 @@ namespace Flexx.Utilities
                 {
                     using (WebClient client = new())
                     {
-                        json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={title}&first_air_date_year={year}"));
+                        json = (JObject) JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={title}&first_air_date_year={year}"));
                         if (json["results"].Children().Any())
                         {
-                            tmdb = (string)json["results"][0]["id"];
+                            tmdb = (string) json["results"][0]["id"];
                         }
                         else
                         {
-                            json = (JObject)JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={title}"));
+                            json = (JObject) JsonConvert.DeserializeObject(client.DownloadString($"https://api.themoviedb.org/3/search/tv?api_key={TMDB_API}&query={title}"));
                             if (json["results"].Children().Any())
                             {
-                                tmdb = (string)json["results"][0]["id"];
+                                tmdb = (string) json["results"][0]["id"];
                             }
                         }
                     }

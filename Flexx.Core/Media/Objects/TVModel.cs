@@ -104,33 +104,27 @@ namespace Flexx.Media.Objects
             try
             {
                 ScannedDate = DateTime.Now;
-                JObject json = null;
-                try
+                if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{TMDB}/season/{Season.Season_Number}/episode/{Episode_Number}?api_key={TMDB_API}", out JObject json))
                 {
-                    string url = $"https://api.themoviedb.org/3/tv/{TMDB}/season/{Season.Season_Number}/episode/{Episode_Number}?api_key={TMDB_API}";
-                    json = (JObject)Functions.GetJsonObjectFromURL(url);
-                }
-                catch
-                {
-                    Title = $"Episode {Episode_Number}";
-                    Plot = Season.Series.Plot;
-                    ReleaseDate = Season.StartDate;
-                    PosterImage = Season.PosterImage;
-                }
-                if (json != null)
-                {
-                    Title = (string)json["name"];
-                    Plot = (string)json["overview"];
+                    Title = (string) json["name"];
+                    Plot = (string) json["overview"];
                     try
                     {
                         PosterImage = $"https://image.tmdb.org/t/p/original{json["still_path"]}";
-                        ReleaseDate = DateTime.Parse((string)json["air_date"]);
+                        ReleaseDate = DateTime.Parse((string) json["air_date"]);
                     }
                     catch
                     {
                         ReleaseDate = Season.StartDate;
                         PosterImage = Season.PosterImage;
                     }
+                }
+                else
+                {
+                    Title = $"Episode {Episode_Number}";
+                    Plot = Season.Series.Plot;
+                    ReleaseDate = Season.StartDate;
+                    PosterImage = Season.PosterImage;
                 }
             }
             catch
@@ -313,30 +307,25 @@ namespace Flexx.Media.Objects
         {
             try
             {
-                JObject json = null;
-                try
+                if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{Series.TMDB}/season/{Season_Number}?api_key={TMDB_API}", out JObject json))
                 {
-                    json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{Series.TMDB}/season/{Season_Number}?api_key={TMDB_API}");
+                    Title = (string) json["name"];
+                    Plot = (string) json["overview"];
+                    if (!string.IsNullOrWhiteSpace((string) json["poster_path"]))
+                        PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
+                    else
+                        PosterImage = Series.PosterImage;
+                    if (json["air_date"] != null && !string.IsNullOrWhiteSpace((string) json["air_date"]))
+                        StartDate = DateTime.Parse((string) json["air_date"]);
+                    else
+                        StartDate = Series.StartDate;
                 }
-                catch
+                else
                 {
                     Title = $"Season {Season_Number}";
                     Plot = Series.Plot;
                     StartDate = Series.StartDate;
                     PosterImage = Series.PosterImage;
-                }
-                if (json != null)
-                {
-                    Title = (string)json["name"];
-                    Plot = (string)json["overview"];
-                    if (!string.IsNullOrWhiteSpace((string)json["poster_path"]))
-                        PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
-                    else
-                        PosterImage = Series.PosterImage;
-                    if (json["air_date"] != null && !string.IsNullOrWhiteSpace((string)json["air_date"]))
-                        StartDate = DateTime.Parse((string)json["air_date"]);
-                    else
-                        StartDate = Series.StartDate;
                 }
             }
             catch
@@ -427,7 +416,7 @@ namespace Flexx.Media.Objects
             Metadata.Add("poster", "");
             Metadata.Add("cover", "");
 
-            Category = Metadata.GetConfigByKey("category") != null ? (Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object cat) ? (DiscoveryCategory)cat : DiscoveryCategory.None) : DiscoveryCategory.None;
+            Category = Metadata.GetConfigByKey("category") != null ? (Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object cat) ? (DiscoveryCategory) cat : DiscoveryCategory.None) : DiscoveryCategory.None;
             if (Metadata.GetConfigByKey("id") == null)
             {
                 UpdateMetaData();
@@ -626,88 +615,85 @@ namespace Flexx.Media.Objects
 
         public void UpdateMetaData()
         {
-            JObject json = null;
-            try
+            if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{TMDB}?api_key={TMDB_API}", out JObject json))
             {
-                json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{TMDB}?api_key={TMDB_API}");
-            }
-            catch (Exception e)
-            {
-                log.Error($"Unable to gather metadata for TV Show with ID of {TMDB}", e);
-                return;
-            }
-            try
-            {
-                JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{TMDB}/images?api_key={TMDB_API}&include_image_language=en");
-                if (imagesJson["backdrops"].Any())
+                if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{TMDB}/images?api_key={TMDB_API}&include_image_language=en", out JObject imagesJson))
                 {
-                    CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
-                }
-
-                if (imagesJson["logos"].Any())
-                {
-                    LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
-                }
-            }
-            catch (Exception e)
-            {
-                log.Error($"Unable to get Image metadata for TV Show with ID of {TMDB}", e);
-            }
-
-            Title = (string)json["name"];
-            Plot = (string)json["overview"];
-            Rating = (string)json["vote_average"];
-            try
-            {
-                string j = new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/content_ratings?api_key={TMDB_API}");
-                foreach (JToken token in (JArray)((JObject)JsonConvert.DeserializeObject(j))["results"])
-                {
-                    if (token["iso_3166_1"].Equals("US"))
+                    if (imagesJson["backdrops"].Any())
                     {
-                        MPAA = (string)token["rating"];
-                        break;
+                        CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
+                    }
+
+                    if (imagesJson["logos"].Any())
+                    {
+                        LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
                     }
                 }
-            }
-            catch
-            {
-                MPAA = "NR";
-            }
-            try
-            {
-                Studio = (string)json["networks"][0]["name"];
-            }
-            catch { }
-            try
-            {
-                InProduction = (bool)json["in_production"];
-            }
-            catch { }
-            try
-            {
-                StartDate = DateTime.Parse((string)json["first_air_date"]);
-            }
-            catch { }
-            if (json["poster_path"] != null && !string.IsNullOrWhiteSpace((string)json["poster_path"]))
-            {
-                PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
-            }
+                else
+                {
+                    log.Error($"Unable to get Image metadata for TV Show with ID of {TMDB}");
+                }
 
-            if (json["backdrop_path"] != null && !string.IsNullOrWhiteSpace((string)json["backdrop_path"]))
-            {
-                CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
-            }
+                Title = (string) json["name"];
+                Plot = (string) json["overview"];
+                Rating = (string) json["vote_average"];
+                try
+                {
+                    string j = new WebClient().DownloadString($"https://api.themoviedb.org/3/tv/{TMDB}/content_ratings?api_key={TMDB_API}");
+                    foreach (JToken token in (JArray) ((JObject) JsonConvert.DeserializeObject(j))["results"])
+                    {
+                        if (token["iso_3166_1"].Equals("US"))
+                        {
+                            MPAA = (string) token["rating"];
+                            break;
+                        }
+                    }
+                }
+                catch
+                {
+                    MPAA = "NR";
+                }
+                try
+                {
+                    Studio = (string) json["networks"][0]["name"];
+                }
+                catch { }
+                try
+                {
+                    InProduction = (bool) json["in_production"];
+                }
+                catch { }
+                try
+                {
+                    StartDate = DateTime.Parse((string) json["first_air_date"]);
+                }
+                catch { }
+                if (json["poster_path"] != null && !string.IsNullOrWhiteSpace((string) json["poster_path"]))
+                {
+                    PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
+                }
 
-            Metadata.Add("id", TMDB);
-            Metadata.Add("title", Title);
-            Metadata.Add("added", Added);
-            Metadata.Add("plot", Plot);
-            Metadata.Add("category", Category.ToString());
-            Metadata.Add("studio", Studio);
-            Metadata.Add("mpaa", MPAA);
-            Metadata.Add("rating", Rating);
-            Metadata.Add("in_production", InProduction);
-            Metadata.Add("start_date", StartDate.ToString("yyyy-MM-dd"));
+                if (json["backdrop_path"] != null && !string.IsNullOrWhiteSpace((string) json["backdrop_path"]))
+                {
+                    CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
+                }
+
+                Metadata.Add("id", TMDB);
+                Metadata.Add("title", Title);
+                Metadata.Add("added", Added);
+                Metadata.Add("plot", Plot);
+                Metadata.Add("category", Category.ToString());
+                Metadata.Add("studio", Studio);
+                Metadata.Add("mpaa", MPAA);
+                Metadata.Add("rating", Rating);
+                Metadata.Add("in_production", InProduction);
+                Metadata.Add("start_date", StartDate.ToString("yyyy-MM-dd"));
+            }
+            else
+            {
+                log.Error($"Unable to gather metadata for TV Show with ID of {TMDB}");
+                return;
+            }
         }
 
         #endregion Public Methods
@@ -749,7 +735,7 @@ namespace Flexx.Media.Objects
                 }
                 if (Metadata.GetConfigByKey("category") != null)
                 {
-                    Category = Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object cat) ? (DiscoveryCategory)cat : DiscoveryCategory.None;
+                    Category = Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object cat) ? (DiscoveryCategory) cat : DiscoveryCategory.None;
                 }
             }
         }

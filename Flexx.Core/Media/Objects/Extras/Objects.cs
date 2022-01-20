@@ -14,7 +14,8 @@ namespace Flexx.Media.Objects.Extras
 
         public EpisodeObject(EpisodeModel episode, User user)
         {
-            if (episode == null) return;
+            if (episode == null)
+                return;
             ID = episode.Season.Series.TMDB;
             Title = episode.Title;
             Name = episode.FriendlyName;
@@ -28,19 +29,23 @@ namespace Flexx.Media.Objects.Extras
             Watched = user.GetHasWatched(episode);
             WatchedDuration = user.GetWatchedDuration(episode);
             if (episode.Downloaded)
-                WatchedPercentage = (byte)Math.Floor(WatchedDuration / episode.MediaInfo.Duration.TotalSeconds * 100);
+                WatchedPercentage = (byte) Math.Floor(WatchedDuration / episode.MediaInfo.Duration.TotalSeconds * 100);
 
             EpisodeModel next = null;
             EpisodeModel previous = null;
 
             foreach (SeasonModel s in episode.Season.Series.Seasons)
             {
-                if (s.Season_Number > episode.Season.Season_Number) continue;
-                if (next != null) break;
+                if (s.Season_Number > episode.Season.Season_Number)
+                    continue;
+                if (next != null)
+                    break;
                 foreach (EpisodeModel e in s.Episodes)
                 {
-                    if (!e.Downloaded || episode.Episode_Number >= e.Episode_Number) continue;
-                    if (next != null) break;
+                    if (!e.Downloaded || episode.Episode_Number >= e.Episode_Number)
+                        continue;
+                    if (next != null)
+                        break;
                     next = e;
                     break;
                 }
@@ -49,13 +54,17 @@ namespace Flexx.Media.Objects.Extras
             for (int i = episode.Season.Series.Seasons.Count - 1; i > 0; i--)
             {
                 SeasonModel s = episode.Season.Series.Seasons[i];
-                if (s.Season_Number > episode.Season.Season_Number) continue;
-                if (previous != null) break;
+                if (s.Season_Number > episode.Season.Season_Number)
+                    continue;
+                if (previous != null)
+                    break;
                 for (int j = s.Episodes.Count - 1; j > 0; j--)
                 {
                     EpisodeModel e = s.Episodes[j];
-                    if (!e.Downloaded || episode.Episode_Number <= e.Episode_Number) continue;
-                    if (previous != null) break;
+                    if (!e.Downloaded || episode.Episode_Number <= e.Episode_Number)
+                        continue;
+                    if (previous != null)
+                        break;
                     previous = e;
                     break;
                 }
@@ -85,19 +94,19 @@ namespace Flexx.Media.Objects.Extras
 
         public EpisodeObject(string json)
         {
-            JObject result = (JObject)JsonConvert.DeserializeObject(json);
-            ID = (string)result["id"];
-            Title = (string)result["name"];
-            Season = int.TryParse((string)result["season_number"], out int season) ? season : 0;
-            Episode = int.TryParse((string)result["episode_number"], out int episode) ? episode : 0;
+            JObject result = (JObject) JsonConvert.DeserializeObject(json);
+            ID = (string) result["id"];
+            Title = (string) result["name"];
+            Season = int.TryParse((string) result["season_number"], out int season) ? season : 0;
+            Episode = int.TryParse((string) result["episode_number"], out int episode) ? episode : 0;
             Name = $"S{(Season < 10 ? "0" + Season : Season)}E{(Episode < 10 ? "0" + Episode : Episode)}";
-            Plot = (string)result["overview"];
-            if (DateTime.TryParse((string)result["air_date"], out DateTime date))
+            Plot = (string) result["overview"];
+            if (DateTime.TryParse((string) result["air_date"], out DateTime date))
             {
                 ReleaseDate = date;
             }
 
-            Rating = double.Parse((string)result["vote_average"]);
+            Rating = double.Parse((string) result["vote_average"]);
             Downloaded = false;
             Watched = false;
             WatchedDuration = 0;
@@ -157,11 +166,11 @@ namespace Flexx.Media.Objects.Extras
             MPAA = movie.MPAA;
             Rating = movie.Rating;
             Downloaded = movie.Downloaded;
-            Year = (ushort)movie.ReleaseDate.Year;
+            Year = (ushort) movie.ReleaseDate.Year;
             Watched = user.GetHasWatched(movie);
             WatchedDuration = user.GetWatchedDuration(movie);
             if (movie.Downloaded)
-                WatchedPercentage = (byte)Math.Floor(WatchedDuration / movie.MediaInfo.Duration.TotalSeconds * 100);
+                WatchedPercentage = (byte) Math.Floor(WatchedDuration / movie.MediaInfo.Duration.TotalSeconds * 100);
             MainCast = movie.Cast.GetCast();
             Category = movie.Category;
             FullDuration = movie.FullDuration;
@@ -170,30 +179,29 @@ namespace Flexx.Media.Objects.Extras
 
         public MovieObject(string json)
         {
-            JObject result = (JObject)JsonConvert.DeserializeObject(json);
-            ID = (string)result["id"];
-            Title = (string)result["title"];
-            Plot = (string)result["overview"];
-            if (DateTime.TryParse((string)result["release_date"], out DateTime date))
+            JObject result = (JObject) JsonConvert.DeserializeObject(json);
+            ID = (string) result["id"];
+            Title = (string) result["title"];
+            Plot = (string) result["overview"];
+            if (DateTime.TryParse((string) result["release_date"], out DateTime date))
             {
-                Year = (ushort)date.Year;
+                Year = (ushort) date.Year;
             }
 
-            Rating = double.Parse((string)result["vote_average"]);
-            Downloaded = MovieLibraryModel.Instance.GetMovieByTMDB((string)result["id"]) != null;
+            Rating = double.Parse((string) result["vote_average"]);
+            Downloaded = MovieLibraryModel.Instance.GetMovieByTMDB((string) result["id"]) != null;
             Watched = false;
             WatchedDuration = 0;
             Category = DiscoveryCategory.None;
-            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{ID}/release_dates?api_key={TMDB_API}");
-            if (jresult != null)
+            if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{ID}/release_dates?api_key={TMDB_API}", out JObject jresult))
             {
-                foreach (JToken child in ((JObject)jresult)["results"].Children())
+                foreach (JToken child in jresult["results"].Children())
                 {
                     try
                     {
-                        if (((string)child["iso_3166_1"]).ToLower().Equals("us"))
+                        if (((string) child["iso_3166_1"]).ToLower().Equals("us"))
                         {
-                            MPAA = (string)child["release_dates"][0]["certification"];
+                            MPAA = (string) child["release_dates"][0]["certification"];
                         }
                     }
                     catch
@@ -272,7 +280,8 @@ namespace Flexx.Media.Objects.Extras
             EpisodeModel next = null;
             foreach (EpisodeModel e in season.Episodes)
             {
-                if (!e.Downloaded || user.GetHasWatched(e)) continue;
+                if (!e.Downloaded || user.GetHasWatched(e))
+                    continue;
                 next = e;
                 break;
             }
@@ -280,7 +289,8 @@ namespace Flexx.Media.Objects.Extras
             {
                 foreach (EpisodeModel e in season.Episodes)
                 {
-                    if (!e.Downloaded) continue;
+                    if (!e.Downloaded)
+                        continue;
                     next = e;
                     break;
                 }
@@ -298,10 +308,10 @@ namespace Flexx.Media.Objects.Extras
 
         public SeasonObject(string json)
         {
-            JObject result = (JObject)JsonConvert.DeserializeObject(json);
-            Name = (string)result["name"];
-            Plot = (string)result["overview"];
-            if (DateTime.TryParse((string)result["air_date"], out DateTime date))
+            JObject result = (JObject) JsonConvert.DeserializeObject(json);
+            Name = (string) result["name"];
+            Plot = (string) result["overview"];
+            if (DateTime.TryParse((string) result["air_date"], out DateTime date))
             {
                 ReleaseDate = date;
             }
@@ -309,12 +319,12 @@ namespace Flexx.Media.Objects.Extras
             Watched = false;
             if (result["episode_count"] != null)
             {
-                Episodes = int.TryParse((string)result["episode_count"], out int episode) ? episode : 0;
+                Episodes = int.TryParse((string) result["episode_count"], out int episode) ? episode : 0;
             }
 
             if (result["season_number"] != null)
             {
-                Season = int.TryParse((string)result["season_number"], out int season) ? season : 0;
+                Season = int.TryParse((string) result["season_number"], out int season) ? season : 0;
             }
         }
 
@@ -349,7 +359,8 @@ namespace Flexx.Media.Objects.Extras
 
         public SeriesObject(TVModel show, User user)
         {
-            if (show == null) return;
+            if (show == null)
+                return;
             ID = show.TMDB;
             Title = show.Title;
             Plot = show.Plot;
@@ -380,8 +391,10 @@ namespace Flexx.Media.Objects.Extras
                     Episodes += season.Episodes.Count;
                     foreach (var episode in season.Episodes)
                     {
-                        if (next != null) break;
-                        if (!episode.Downloaded || user.GetHasWatched(episode)) continue;
+                        if (next != null)
+                            break;
+                        if (!episode.Downloaded || user.GetHasWatched(episode))
+                            continue;
                         next = episode;
                         break;
                     }
@@ -405,11 +418,11 @@ namespace Flexx.Media.Objects.Extras
 
         public SeriesObject(string json)
         {
-            JObject result = (JObject)JsonConvert.DeserializeObject(json);
-            ID = (string)result["id"];
-            Title = (string)result["name"];
-            Plot = (string)result["overview"];
-            if (DateTime.TryParse((string)result["first_air_date"], out DateTime date))
+            JObject result = (JObject) JsonConvert.DeserializeObject(json);
+            ID = (string) result["id"];
+            Title = (string) result["name"];
+            Plot = (string) result["overview"];
+            if (DateTime.TryParse((string) result["first_air_date"], out DateTime date))
             {
                 ReleaseDate = date;
                 Year = ReleaseDate.Year;
@@ -417,15 +430,14 @@ namespace Flexx.Media.Objects.Extras
 
             Watched = false;
             Added = TvLibraryModel.Instance.GetShowByTMDB(ID) != null && TvLibraryModel.Instance.GetShowByTMDB(ID).Added;
-            Rating = (string)result["vote_average"];
-            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{ID}/content_ratings?api_key={TMDB_API}&language=en-US");
-            if (jresult != null)
+            Rating = (string) result["vote_average"];
+            if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/tv/{ID}/content_ratings?api_key={TMDB_API}&language=en-US", out JObject jresult))
             {
-                foreach (JToken token in (JArray)((JObject)jresult)["results"])
+                foreach (JToken token in (JArray) jresult["results"])
                 {
-                    if (((string)token["iso_3166_1"]).Equals("US"))
+                    if (((string) token["iso_3166_1"]).Equals("US"))
                     {
-                        MPAA = (string)token["rating"];
+                        MPAA = (string) token["rating"];
                         break;
                     }
                 }

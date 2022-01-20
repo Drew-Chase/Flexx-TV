@@ -34,7 +34,7 @@ namespace Flexx.Media.Objects
             {
                 if (Enum.TryParse(typeof(DiscoveryCategory), metadata.GetConfigByKey("category").Value, out object category))
                 {
-                    Init(metadata.GetConfigByKey("id").Value, true, (DiscoveryCategory)category);
+                    Init(metadata.GetConfigByKey("id").Value, true, (DiscoveryCategory) category);
                 }
             }
         }
@@ -195,11 +195,11 @@ namespace Flexx.Media.Objects
                 return;
             }
 
-            JToken results = ((JObject)JsonConvert.DeserializeObject(json))["results"];
+            JToken results = ((JObject) JsonConvert.DeserializeObject(json))["results"];
             if (results.Any())
             {
                 JToken keyObject = results[0]["key"];
-                string key = (string)keyObject;
+                string key = (string) keyObject;
                 if (!string.IsNullOrWhiteSpace(key))
                 {
                     try
@@ -252,74 +252,83 @@ namespace Flexx.Media.Objects
             if (Metadata == null)
             {
                 string path = Path.Combine(Metadata_Directory, "metadata");
-                if (File.Exists(path)) File.Delete(path);
+                if (File.Exists(path))
+                    File.Delete(path);
                 Metadata = new(path);
             }
             log.Debug($"Getting metadata for {TMDB}");
             ScannedDate = DateTime.Now;
-            JObject json = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}?api_key={TMDB_API}");
-            JObject imagesJson = (JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}/images?api_key={TMDB_API}&include_image_language=en");
-            if (imagesJson["backdrops"].Any())
+            if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}?api_key={TMDB_API}", out JObject json))
             {
-                CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
-            }
+                if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}/images?api_key={TMDB_API}&include_image_language=en", out JObject imagesJson))
+                {
+                    if (imagesJson["backdrops"].Any())
+                    {
+                        CoverImageWithLanguage = $"https://image.tmdb.org/t/p/original{imagesJson["backdrops"][0]["file_path"]}";
+                    }
 
-            if (imagesJson["logos"].Any())
-            {
-                LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
-            }
+                    if (imagesJson["logos"].Any())
+                    {
+                        LogoImage = $"https://image.tmdb.org/t/p/original{imagesJson["logos"][0]["file_path"]}";
+                    }
+                }
 
-            if (!string.IsNullOrWhiteSpace((string)json["poster_path"]))
-            {
-                PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
-            }
+                if (!string.IsNullOrWhiteSpace((string) json["poster_path"]))
+                {
+                    PosterImage = $"https://image.tmdb.org/t/p/original{json["poster_path"]}";
+                }
 
-            if (!string.IsNullOrWhiteSpace((string)json["backdrop_path"]))
-                CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
+                if (!string.IsNullOrWhiteSpace((string) json["backdrop_path"]))
+                    CoverImage = $"https://image.tmdb.org/t/p/original{json["backdrop_path"]}";
 
-            if (DateTime.TryParse((string)json["release_date"], out DateTime tmp))
-            {
-                ReleaseDate = tmp;
-            }
+                if (DateTime.TryParse((string) json["release_date"], out DateTime tmp))
+                {
+                    ReleaseDate = tmp;
+                }
 
-            Title = (string)json["title"];
-            Plot = (string)json["overview"];
-            try
-            {
-                Rating = (sbyte)(decimal.Parse((string)json["vote_average"]) * 10);
-            }
-            catch
-            {
-            }
-            foreach (JToken child in ((JObject)Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}/release_dates?api_key={TMDB_API}"))["results"].Children().ToList())
-            {
+                Title = (string) json["title"];
+                Plot = (string) json["overview"];
                 try
                 {
-                    if (((string)child["iso_3166_1"]).ToLower().Equals("us"))
-                    {
-                        MPAA = (string)child["release_dates"][0]["certification"];
-                    }
+                    Rating = (sbyte) (decimal.Parse((string) json["vote_average"]) * 10);
                 }
                 catch
                 {
-                    continue;
                 }
-            }
-            Metadata.Add("id", TMDB);
-            Metadata.Add("title", Title);
-            Metadata.Add("plot", Plot);
-            Metadata.Add("category", Category.ToString());
-            if (Rating != 0)
-            {
-                Metadata.Add("rating", Rating);
-            }
+                if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{TMDB}/release_dates?api_key={TMDB_API}", out JObject dates))
+                {
+                    foreach (JToken child in dates["results"].Children().ToList())
+                    {
+                        try
+                        {
+                            if (((string) child["iso_3166_1"]).ToLower().Equals("us"))
+                            {
+                                MPAA = (string) child["release_dates"][0]["certification"];
+                            }
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+                    }
+                }
 
-            Metadata.Add("release_date", ReleaseDate.ToString("MM-dd-yyyy"));
-            Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
-            Metadata.Add("stills_generated", false);
-            if (!string.IsNullOrWhiteSpace(MPAA))
-            {
-                Metadata.Add("mpaa", MPAA);
+                Metadata.Add("id", TMDB);
+                Metadata.Add("title", Title);
+                Metadata.Add("plot", Plot);
+                Metadata.Add("category", Category.ToString());
+                if (Rating != 0)
+                {
+                    Metadata.Add("rating", Rating);
+                }
+
+                Metadata.Add("release_date", ReleaseDate.ToString("MM-dd-yyyy"));
+                Metadata.Add("scanned_date", ScannedDate.ToString("MM-dd-yyyy"));
+                Metadata.Add("stills_generated", false);
+                if (!string.IsNullOrWhiteSpace(MPAA))
+                {
+                    Metadata.Add("mpaa", MPAA);
+                }
             }
         }
 
@@ -329,88 +338,110 @@ namespace Flexx.Media.Objects
 
         private void Init(string initializer, bool isTMDB, DiscoveryCategory Category)
         {
-            this.Category = Category;
-            if (isTMDB)
+            try
             {
-                TMDB = initializer;
-            }
-            else
-            {
-                PATH = initializer;
-                Downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
-                if (Downloaded)
+                this.Category = Category;
+                if (isTMDB)
                 {
-                    MediaInfo = FFmpeg.GetMediaInfo(PATH).Result;
-                    FullDuration = $"{MediaInfo.Duration.Hours}h {MediaInfo.Duration.Minutes}m";
-                }
-
-                Torrent torrent = new(FileName);
-                string query = torrent.Name.Replace($".{torrent.Container}", "").Replace($"({torrent.Year})", "");
-                string url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}&year={torrent.Year}";
-                JArray results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
-                if (results.Children().Any())
-                {
-                    TMDB = (string)results[0]["id"];
+                    TMDB = initializer;
                 }
                 else
                 {
-                    url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}";
-                    results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
-                    if (results.Children().Any())
+                    PATH = initializer;
+                    Downloaded = !string.IsNullOrWhiteSpace(PATH) && File.Exists(PATH);
+                    if (Downloaded)
                     {
-                        TMDB = (string)results[0]["id"];
+                        MediaInfo = FFmpeg.GetMediaInfo(PATH).Result;
+                        FullDuration = $"{MediaInfo.Duration.Hours}h {MediaInfo.Duration.Minutes}m";
                     }
-                    else
+
+                    Torrent torrent = new(FileName);
+                    string query = torrent.Name.Replace($".{torrent.Container}", "").Replace($"({torrent.Year})", "");
+                    try
                     {
-                        url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}&year={torrent.Year}";
-                        results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
-                        if (results.Children().Any())
+                        if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}&year={torrent.Year}", out JObject tmp))
                         {
-                            TMDB = (string)results[0]["id"];
-                        }
-                        else
-                        {
-                            url = $"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}";
-                            results = (JArray)((JObject)Functions.GetJsonObjectFromURL(url))["results"];
+                            JArray results = (JArray) tmp["results"];
                             if (results.Children().Any())
                             {
-                                TMDB = (string)results[0]["id"];
+                                TMDB = (string) results[0]["id"];
+                            }
+                            else
+                            {
+                                if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}", out tmp))
+                                {
+                                    results = (JArray) tmp["results"];
+                                    if (results.Children().Any())
+                                    {
+                                        TMDB = (string) results[0]["id"];
+                                    }
+                                    else
+                                    {
+                                        if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}&year={torrent.Year}", out tmp))
+                                        {
+                                            results = (JArray) tmp["results"];
+                                            if (results.Children().Any())
+                                            {
+                                                TMDB = (string) results[0]["id"];
+                                            }
+                                            else
+                                            {
+                                                if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={torrent.Title}", out tmp))
+                                                {
+                                                    results = (JArray) tmp["results"];
+                                                    if (results.Children().Any())
+                                                    {
+                                                        TMDB = (string) results[0]["id"];
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
-                }
+                    catch (Exception e)
+                    {
+                        log.Error($"Had trouble retrieving id from The Movie Database\nurl: https://api.themoviedb.org/3/search/movie?api_key={TMDB_API}&query={query}", e);
+                    }
 
-                if (string.IsNullOrWhiteSpace(TMDB))
-                {
-                    MovieLibraryModel.Instance.RemoveMedia(this);
-                    return;
+                    if (string.IsNullOrWhiteSpace(TMDB))
+                    {
+                        MovieLibraryModel.Instance.RemoveMedia(this);
+                        return;
+                    }
                 }
+                if (Metadata == null)
+                {
+                    Metadata_Directory = Path.Combine(Paths.MovieData, TMDB);
+                    try
+                    {
+                        Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false);
+                    }
+                    catch (Exception e)
+                    {
+                        log.Fatal("Had Trouble setting metadata", e);
+                        UpdateMetaData();
+                        Cast = new("movie", TMDB);
+                        return;
+                    }
+                }
+                Metadata.Add("coverLanguage", "");
+                Metadata.Add("logo", "");
+                Metadata.Add("poster", "");
+                Metadata.Add("cover", "");
+                LoadMetaData();
+                if (Downloaded)
+                {
+                    AlternativeVersions = Transcoder.GetAcceptableVersions(this);
+                }
+                Cast = new("movie", TMDB);
             }
-            if (Metadata == null)
+            catch (Exception e)
             {
-                Metadata_Directory = Path.Combine(Paths.MovieData, TMDB);
-                try
-                {
-                    Metadata = new(Path.Combine(Metadata_Directory, "metadata"), false);
-                }
-                catch (Exception e)
-                {
-                    log.Fatal("Had Trouble setting metadata", e);
-                    UpdateMetaData();
-                    Cast = new("movie", TMDB);
-                    return;
-                }
+                log.Error($"Had trouble initializing MovieModel with ID of {TMDB}", e);
             }
-            Metadata.Add("coverLanguage", "");
-            Metadata.Add("logo", "");
-            Metadata.Add("poster", "");
-            Metadata.Add("cover", "");
-            LoadMetaData();
-            if (Downloaded)
-            {
-                AlternativeVersions = Transcoder.GetAcceptableVersions(this);
-            }
-            Cast = new("movie", TMDB);
         }
 
         private void LoadMetaData()
@@ -439,7 +470,7 @@ namespace Flexx.Media.Objects
                     catch { }
                     ReleaseDate = DateTime.Parse(Metadata.GetConfigByKey("release_date").Value);
                     ScannedDate = DateTime.Parse(Metadata.GetConfigByKey("scanned_date").Value);
-                    Category = Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object value) ? (DiscoveryCategory)value : DiscoveryCategory.None;
+                    Category = Enum.TryParse(typeof(DiscoveryCategory), Metadata.GetConfigByKey("category").Value, out object value) ? (DiscoveryCategory) value : DiscoveryCategory.None;
                 }
                 catch
                 {
