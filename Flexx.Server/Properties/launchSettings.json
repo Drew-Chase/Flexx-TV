@@ -9,7 +9,7 @@
   "profiles": {
     "Web Server with Console": {
       "commandName": "Project",
-      "commandLineArgs": "-show",
+      "commandLineArgs": "",
       "nativeDebugging": true
     },
     "Web Server Add to Firewall": {
