@@ -220,7 +220,7 @@ function LoadEvents() {
 async function LoadFS(e, d = "") {
     let data = new FormData();
     data.append("dir", d)
-    let response = await fetch("/settings/fs", { method: 'POST', body: data })
+    let response = await fetch("/api/settings/fs", { method: 'POST', body: data })
     let json = await response.json();
     e.dataset.cd = json.cd;
     let fs = e.querySelector(".fs")
