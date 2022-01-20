@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<RootNamespace>Flexx.Server</RootNamespace>
-		<AssemblyName>Flexx Media Server</AssemblyName>
+		<AssemblyName>fms_console</AssemblyName>
 		<OutputType>Exe</OutputType>
 		<ApplicationIcon>favicon.ico</ApplicationIcon>
 	</PropertyGroup>
