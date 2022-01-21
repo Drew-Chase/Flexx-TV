@@ -38,7 +38,7 @@ namespace Flexx.Data
                     new ("Running Network Initialization Event", ()=> Firewall.OpenPort(config.ApiPort).Wait()),
                     new("Initializing Command Engine", () => CommandEngine.Run()),
                 };
-
+                DateTime start = DateTime.Now;
                 for (int i = 0; i < steps.Length; i++)
                 {
                     log.Warn($"{steps[i].Name} ({i + 1}/{steps.Length})...");
@@ -48,6 +48,7 @@ namespace Flexx.Data
 
                     steps[i].Action.Invoke();
                 }
+                log.Info($"FlexxTV is Fully active! Startup Process took {(DateTime.Now - start).TotalSeconds}s");
             });
         }
 
@@ -64,6 +65,8 @@ namespace Flexx.Data
             new ("help", "Displays this message.", ()=>CommandHelp()),
             new ("clear", "Clears console window.", ()=>Console.Clear()),
             new ("list-streams", "Will list all active streams along with their stream info.", ()=>log.Error($"This Command has no functionality yet...")),
+            new ("restart", "Will Restart the application.", ()=>Functions.RestartApplication()),
+            new ("exit", "Will Exit the application.", ()=>Functions.ExitApplication()),
             new ("list-movies", "Will list all downloaded and added movies.", ()=>
                 {
                     foreach (var movie in MovieLibraryModel.Instance.GetLocalList(Users.Instance.GetGuestUser()))
