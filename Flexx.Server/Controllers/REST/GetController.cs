@@ -107,18 +107,18 @@ namespace Flexx.Server.Controllers
                         {
                             if (media.GetType().Equals(typeof(MovieModel)))
                             {
-                                list.Add(new MovieObject((MovieModel)media, user));
+                                list.Add(new MovieObject((MovieModel) media, user));
                             }
                             else if (media.GetType().Equals(typeof(EpisodeModel)))
                             {
-                                list.Add(new EpisodeObject((EpisodeModel)media, user));
+                                list.Add(new EpisodeObject((EpisodeModel) media, user));
                             }
                         }
                         return new(list);
                     }
                     else if (Enum.TryParse(typeof(DiscoveryCategory), category, out object cat))
                     {
-                        DiscoveryCategory discoveryCategory = (DiscoveryCategory)cat;
+                        DiscoveryCategory discoveryCategory = (DiscoveryCategory) cat;
                         if (library.Equals("movie"))
                         {
                             results = MovieLibraryModel.Instance.Discover(user, discoveryCategory);
@@ -163,12 +163,10 @@ namespace Flexx.Server.Controllers
             {
                 if (!string.IsNullOrWhiteSpace(library) || !string.IsNullOrWhiteSpace(id) || !string.IsNullOrWhiteSpace(type))
                 {
-                    object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(season.HasValue ? $"/season/{season.Value}{(episode.HasValue ? $"/episode/{episode.Value}" : "")}" : "")}/images?api_key={TMDB_API}{(language.GetValueOrDefault(false) ? $"&include_image_language={config.LanguagePreference}" : "")}");
                     JArray images;
                     string key = "";
-                    if (obj != null)
+                    if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(season.HasValue ? $"/season/{season.Value}{(episode.HasValue ? $"/episode/{episode.Value}" : "")}" : "")}/images?api_key={TMDB_API}{(language.GetValueOrDefault(false) ? $"&include_image_language={config.LanguagePreference}" : "")}", out JObject json))
                     {
-                        JObject json = (JObject)obj;
                         if (library.Equals("movie"))
                         {
                             var movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
@@ -176,10 +174,10 @@ namespace Flexx.Server.Controllers
                             {
                                 if (type.Equals("poster"))
                                 {
-                                    images = (JArray)json["posters"];
+                                    images = (JArray) json["posters"];
                                     if (images.Any())
                                     {
-                                        key = (string)images[0]["file_path"];
+                                        key = (string) images[0]["file_path"];
                                     }
                                     else
                                     {
@@ -188,10 +186,10 @@ namespace Flexx.Server.Controllers
                                 }
                                 else if (type.Equals("cover"))
                                 {
-                                    images = (JArray)json["backdrops"];
+                                    images = (JArray) json["backdrops"];
                                     if (images.Any())
                                     {
-                                        key = (string)images[0]["file_path"];
+                                        key = (string) images[0]["file_path"];
                                     }
                                     else
                                     {
@@ -200,10 +198,10 @@ namespace Flexx.Server.Controllers
                                 }
                                 else if (type.Equals("logo"))
                                 {
-                                    images = (JArray)json["logos"];
+                                    images = (JArray) json["logos"];
                                     if (images.Any())
                                     {
-                                        key = (string)images[0]["file_path"];
+                                        key = (string) images[0]["file_path"];
                                     }
                                     else
                                     {
@@ -296,14 +294,14 @@ namespace Flexx.Server.Controllers
                                             }
                                             else
                                             {
-                                                images = (JArray)json["stills"];
+                                                images = (JArray) json["stills"];
                                                 if (!images.Any())
                                                 {
                                                     return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                                 }
                                                 else
                                                 {
-                                                    key = (string)images[0]["file_path"];
+                                                    key = (string) images[0]["file_path"];
                                                 }
                                             }
                                         }
@@ -390,48 +388,48 @@ namespace Flexx.Server.Controllers
                                 {
                                     if (episode.HasValue)
                                     {
-                                        images = (JArray)json["stills"];
+                                        images = (JArray) json["stills"];
                                         if (!images.Any())
                                         {
                                             return File(new FileStream(Paths.MissingCover, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                         }
                                         else
                                         {
-                                            key = (string)images[0]["file_path"];
+                                            key = (string) images[0]["file_path"];
                                         }
                                     }
                                     else
                                     {
-                                        images = (JArray)json["posters"];
+                                        images = (JArray) json["posters"];
                                         if (!images.Any())
                                         {
                                             return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                         }
                                         else
                                         {
-                                            key = (string)images[0]["file_path"];
+                                            key = (string) images[0]["file_path"];
                                         }
                                     }
                                 }
                                 else
                                 {
-                                    images = (JArray)json["posters"];
+                                    images = (JArray) json["posters"];
                                     if (!images.Any())
                                     {
                                         return File(new FileStream(Paths.MissingPoster, FileMode.Open, FileAccess.Read, FileShare.Read), "image/png");
                                     }
                                     else
                                     {
-                                        key = (string)images[0]["file_path"];
+                                        key = (string) images[0]["file_path"];
                                     }
                                 }
                             }
                             else if (type.Equals("cover"))
                             {
-                                images = (JArray)json["backdrops"];
+                                images = (JArray) json["backdrops"];
                                 if (images.Any())
                                 {
-                                    key = (string)images[0]["file_path"];
+                                    key = (string) images[0]["file_path"];
                                 }
                                 else
                                 {
@@ -440,10 +438,10 @@ namespace Flexx.Server.Controllers
                             }
                             else if (type.Equals("logo"))
                             {
-                                images = (JArray)json["logos"];
+                                images = (JArray) json["logos"];
                                 if (images.Any())
                                 {
-                                    key = (string)images[0]["file_path"];
+                                    key = (string) images[0]["file_path"];
                                 }
                                 else
                                 {
@@ -465,319 +463,6 @@ namespace Flexx.Server.Controllers
                 return BadRequest();
             }
         }
-
-        /*
-        public IActionResult Images(string id, string library, string type, bool? language, int? season, int? episode)
-        {
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(library) || !string.IsNullOrWhiteSpace(id) || !string.IsNullOrWhiteSpace(type))
-                {
-                    object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(season.HasValue ? $"/season/{season.Value}{(episode.HasValue ? $"/episode/{episode.Value}" : "")}" : "")}/images?api_key={TMDB_API}{(language.GetValueOrDefault(false) ? $"&include_image_language={config.LanguagePreference}" : "")}");
-                    JArray images;
-                    string key = "";
-                    if (obj != null)
-                    {
-                        JObject json = (JObject)obj;
-                        if (library.Equals("movie"))
-                        {
-                            var movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
-                            if (movie == null)
-                            {
-                                if (type.Equals("poster"))
-                                {
-                                    images = (JArray)json["posters"];
-                                    if (images.Any())
-                                    {
-                                        key = (string)images[0]["file_path"];
-                                    }
-                                    else
-                                    {
-                                        return new JsonResult(new { @base = Paths.MissingPoster });
-                                    }
-                                }
-                                else if (type.Equals("cover"))
-                                {
-                                    images = (JArray)json["backdrops"];
-                                    if (images.Any())
-                                    {
-                                        key = (string)images[0]["file_path"];
-                                    }
-                                    else
-                                    {
-                                        return new JsonResult(new { @base = Paths.MissingCover });
-                                    }
-                                }
-                                else if (type.Equals("logo"))
-                                {
-                                    images = (JArray)json["logos"];
-                                    if (images.Any())
-                                    {
-                                        key = (string)images[0]["file_path"];
-                                    }
-                                    else
-                                    {
-                                        return NotFound();
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (type.Equals("poster"))
-                                {
-                                    if (!string.IsNullOrWhiteSpace(movie.PosterImage))
-                                    {
-                                        return new JsonResult(new { @base = movie.PosterImage });
-                                    }
-                                    else
-                                    {
-                                        return new JsonResult(new { @base = Paths.MissingPoster });
-                                    }
-                                }
-                                else if (type.Equals("cover"))
-                                {
-                                    if (language.GetValueOrDefault(false))
-                                    {
-                                        if (!string.IsNullOrWhiteSpace(movie.CoverImageWithLanguage))
-                                        {
-                                            return new JsonResult(new { @base = movie.CoverImageWithLanguage });
-                                        }
-                                        else
-                                        {
-                                            return Images(id, library, type, false, season, episode);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (!string.IsNullOrWhiteSpace(movie.CoverImage))
-                                        {
-                                            return new JsonResult(new { @base = movie.CoverImage });
-                                        }
-                                        else
-                                        {
-                                            return new JsonResult(new { @base = Paths.MissingCover });
-                                        }
-                                    }
-                                }
-                                else if (type.Equals("logo"))
-                                {
-                                    if (!string.IsNullOrWhiteSpace(movie.LogoImage))
-                                    {
-                                        return new JsonResult(new { @base = movie.LogoImage });
-                                    }
-                                    else
-                                    {
-                                        return NotFound();
-                                    }
-                                }
-                                else if (type.Equals("stills"))
-                                {
-                                    if (movie.Stills != null)
-                                    {
-                                        return new JsonResult(new { movie.Stills });
-                                    }
-                                    return Images(id, library, "cover", false, season, episode);
-                                }
-                            }
-                        }
-                        else if (library.Equals("tv"))
-                        {
-                            TVModel tvModel = TvLibraryModel.Instance.GetShowByTMDB(id);
-                            SeasonModel seasonModel;
-                            EpisodeModel episodeModel;
-                            if (tvModel != null)
-                            {
-                                if (type.Equals("poster"))
-                                {
-                                    if (season.HasValue)
-                                    {
-                                        seasonModel = tvModel.GetSeasonByNumber(season.Value);
-                                        if (episode.HasValue)
-                                        {
-                                            if (tvModel.Added)
-                                            {
-                                                episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
-                                                if (episodeModel != null && !string.IsNullOrWhiteSpace(episodeModel.PosterImage))
-                                                {
-                                                    return new JsonResult(new { @base = episodeModel.PosterImage });
-                                                }
-                                                else
-                                                {
-                                                    return BadRequest();
-                                                }
-                                            }
-                                            else
-                                            {
-                                                images = (JArray)json["stills"];
-                                                if (!images.Any())
-                                                {
-                                                    return new JsonResult(new { @base = Paths.MissingCover });
-                                                }
-                                                else
-                                                {
-                                                    key = (string)images[0]["file_path"];
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(seasonModel.PosterImage))
-                                            {
-                                                return new JsonResult(new { @base = seasonModel.PosterImage });
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (!string.IsNullOrWhiteSpace(tvModel.PosterImage))
-                                        {
-                                            return new JsonResult(new { @base = tvModel.PosterImage });
-                                        }
-                                    }
-                                }
-                                else if (type.Equals("cover"))
-                                {
-                                    if (season.HasValue)
-                                    {
-                                        seasonModel = tvModel.GetSeasonByNumber(season.Value);
-                                        if (episode.HasValue)
-                                        {
-                                            episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
-                                            if (episodeModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage))
-                                            {
-                                                return new JsonResult(new { @base = tvModel.CoverImage });
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage))
-                                            {
-                                                return new JsonResult(new { @base = tvModel.CoverImage });
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (!string.IsNullOrWhiteSpace(tvModel.CoverImage))
-                                        {
-                                            return new JsonResult(new { @base = tvModel.CoverImage });
-                                        }
-                                    }
-                                }
-                                else if (type.Equals("logo"))
-                                {
-                                    if (!string.IsNullOrWhiteSpace(tvModel.LogoImage))
-                                    {
-                                        return new JsonResult(new { @base = tvModel.LogoImage });
-                                    }
-                                }
-                                else if (type.Equals("stills"))
-                                {
-                                    if (season.HasValue)
-                                    {
-                                        seasonModel = tvModel.GetSeasonByNumber(season.Value);
-                                        if (episode.HasValue)
-                                        {
-                                            episodeModel = seasonModel.GetEpisodeByNumber(episode.Value);
-                                            if (episodeModel != null)
-                                            {
-                                                if (episodeModel.Stills != null)
-                                                    return new JsonResult(new { @base = episodeModel.Stills });
-                                                return Images(id, library, "cover", false, season, episode);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (seasonModel != null && !string.IsNullOrWhiteSpace(tvModel.CoverImage) && System.IO.File.Exists(tvModel.CoverImage))
-                                            {
-                                                return new JsonResult(new { @base = tvModel.CoverImage });
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            if (type.Equals("poster"))
-                            {
-                                if (season.HasValue)
-                                {
-                                    if (episode.HasValue)
-                                    {
-                                        images = (JArray)json["stills"];
-                                        if (!images.Any())
-                                        {
-                                            return new JsonResult(new { @base = Paths.MissingCover });
-                                        }
-                                        else
-                                        {
-                                            key = (string)images[0]["file_path"];
-                                        }
-                                    }
-                                    else
-                                    {
-                                        images = (JArray)json["posters"];
-                                        if (!images.Any())
-                                        {
-                                            return new JsonResult(new { @base = Paths.MissingPoster });
-                                        }
-                                        else
-                                        {
-                                            key = (string)images[0]["file_path"];
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    images = (JArray)json["posters"];
-                                    if (!images.Any())
-                                    {
-                                        return new JsonResult(new { @base = Paths.MissingPoster });
-                                    }
-                                    else
-                                    {
-                                        key = (string)images[0]["file_path"];
-                                    }
-                                }
-                            }
-                            else if (type.Equals("cover"))
-                            {
-                                images = (JArray)json["backdrops"];
-                                if (images.Any())
-                                {
-                                    key = (string)images[0]["file_path"];
-                                }
-                                else
-                                {
-                                    return new JsonResult(new { @base = Paths.MissingCover });
-                                }
-                            }
-                            else if (type.Equals("logo"))
-                            {
-                                images = (JArray)json["logos"];
-                                if (images.Any())
-                                {
-                                    key = (string)images[0]["file_path"];
-                                }
-                                else
-                                {
-                                    return NotFound();
-                                }
-                            }
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(key))
-                        {
-                            return File(new HttpClient().GetAsync($"https://image.tmdb.org/t/p/original{key}").Result.Content.ReadAsStream(), "image/png");
-                        }
-                    }
-                }
-                return new JsonResult(new { @base = Paths.MissingCover });
-            }
-            catch
-            {
-                return BadRequest();
-            }
-        }
-        */
 
         /// <summary>
         /// Will retrieve All <b> <u> <see cref="MovieObject"> Movies </see></u></b>, <b> <u> <see
@@ -803,58 +488,63 @@ namespace Flexx.Server.Controllers
                     }
                     else
                     {
-                        object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(library.Equals("tv") ? (season.HasValue ? $"/season/{season.Value}" : "") : "")}?api_key={TMDB_API}");
-                        if (obj == null) return new(new { });
-                        if (library.Equals("tv"))
+                        if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(library.Equals("tv") ? (season.HasValue ? $"/season/{season.Value}" : "") : "")}?api_key={TMDB_API}", out JObject obj))
                         {
-                            TVModel tvModel = TvLibraryModel.Instance.GetShowByTMDB(id);
-                            if (!season.HasValue)
+                            if (library.Equals("tv"))
                             {
-                                // Get Show Seasons
-                                List<SeasonObject> seasons = new();
-                                if (tvModel == null || !tvModel.Added)
+                                TVModel tvModel = TvLibraryModel.Instance.GetShowByTMDB(id);
+                                if (!season.HasValue)
                                 {
-                                    if (obj != null)
+                                    // Get Show Seasons
+                                    List<SeasonObject> seasons = new();
+                                    if (tvModel == null || !tvModel.Added)
                                     {
-                                        foreach (var json in (JArray)((JToken)obj)["seasons"])
+                                        if (obj != null)
                                         {
-                                            seasons.Add(new(JsonConvert.SerializeObject(json)));
+                                            foreach (var json in (JArray) ((JToken) obj)["seasons"])
+                                            {
+                                                seasons.Add(new(JsonConvert.SerializeObject(json)));
+                                            }
                                         }
                                     }
+                                    else
+                                    {
+                                        foreach (SeasonModel seasonModel in tvModel.Seasons)
+                                        {
+                                            seasons.Add(new(seasonModel, user));
+                                        }
+                                    }
+                                    seasons.Sort((x, y) => x.Season.CompareTo(y.Season));
+                                    return new(new { seasons });
                                 }
                                 else
                                 {
-                                    foreach (SeasonModel seasonModel in tvModel.Seasons)
+                                    // Get Seasons Episodes
+                                    List<EpisodeObject> episodes = new();
+                                    if (tvModel == null || !tvModel.Added || (tvModel != null && tvModel.GetSeasonByNumber(season.Value) == null))
                                     {
-                                        seasons.Add(new(seasonModel, user));
-                                    }
-                                }
-                                seasons.Sort((x, y) => x.Season.CompareTo(y.Season));
-                                return new(new { seasons });
-                            }
-                            else
-                            {
-                                // Get Seasons Episodes
-                                List<EpisodeObject> episodes = new();
-                                if (tvModel == null || !tvModel.Added || (tvModel != null && tvModel.GetSeasonByNumber(season.Value) == null))
-                                {
-                                    if (obj != null)
-                                    {
-                                        foreach (var json in (JArray)((JToken)obj)["episodes"])
+                                        if (obj != null)
                                         {
-                                            episodes.Add(new(JsonConvert.SerializeObject(json)));
+                                            foreach (var json in (JArray) ((JToken) obj)["episodes"])
+                                            {
+                                                episodes.Add(new(JsonConvert.SerializeObject(json)));
+                                            }
                                         }
                                     }
-                                }
-                                else
-                                {
-                                    foreach (var episodeModel in tvModel.GetSeasonByNumber(season.Value).Episodes)
+                                    else
                                     {
-                                        episodes.Add(new(episodeModel, user));
+                                        foreach (var episodeModel in tvModel.GetSeasonByNumber(season.Value).Episodes)
+                                        {
+                                            episodes.Add(new(episodeModel, user));
+                                        }
                                     }
+                                    return new(new { episodes });
                                 }
-                                return new(new { episodes });
                             }
+                        }
+                        else
+                        {
+                            return new(new { });
                         }
                     }
                 }
@@ -872,9 +562,7 @@ namespace Flexx.Server.Controllers
         /// <param name="id">       the TMDB ID of the element </param>
         /// <param name="library">  Either "tv" or "movie" </param>
         /// <param name="username"> leave blank for guest user </param>
-        /// <param name="season">  
-        /// TV Shows Season Number (only use with tv library and id specified)
-        /// </param>
+        /// <param name="season">   TV Shows Season Number (only use with tv library and id specified) </param>
         /// <param name="episode"> 
         /// Seasons Episode Number (only use with tv library, id and season specified)
         /// </param>
@@ -885,9 +573,8 @@ namespace Flexx.Server.Controllers
             try
             {
                 User user = Users.Instance.Get(username);
-                object obj = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(library.Equals("tv") ? (season.HasValue ? $"/season/{season.Value}{(episode.HasValue ? $"/episode/{episode.Value}" : "")}" : "") : "")}?api_key={TMDB_API}");
 
-                if (!string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(library) && obj != null)
+                if (!string.IsNullOrWhiteSpace(id) && !string.IsNullOrWhiteSpace(library) && Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/{library}/{id}{(library.Equals("tv") ? (season.HasValue ? $"/season/{season.Value}{(episode.HasValue ? $"/episode/{episode.Value}" : "")}" : "") : "")}?api_key={TMDB_API}", out JObject obj))
                 {
                     if (library.Equals("tv"))
                     {
@@ -992,7 +679,7 @@ namespace Flexx.Server.Controllers
             if (Enum.TryParse(typeof(NotificationType), type, out object typeObject))
             {
                 User user = Users.Instance.Get(username);
-                user.Notifications.Push(new((NotificationType)typeObject, user, title, message, DateTime.Now, true));
+                user.Notifications.Push(new((NotificationType) typeObject, user, title, message, DateTime.Now, true));
                 return new OkResult();
             }
             return new BadRequestResult();
