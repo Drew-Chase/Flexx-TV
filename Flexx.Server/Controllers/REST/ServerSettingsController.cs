@@ -16,6 +16,12 @@ namespace Flexx.Server.Controllers
     {
         #region Public Methods
 
+        /// <summary>
+        /// Will return JSON interpreted version of the HOST computers file system
+        /// </summary>
+        /// <param name="dir">   </param>
+        /// <param name="movie"> </param>
+        /// <returns> </returns>
         [HttpPost("fs")]
         public JsonResult GetFS([FromForm] string dir, [FromForm] bool? movie)
         {
@@ -46,11 +52,19 @@ namespace Flexx.Server.Controllers
             {
                 return Unauthorized(new { success = false, message = "User is not authorized to view this data" });
             }
-            SonarrRadarrSupport.TestConnection(true, out _);  // Test Radarr
-            SonarrRadarrSupport.TestConnection(false, out _); // Test Sonarr
+            SonarrRadarrSupport.TestConnection();
             return Ok(config);
         }
 
+        /// <summary>
+        /// Sets up Sonarr or Radarr
+        /// </summary>
+        /// <param name="token"> Users authentication token </param>
+        /// <param name="url">   Radarr or Sonarr;s base url </param>
+        /// <param name="key">   Radarr or Sonarr's API Key </param>
+        /// <param name="port">  Radarr or Sonarr's port </param>
+        /// <param name="type">  Radarr or Sonarr </param>
+        /// <returns> </returns>
         [HttpPost("{type}")]
         public IActionResult SetupSonarrRadarr([FromForm] string token, [FromForm] string url, [FromForm] string key, [FromForm] int port, string type)
         {
@@ -87,7 +101,7 @@ namespace Flexx.Server.Controllers
                 {
                     try
                     {
-                        message = (string)JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result)["error"];
+                        message = (string) JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result)["error"];
                     }
                     catch { }
                     if (string.IsNullOrWhiteSpace(message))

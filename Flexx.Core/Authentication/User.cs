@@ -15,6 +15,9 @@ using static Flexx.Data.Global;
 
 namespace Flexx.Authentication;
 
+/// <summary>
+/// All available Flexx Plans
+/// </summary>
 public enum PlanTier
 {
     Free,
@@ -26,10 +29,16 @@ public enum PlanTier
     Hotrod
 }
 
+/// <summary>
+/// This class contains all users currently loaded into memory
+/// </summary>
 public class Users
 {
     #region Public Fields
 
+    /// <summary>
+    /// The singleton pattern used to insure that there is only ever one instance of this class
+    /// </summary>
     public static Users Instance = Instance ?? new Users();
 
     #endregion Public Fields
@@ -47,27 +56,52 @@ public class Users
         Instance = this;
         users = new();
         LoadExisting();
+        if (users.Find(u => u.Username.Equals("guest")) == null)
+            Add("guest");
     }
 
     #endregion Private Constructors
 
+    #region Public Properties
+
+    public bool HasHostUser => users.Find(u => u.IsHost) != null;
+
+    #endregion Public Properties
+
     #region Public Methods
 
+    /// <summary>
+    /// Initializes and Adds user with Username
+    /// </summary>
+    /// <param name="username"> </param>
+    /// <returns> </returns>
     public User Add(string username)
     {
         return Add(new User(username));
     }
 
+    /// <summary>
+    /// Adds already initialized user
+    /// </summary>
+    /// <param name="user"> </param>
+    /// <returns> </returns>
     public User Add(User user)
     {
         users.Add(user);
         return user;
     }
 
+    /// <summary>
+    /// Searches for user by delimiter. If none is found, returns the <see cref="GetGuestUser">
+    /// Guest User </see>
+    /// </summary>
+    /// <param name="delimiter"> Username or Users Token </param>
+    /// <returns> </returns>
     public User Get(string delimiter)
     {
         User value = null;
-        if (string.IsNullOrWhiteSpace(delimiter)) return GetGuestUser();
+        if (string.IsNullOrWhiteSpace(delimiter))
+            return GetGuestUser();
         Parallel.ForEach(users, user =>
         {
             if (user.Username.Equals(delimiter) || user.Token.Equals(delimiter))
@@ -78,6 +112,10 @@ public class Users
         return value ?? Add(delimiter);
     }
 
+    /// <summary>
+    /// Gets the guest user
+    /// </summary>
+    /// <returns> </returns>
     public User GetGuestUser()
     {
         return Get("guest");
@@ -87,6 +125,9 @@ public class Users
 
     #region Private Methods
 
+    /// <summary>
+    /// Loads Already saved users form the <see cref="Paths.UserData"> User Data </see> Directory
+    /// </summary>
     private void LoadExisting()
     {
         log.Debug("Loading UserData");
@@ -129,6 +170,10 @@ public class User
 
         userProfile.Add("isHost", false);
         userProfile.Add("token", "");
+        userProfile.Add("username", "");
+        userProfile.Add("email", "");
+        userProfile.Add("first name", "");
+        userProfile.Add("last name", "");
         Token = userProfile.GetConfigByKey("token").Value;
         IsLocal = string.IsNullOrWhiteSpace(Token);
         LoginWithToken();
@@ -147,6 +192,9 @@ public class User
 
     public string FirstName { get; private set; }
 
+    /// <summary>
+    /// Checks if config value is host is true or not and returns the value
+    /// </summary>
     public bool IsHost { get => userProfile.GetConfigByKey("isHost").Value; set => userProfile.GetConfigByKey("isHost").Value = value; }
 
     public bool IsLocal { get; private set; }
@@ -155,16 +203,27 @@ public class User
 
     public Notifications Notifications { get; }
 
+    /// <summary>
+    /// The users current plan. <br/> Value is populated from <see cref="LoginWithToken"> Remove
+    /// Server </see>
+    /// </summary>
     public PlanTier Plan { get; private set; }
 
+    /// <summary>
+    /// Users token is used for authentication
+    /// </summary>
     public string Token { get; private set; }
 
-    public string Username { get; }
+    public string Username { get; private set; }
 
     #endregion Public Properties
 
     #region Public Methods
 
+    /// <summary>
+    /// Retrieves a list of all movies or episodes that have been started but not finished.
+    /// </summary>
+    /// <returns> </returns>
     public MediaBase[] ContinueWatchingList()
     {
         List<MediaBase> list = new();
@@ -212,6 +271,11 @@ public class User
         return list.ToArray();
     }
 
+    /// <summary>
+    /// Generates a token from users stored username and given password
+    /// </summary>
+    /// <param name="password"> </param>
+    /// <returns> </returns>
     public object GenerateToken(string password)
     {
         if (!string.IsNullOrEmpty(password))
@@ -224,16 +288,16 @@ public class User
             if (response.IsSuccessStatusCode)
             {
                 string content = response.Content.ReadAsStringAsync().Result;
-                JObject json = (JObject)JsonConvert.DeserializeObject(content);
+                JObject json = (JObject) JsonConvert.DeserializeObject(content);
                 if (json.ContainsKey("token"))
                 {
                     try
                     {
-                        Token = (string)json["token"];
-                        FirstName = (string)json["fname"];
-                        LastName = (string)json["lname"];
-                        Email = (string)json["email"];
-                        Plan = Enum.TryParse(typeof(PlanTier), (string)json["plan"], out object planTier) ? (PlanTier)planTier : PlanTier.Free;
+                        Token = (string) json["token"];
+                        FirstName = (string) json["fname"];
+                        LastName = (string) json["lname"];
+                        Email = (string) json["email"];
+                        Plan = Enum.TryParse(typeof(PlanTier), (string) json["plan"], out object planTier) ? (PlanTier) planTier : PlanTier.Free;
                         userProfile.GetConfigByKey("token").Value = Token;
                         IsLocal = false;
                         return new
@@ -249,14 +313,25 @@ public class User
                 {
                     return new
                     {
-                        error = (string)json["error"]
+                        error = (string) json["error"]
                     };
                 }
             }
         }
-        return null;
+        return new
+        {
+            error = "Unable to connect to authentication server"
+        };
     }
 
+    /// <summary>
+    /// Gets rather a specified <see cref="MovieModel"> Movie </see> or <see cref="EpisodeModel">
+    /// Episode </see> has been watched or not
+    /// </summary>
+    /// <param name="media">
+    /// <see cref="MovieModel"> Movie </see> or <see cref="EpisodeModel"> Episode </see>
+    /// </param>
+    /// <returns> </returns>
     public bool GetHasWatched(MediaBase media)
     {
         string key = "";
@@ -266,7 +341,7 @@ public class User
         }
         else if (media.GetType().Equals(typeof(EpisodeModel)))
         {
-            EpisodeModel episode = (EpisodeModel)media;
+            EpisodeModel episode = (EpisodeModel) media;
             key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
         }
 
@@ -288,6 +363,14 @@ public class User
         }
     }
 
+    /// <summary>
+    /// Gets the time in seconds that a <see cref="MovieModel"> Movie </see> or <see
+    /// cref="EpisodeModel"> Episode </see> was watched until
+    /// </summary>
+    /// <param name="media">
+    /// <see cref="MovieModel"> Movie </see> or <see cref="EpisodeModel"> Episode </see>
+    /// </param>
+    /// <returns> </returns>
     public ushort GetWatchedDuration(MediaBase media)
     {
         string key = "";
@@ -297,7 +380,7 @@ public class User
         }
         else if (media.GetType().Equals(typeof(EpisodeModel)))
         {
-            EpisodeModel episode = (EpisodeModel)media;
+            EpisodeModel episode = (EpisodeModel) media;
             key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
         }
 
@@ -311,7 +394,7 @@ public class User
             ChaseLabs.CLConfiguration.Object.Config cfg = userProfile.GetConfigByKey(key);
             if (cfg == null)
             {
-                userProfile.Add(key, (ushort)0);
+                userProfile.Add(key, (ushort) 0);
                 return 0;
             }
             WatchedDuration.Add(key, cfg.Value);
@@ -319,31 +402,21 @@ public class User
         }
     }
 
+    /// <summary>
+    /// Checks if a user has specified plan or higher
+    /// </summary>
+    /// <param name="plan"> Plan required </param>
+    /// <returns> </returns>
     public bool IsAuthorized(PlanTier plan = PlanTier.Free) => !string.IsNullOrWhiteSpace(Token) && plan >= Plan;
 
-    public void RemoveFromContinueWatching(MediaBase media)
-    {
-        if (media != null)
-        {
-            string name = "";
-            if (media.GetType().Equals(typeof(MovieModel)))
-            {
-                name = $"m_{media.TMDB}";
-            }
-            else if (media.GetType().Equals(typeof(EpisodeModel)))
-            {
-                EpisodeModel episode = (EpisodeModel)media;
-                name = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
-            }
-            if (!string.IsNullOrEmpty(name))
-            {
-                name += "-continue-watching";
-                ContinueWatching.Remove(name);
-                userProfile.Remove(name);
-            }
-        }
-    }
-
+    /// <summary>
+    /// Marks <see cref="MovieModel"> Movie </see> or <see cref="EpisodeModel"> Episode </see> as
+    /// watched or not.
+    /// </summary>
+    /// <param name="media">  
+    /// <see cref="MovieModel"> Movie </see> or <see cref="EpisodeModel"> Episode </see>
+    /// </param>
+    /// <param name="watched"> </param>
     public void SetHasWatched(MediaBase media, bool watched)
     {
         string key = "";
@@ -353,7 +426,7 @@ public class User
         }
         else if (media.GetType().Equals(typeof(EpisodeModel)))
         {
-            EpisodeModel episode = (EpisodeModel)media;
+            EpisodeModel episode = (EpisodeModel) media;
             key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
         }
 
@@ -379,30 +452,12 @@ public class User
         }
     }
 
-    public void SetToContinueWatching(MediaBase media)
-    {
-        if (media != null)
-        {
-            string name = "";
-            DateTime time = DateTime.Now;
-            if (media.GetType().Equals(typeof(MovieModel)))
-            {
-                name = $"m_{media.TMDB}";
-            }
-            else if (media.GetType().Equals(typeof(EpisodeModel)))
-            {
-                EpisodeModel episode = (EpisodeModel)media;
-                name = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
-            }
-            if (!string.IsNullOrEmpty(name))
-            {
-                name += "-continue-watching";
-                ContinueWatching.Add(name, time);
-                userProfile.Add(name, time.ToString("MM/dd/yyyy-HH:mm:ss:ff"));
-            }
-        }
-    }
-
+    /// <summary>
+    /// Sets the time in seconds that a <see cref="MovieModel"> Movie </see> or <see
+    /// cref="EpisodeModel"> Episode </see> was watched until
+    /// </summary>
+    /// <param name="media">    </param>
+    /// <param name="duration"> </param>
     public void SetWatchedDuration(MediaBase media, ushort duration)
     {
         try
@@ -414,7 +469,7 @@ public class User
             }
             else if (media.GetType().Equals(typeof(EpisodeModel)))
             {
-                EpisodeModel episode = (EpisodeModel)media;
+                EpisodeModel episode = (EpisodeModel) media;
                 key = $"e_{episode.TMDB}_{episode.Season.Season_Number}_{episode.Episode_Number}";
             }
 
@@ -448,6 +503,9 @@ public class User
 
     #region Private Methods
 
+    /// <summary>
+    /// Attempts to login with stored token.
+    /// </summary>
     private void LoginWithToken()
     {
         if (!string.IsNullOrEmpty(Token))
@@ -459,17 +517,22 @@ public class User
             HttpResponseMessage response = new HttpClient().PostAsync($"https://auth.flexx-tv.tk/login.php", new StringContent(JsonConvert.SerializeObject(formData), Encoding.UTF8, "application/json")).Result;
             if (response.IsSuccessStatusCode)
             {
-                JObject json = (JObject)JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result);
+                JObject json = (JObject) JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result);
                 if (json.ContainsKey("token"))
                 {
                     try
                     {
-                        Token = (string)json["token"];
-                        FirstName = (string)json["fname"];
-                        LastName = (string)json["lname"];
-                        Email = (string)json["email"];
-                        Plan = Enum.TryParse(typeof(PlanTier), (string)json["plan"], out object planTier) ? (PlanTier)planTier : PlanTier.Free;
+                        Token = (string) json["token"];
+                        FirstName = (string) json["fname"];
+                        LastName = (string) json["lname"];
+                        Email = (string) json["email"];
+                        Username = json["username"] != null ? (string) json["username"] : string.IsNullOrWhiteSpace(FirstName) ? Email : FirstName;
+                        Plan = Enum.TryParse(typeof(PlanTier), (string) json["plan"], out object planTier) ? (PlanTier) planTier : PlanTier.Free;
                         IsLocal = false;
+                        userProfile.GetConfigByKey("email").Value = Email;
+                        userProfile.GetConfigByKey("username").Value = Username;
+                        userProfile.GetConfigByKey("first name").Value = FirstName;
+                        userProfile.GetConfigByKey("last name").Value = LastName;
                     }
                     catch
                     {
@@ -479,6 +542,10 @@ public class User
         }
     }
 
+    /// <summary>
+    /// Loads <see cref="GetWatchedDuration"> Watch Duration </see> and <see cref="GetHasWatched">
+    /// Has Watched </see> values from metadata.
+    /// </summary>
     private void UpdateDictionaries()
     {
         WatchedDuration.Clear();

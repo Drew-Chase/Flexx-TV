@@ -10,6 +10,10 @@ namespace Flexx.Server.Controllers
     {
         #region Public Methods
 
+        /// <summary>
+        /// Gets server base information.
+        /// </summary>
+        /// <returns> </returns>
         [HttpGet("status")]
         public IActionResult GetStatus()
         {
@@ -24,6 +28,10 @@ namespace Flexx.Server.Controllers
             });
         }
 
+        /// <summary>
+        /// Redirects to <see cref="GetStatus"> Status </see>
+        /// </summary>
+        /// <returns> </returns>
         public IActionResult Index()
         {
             return GetStatus();

@@ -21,6 +21,10 @@ public class StreamController : ControllerBase
 {
     #region Public Methods
 
+    /// <summary>
+    /// Returns all Active Streams with necessary information
+    /// </summary>
+    /// <returns> </returns>
     [HttpGet("get/active")]
     public JsonResult GetAllActiveStreams()
     {
@@ -46,25 +50,36 @@ public class StreamController : ControllerBase
         return new(json);
     }
 
+    /// <summary>
+    /// Retrieves the trailer direct URL from YouTube/Google Video.
+    /// </summary>
+    /// <param name="id"> </param>
+    /// <returns> </returns>
     [HttpGet("trailer")]
     public IActionResult GetMovieTrailer(string id)
     {
-        if (string.IsNullOrWhiteSpace(id)) return BadRequest(new { message = "ID cannot be empty" });
+        if (string.IsNullOrWhiteSpace(id))
+            return BadRequest(new { message = "ID cannot be empty" });
         MovieModel movie = MovieLibraryModel.Instance.GetMovieByTMDB(id);
         string trailerURL = string.Empty;
         if (movie == null)
         {
-            object jresult = Functions.GetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/videos?api_key={TMDB_API}");
-            if (jresult == null) return BadRequest();
-            JToken results = ((JObject)jresult)["results"];
-            if (results.Any())
+            if (Functions.TryGetJsonObjectFromURL($"https://api.themoviedb.org/3/movie/{id}/videos?api_key={TMDB_API}", out JObject jresult))
             {
-                JToken keyObject = results[0]["key"];
-                string key = (string)keyObject;
-                IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(key).Result.GetMuxedStreams().GetWithHighestVideoQuality();
-                if (!string.IsNullOrWhiteSpace(key) && streamInfo != null)
+                JToken results = jresult["results"];
+                if (results.Any())
                 {
-                    trailerURL = streamInfo.Url;
+                    JToken keyObject = results[0]["key"];
+                    string key = (string) keyObject;
+                    IVideoStreamInfo streamInfo = new YoutubeClient().Videos.Streams.GetManifestAsync(key).Result.GetMuxedStreams().GetWithHighestVideoQuality();
+                    if (!string.IsNullOrWhiteSpace(key) && streamInfo != null)
+                    {
+                        trailerURL = streamInfo.Url;
+                    }
+                    else
+                    {
+                        trailerURL = "";
+                    }
                 }
                 else
                 {
@@ -73,7 +88,7 @@ public class StreamController : ControllerBase
             }
             else
             {
-                trailerURL = "";
+                return BadRequest();
             }
         }
         else
@@ -92,6 +107,26 @@ public class StreamController : ControllerBase
         return RedirectPermanent(trailerURL);
     }
 
+    /// <summary>
+    /// Gets the stream information needed for the video player
+    /// </summary>
+    /// <param name="id">        The TMDB ID of the Movie or Series </param>
+    /// <param name="username">  The requesting users username or email </param>
+    /// <param name="library">   Rather its a Movie or Series </param>
+    /// <param name="platform"> 
+    /// The Video Players Platform, <see cref="Platform"> Platform List </see>
+    /// </param>
+    /// <param name="startTime"> what position the video should start at </param>
+    /// <param name="version">  
+    /// The quality setting that the stream is set to. See <see cref="MediaVersion"> Versions </see>
+    /// </param>
+    /// <param name="season">   
+    /// If Library parameter is set to "tv" then this will be the shows season
+    /// </param>
+    /// <param name="episode">  
+    /// If Library parameter is set to "tv" then this will be the shows episode
+    /// </param>
+    /// <returns> </returns>
     [HttpGet("get/stream_info")]
     public JsonResult GetStreamInfo(string id, string username, string library, Platform platform, long startTime, string version, int? season, int? episode)
     {
@@ -124,11 +159,17 @@ public class StreamController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Returns the HLS stream part from the temp directory
+    /// </summary>
+    /// <param name="file"> </param>
+    /// <returns> </returns>
     [HttpGet("get/{file}")]
     public IActionResult GetStreamPart(string file)
     {
         string[] files = Directory.GetFiles(Paths.TempData, file, SearchOption.AllDirectories);
-        if (files.Length == 0) return BadRequest();
+        if (files.Length == 0)
+            return BadRequest();
         try
         {
             return File(new FileStream(files[0], FileMode.Open, FileAccess.Read), "video/MP2T", true);
@@ -140,6 +181,27 @@ public class StreamController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Will return the HLS stream file
+    /// </summary>
+    /// <param name="id">         The TMDB ID of the Movie or Series </param>
+    /// <param name="username">   The requesting users username or email </param>
+    /// <param name="library">    Rather its a Movie or Series </param>
+    /// <param name="platform">  
+    /// The Video Players Platform, <see cref="Platform"> Platform List </see>
+    /// </param>
+    /// <param name="start_time"> what position the video should start at </param>
+    /// <param name="version">   
+    /// The quality setting that the stream is set to. See <see cref="MediaVersion"> Versions </see>
+    /// </param>
+    /// <param name="season">    
+    /// If Library parameter is set to "tv" then this will be the shows season
+    /// </param>
+    /// <param name="episode">   
+    /// If Library parameter is set to "tv" then this will be the shows episode
+    /// </param>
+    /// <param name="startTick">  The time-stamp when the stream started </param>
+    /// <returns> </returns>
     [HttpGet("get/version")]
     public IActionResult GetVideoStream(string id, string username, string library, string version, Platform platform, int? season, int? episode, int? start_time, long? startTick)
     {
@@ -162,12 +224,34 @@ public class StreamController : ControllerBase
                 Inline = false,
             };
             Response.Headers.Add("Content-Disposition", cd.ToString());
-            if (stream.FileStream != null) stream.FileStream.Dispose();
+            if (stream.FileStream != null)
+                stream.FileStream.Dispose();
             stream.FileStream = new(Directory.GetFiles(stream.WorkingDirectory, "*.m3u8")[0], FileMode.Open, FileAccess.Read);
             return File(stream.FileStream, "application/x-mpegURL", true);
         }
     }
 
+    /// <summary>
+    /// Removes a currently active stream and disposes of its resources
+    /// </summary>
+    /// <param name="id">        The TMDB ID of the Movie or Series </param>
+    /// <param name="username">  The requesting users username or email </param>
+    /// <param name="library">   Rather its a Movie or Series </param>
+    /// <param name="platform"> 
+    /// The Video Players Platform, <see cref="Platform"> Platform List </see>
+    /// </param>
+    /// <param name="startTime"> The time-stamp when the stream started </param>
+    /// <param name="version">  
+    /// The quality setting that the stream is set to. See <see cref="MediaVersion"> Versions </see>
+    /// </param>
+    /// <param name="season">   
+    /// If Library parameter is set to "tv" then this will be the shows season
+    /// </param>
+    /// <param name="episode">  
+    /// If Library parameter is set to "tv" then this will be the shows episode
+    /// </param>
+    /// <param name="startTime"> The time-stamp when the stream started </param>
+    /// <returns> </returns>
     [HttpPost("remove")]
     public IActionResult RemoveFromActiveStream([FromForm] string id, [FromForm] string username, [FromForm] string version, [FromForm] Platform platform, [FromForm] long startTime, [FromForm] string library, [FromForm] int? season, [FromForm] int? episode)
     {
@@ -188,6 +272,26 @@ public class StreamController : ControllerBase
         return Ok(new { message = "Stream Successfully Removed" });
     }
 
+    /// <summary>
+    /// Will start a new stream with specified parameters
+    /// </summary>
+    /// <param name="id">         The TMDB ID of the Movie or Series </param>
+    /// <param name="username">   The requesting users username or email </param>
+    /// <param name="library">    Rather its a Movie or Series </param>
+    /// <param name="version">   
+    /// The quality setting that the stream is set to. See <see cref="MediaVersion"> Versions </see>
+    /// </param>
+    /// <param name="platform">  
+    /// The Video Players Platform, <see cref="Platform"> Platform List </see>
+    /// </param>
+    /// <param name="season">    
+    /// If Library parameter is set to "tv" then this will be the shows season
+    /// </param>
+    /// <param name="episode">   
+    /// If Library parameter is set to "tv" then this will be the shows episode
+    /// </param>
+    /// <param name="start_time"> The time-stamp when the stream started </param>
+    /// <returns> </returns>
     [HttpGet("start")]
     public JsonResult StartStream(string id, string username, string library, string version, Platform platform, int? season, int? episode, int? start_time)
     {
@@ -207,6 +311,31 @@ public class StreamController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Will update servers information on the active stream. <br/> If not polled every 15 seconds
+    /// stream will auto kill itself.
+    /// </summary>
+    /// <param name="id">              The TMDB ID of the Movie or Series </param>
+    /// <param name="username">        The requesting users username or email </param>
+    /// <param name="version">        
+    /// The quality setting that the stream is set to. See <see cref="MediaVersion"> Versions </see>
+    /// </param>
+    /// <param name="startTime">       </param>
+    /// <param name="platform">       
+    /// The Video Players Platform, <see cref="Platform"> Platform List </see>
+    /// </param>
+    /// <param name="library">         Rather its a Movie or Series </param>
+    /// <param name="season">         
+    /// If Library parameter is set to "tv" then this will be the shows season
+    /// </param>
+    /// <param name="episode">        
+    /// If Library parameter is set to "tv" then this will be the shows episode
+    /// </param>
+    /// <param name="state">          
+    /// If the video is paused, playing, etc. See <see cref="PlayState"> Available States </see>
+    /// </param>
+    /// <param name="currentPosition"> the current play position of the stream </param>
+    /// <returns> </returns>
     [HttpPost("update")]
     public IActionResult UpdateStream([FromForm] string id, [FromForm] string username, [FromForm] string version, [FromForm] long startTime, [FromForm] Platform platform, [FromForm] string library, [FromForm] int? season, [FromForm] int? episode, [FromForm] PlayState state, [FromForm] int currentPosition)
     {

@@ -7,6 +7,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using static Flexx.Data.Global;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Flexx.Networking;
 
@@ -14,6 +16,9 @@ public static class Firewall
 {
     #region Public Methods
 
+    /// <summary>
+    /// Checks if application is currently added to the Windows Firewall
+    /// </summary>
     public static bool IsAddedToFirewall
     {
         get
@@ -35,10 +40,16 @@ public static class Firewall
         }
     }
 
+    /// <summary>
+    /// Checks if Application is currently running as Windows Administrator
+    /// </summary>
     public static bool IsAdministrator => !OperatingSystem.IsWindows() ||
        new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent())
        .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
 
+    /// <summary>
+    /// Will attempt to add rule to the windows firewall. <br/> This is needed to enable port forwarding
+    /// </summary>
     public static void AddToFirewall()
     {
         if (OperatingSystem.IsWindows() && !IsAddedToFirewall)
@@ -67,6 +78,12 @@ public static class Firewall
         }
     }
 
+    /// <summary>
+    /// This will close specific port. <br/> This is to ensure good security by closing ports when
+    /// there not needed.
+    /// </summary>
+    /// <param name="port"> </param>
+    /// <returns> </returns>
     public static async Task ClosePort(int port)
     {
         NatDevice device = await new NatDiscoverer().DiscoverDeviceAsync(PortMapper.Upnp, new(5000));
@@ -82,6 +99,11 @@ public static class Firewall
         }
     }
 
+    /// <summary>
+    /// Gets the LAN IP Address. <br/><example> Example: <b> 192.168.1.2 </b></example>
+    /// </summary>
+    /// <returns> </returns>
+    /// <exception cref="WebException"> </exception>
     public static IPAddress GetLocalIP()
     {
         NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
@@ -114,6 +136,38 @@ public static class Firewall
         throw new WebException("No outward bound IP address was found");
     }
 
+    /// <summary>
+    /// WIll return an array of Open Mappings
+    /// </summary>
+    /// <returns> </returns>
+    public static async Task<Mapping[]> GetMappingList()
+    {
+        NatDiscoverer nat = new();
+        CancellationTokenSource cts = new(5000);  // Will Timeout after 5 seconds
+        NatDevice device = await nat.DiscoverDeviceAsync(PortMapper.Upnp, cts);
+        return device.GetAllMappingsAsync().Result.ToArray();
+    }
+
+    /// <summary>
+    /// This will return an array of all currently mapped ports
+    /// </summary>
+    /// <returns> Array of open ports </returns>
+    public static async Task<int[]> GetPortsList()
+    {
+        Mapping[] mappings = await GetMappingList();
+        int[] ports = new int[mappings.Length];
+        for (int i = 0; i < ports.Length; i++)
+        {
+            ports[i] = mappings[i].PrivatePort;
+        }
+        return ports;
+    }
+
+    /// <summary>
+    /// Gets the Remotely accessible IP Address of the server.
+    /// </summary>
+    /// <returns> </returns>
+    /// <exception cref="WebException"> </exception>
     public static IPAddress GetPublicIP()
     {
         try
@@ -133,6 +187,11 @@ public static class Firewall
         }
     }
 
+    /// <summary>
+    /// Checks if a specified port is currently port forwarded or not.
+    /// </summary>
+    /// <param name="port"> </param>
+    /// <returns> </returns>
     public static async Task<bool> IsPortOpen(int port)
     {
         NatDiscoverer nat = new();
@@ -149,18 +208,12 @@ public static class Firewall
         return false;
     }
 
-    public static async Task ListPorts()
-    {
-        NatDiscoverer nat = new();
-        CancellationTokenSource cts = new(5000);
-        NatDevice device = await nat.DiscoverDeviceAsync(PortMapper.Upnp, cts);
-
-        foreach (Mapping mapping in await device.GetAllMappingsAsync())
-        {
-            log.Debug($"OPENED => {mapping}");
-        }
-    }
-
+    /// <summary>
+    /// Will add a port to the routers mappings
+    /// </summary>
+    /// <param name="port">        </param>
+    /// <param name="description"> </param>
+    /// <returns> </returns>
     public static async Task OpenPort(int port, string description = "FlexxTV Media Server")
     {
         try
@@ -173,11 +226,24 @@ public static class Firewall
             map = new(Protocol.Udp, port, port, description);
             await device.CreatePortMapAsync(map);
             log.Debug($"Created {map}");
-            await ListPorts();
+            int[] ports = await GetPortsList();
+            await PrintMappingList();
         }
         catch (Exception e)
         {
             log.Error($"Had an Issue opening port: {port}", e);
+        }
+    }
+
+    /// <summary>
+    /// Will Print to console all open port mappings
+    /// </summary>
+    /// <returns> </returns>
+    public static async Task PrintMappingList()
+    {
+        foreach (Mapping mapping in await GetMappingList())
+        {
+            log.Debug($"OPEN=>{mapping}");
         }
     }
 

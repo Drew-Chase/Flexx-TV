@@ -11,6 +11,11 @@ namespace Flexx.Server.Controllers
     {
         #region Public Methods
 
+        /// <summary>
+        /// Adds movie to Flexx
+        /// </summary>
+        /// <param name="tmdb"> </param>
+        /// <returns> </returns>
         [HttpGet("movies/add/{tmdb}")]
         public IActionResult AddMovie(string tmdb)
         {
