@@ -39,4 +39,7 @@
     <PackageReference Include="Xabe.FFmpeg.Downloader" Version="5.0.2" />
     <PackageReference Include="YoutubeExplode" Version="6.0.5" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Flexx.Updater\Flexx.Updater.csproj" />
+  </ItemGroup>
 </Project>
