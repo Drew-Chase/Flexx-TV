@@ -514,8 +514,7 @@ namespace Flexx.Server.Controllers
                                             seasons.Add(new(seasonModel, user));
                                         }
                                     }
-                                    seasons.Sort((x, y) => x.Season.CompareTo(y.Season));
-                                    return new(new { seasons });
+                                    return new(new { seasons = seasons.OrderBy(s => s.Season) });
                                 }
                                 else
                                 {
