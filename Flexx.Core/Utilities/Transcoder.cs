@@ -181,7 +181,8 @@ public class Transcoder
     public static Task GenerateStills(MediaBase media) =>
         Task.Run(() =>
         {
-            if (!media.Downloaded) return;
+            if (!media.Downloaded)
+                return;
             string stillsDirectory = Directory.CreateDirectory(Path.Combine(Directory.GetParent(media.Metadata.PATH).FullName, "stills")).FullName;
             media.Metadata.GetConfigByKey("stills_generated").Value = Directory.GetFiles(stillsDirectory, "*.png", SearchOption.TopDirectoryOnly).Length >= Math.Ceiling(media.MediaInfo.Duration.TotalSeconds - 60);
             if (!media.Metadata.GetConfigByKey("stills_generated").Value)
@@ -190,7 +191,7 @@ public class Transcoder
                 log.Debug($"Processing Stills for {media.TMDB}_{media.Title}");
                 string exe = Directory.GetFiles(Paths.FFMpeg, "ffmpeg*", SearchOption.AllDirectories)[0];
 
-                string arguments = $"-hwaccel auto -y -i \"{media.PATH}\" -loglevel quiet -preset ultrafast -vf fps=1,scale=-2:100 -b:v 10k \"{Path.Combine(stillsDirectory, "%d.png")}\"";
+                string arguments = $"-hwaccel auto -y -i \"{media.PATH}\" -loglevel quiet -preset ultrafast -vf fps=1/30,scale=-2:96 -b:v 0 \"{Path.Combine(stillsDirectory, "%d.png")}\"";
                 Process process = new()
                 {
                     StartInfo = new()
