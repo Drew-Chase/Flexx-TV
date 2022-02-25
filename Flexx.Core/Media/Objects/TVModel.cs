@@ -556,13 +556,6 @@ namespace Flexx.Media.Objects
         {
             SeasonModel model = new(season, this);
             Seasons.Add(model);
-            try
-            {
-                Seasons = Seasons.OrderBy(s => s.Season_Number).ToList();
-            }
-            catch
-            {
-            }
             return model;
         }
 

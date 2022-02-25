@@ -196,7 +196,7 @@ namespace Flexx.Media.Objects.Libraries
             {
                 model.Add(new(show, user));
             }
-            return model.ToArray();
+            return model.OrderBy(s => s.Title).ToArray();
         }
 
         public SeriesObject[] GetLocalList(User user)
