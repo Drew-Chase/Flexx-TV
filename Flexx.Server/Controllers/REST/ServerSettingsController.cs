@@ -46,9 +46,9 @@ namespace Flexx.Server.Controllers
             }
         }
 
-        public IActionResult Index(string token)
+        public IActionResult Index(string username)
         {
-            if (!Users.Instance.Get(token).IsHost)
+            if (!Users.Instance.Get(username).IsHost)
             {
                 return Unauthorized(new { success = false, message = "User is not authorized to view this data" });
             }
