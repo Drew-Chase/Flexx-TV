@@ -104,12 +104,23 @@ public class Users
             return GetGuestUser();
         Parallel.ForEach(users, user =>
         {
-            if (user.Username.Equals(delimiter) || user.Token.Equals(delimiter))
+            try
             {
-                value = user;
+                if (user.Username.Equals(delimiter) || user.Token.Equals(delimiter) || user.Email.Equals(delimiter) || user.FirstName.Equals(delimiter))
+                {
+                    value = user;
+                }
+            }
+            catch (NullReferenceException e)
+            {
+                log.Error($"Search has returned with a null reference while searching for {delimiter}", e);
+            }
+            catch (Exception e)
+            {
+                log.Error($"Unexpected Error has occurred while searching for user: {delimiter}", e);
             }
         });
-        return value ?? Add(delimiter);
+        return value ?? GetGuestUser();
     }
 
     /// <summary>
@@ -161,6 +172,10 @@ public class User
     {
         Plan = PlanTier.Free;
         Username = username;
+        Email = "";
+        FirstName = "";
+        LastName = "";
+
         userProfile = new(Path.Combine(Directory.CreateDirectory(Path.Combine(Paths.UserData, username)).FullName, $"{username}.userdata"));
         HasWatched = new();
         WatchedDuration = new();
@@ -280,7 +295,7 @@ public class User
     {
         if (!string.IsNullOrEmpty(password))
         {
-            HttpResponseMessage response = new HttpClient().PostAsync($"https://auth.flexx-tv.tk/login.php", new FormUrlEncodedContent(new[]
+            HttpResponseMessage response = new HttpClient().PostAsync($"{Paths.FlexxAuthURL}/login.php", new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string,string>("email", Username),
                 new KeyValuePair<string,string>("password", password),
@@ -510,11 +525,11 @@ public class User
     {
         if (!string.IsNullOrEmpty(Token))
         {
-            object formData = new
-            {
-                token = Token,
-            };
-            HttpResponseMessage response = new HttpClient().PostAsync($"https://auth.flexx-tv.tk/login.php", new StringContent(JsonConvert.SerializeObject(formData), Encoding.UTF8, "application/json")).Result;
+            HttpResponseMessage response = new HttpClient().PostAsync($"{Paths.FlexxAuthURL}/login.php", new FormUrlEncodedContent(new[]
+                            {
+                                new KeyValuePair<string, string>("token", Token),
+                            })).Result;
+            log.Debug(response);
             if (response.IsSuccessStatusCode)
             {
                 JObject json = (JObject) JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result);
