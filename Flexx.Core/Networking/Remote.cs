@@ -15,7 +15,7 @@ public static class Remote
     {
         if (user != null && string.IsNullOrWhiteSpace(user.Token) && user.IsHost)
         {
-            HttpResponseMessage response = new HttpClient().GetAsync($"https://auth.flexx-tv.tk/getServer.php?{user.Token}").Result;
+            HttpResponseMessage response = new HttpClient().GetAsync($"{Paths.FlexxAuthURL}/getServer.php?{user.Token}").Result;
             if (response.IsSuccessStatusCode)
             {
                 JObject json = JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
@@ -29,7 +29,7 @@ public static class Remote
     {
         if (user.IsAuthorized(PlanTier.Free))
         {
-            HttpResponseMessage response = new HttpClient().PostAsync($"https://auth.flexx-tv.tk/addServer.php", new FormUrlEncodedContent(new[]
+            HttpResponseMessage response = new HttpClient().PostAsync($"{Paths.FlexxAuthURL}/addServer.php", new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string,string>("host", user.Token),
                 new KeyValuePair<string,string>("public", Firewall.GetPublicIP().ToString()),
@@ -40,12 +40,15 @@ public static class Remote
             {
                 string content = response.Content.ReadAsStringAsync().Result;
                 JObject json = (JObject) JsonConvert.DeserializeObject(content);
-                return (json.ContainsKey("error") && (string) json["error"] == "Server already exists") || (json.ContainsKey("token") && new HttpClient().PostAsync("https://auth.flexx-tv.tk/updateAccount.php", new FormUrlEncodedContent(new[]
+                if (json != null)
                 {
+                    return (json.ContainsKey("error") && (string) json["error"] == "Server already exists") || (json.ContainsKey("token") && new HttpClient().PostAsync($"{Paths.FlexxAuthURL}/updateAccount.php", new FormUrlEncodedContent(new[]
+                    {
                         new KeyValuePair<string,string>("token", user.Token),
                         new KeyValuePair<string,string>("property", "servers"),
                         new KeyValuePair<string,string>("value", user.Token),
-                })).Result.IsSuccessStatusCode);
+                    })).Result.IsSuccessStatusCode);
+                }
             }
         }
         return false;

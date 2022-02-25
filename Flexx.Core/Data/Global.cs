@@ -58,7 +58,7 @@ public static class Global
     /// <summary>
     /// Primary logger
     /// </summary>
-    public static ILog log => LogManager.Singleton.SetLogDirectory(Path.Combine(Paths.Log, "latest.log")).SetDumpMethod(DumpType.NoDump).SetMinimumLogType(Lists.LogTypes.All);
+    public static ILog log => LogManager.Singleton.SetLogDirectory(Path.Combine(Paths.Log, "latest.log")).SetDumpMethod(3000).SetMinimumLogType(Lists.LogTypes.All);
 
     /// <summary>
     /// List of all accepted media container extensions.
@@ -242,6 +242,17 @@ public static class Global
                 return path;
             }
         }
+
+#if DEBUG
+
+        public static string FlexxBaseURL => "flexx-tv.com";
+
+        public static string FlexxAuthURL => $"http://auth.{FlexxBaseURL}";
+
+#else
+        public static string FlexxBaseURL => "flexx-tv.tk";
+        public static string FlexxAuthURL => $"https://auth.{FlexxBaseURL}";
+#endif
 
         /// <summary>
         /// Returns the absolute path to the missing poster image. <br/> If none is found it will
