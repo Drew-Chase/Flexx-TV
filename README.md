@@ -24,8 +24,8 @@ Flexx Free, as you might guess, is the free version of Flexx (and yes that means
 3. Utilizing pre-existing media
 4. Watching Movies and TV with friends
 5. Server Dashboard app
-6. Unlimited amount of users.
-<br></br><br></br>
+6. Unlimited amount of users.  
+
 ![Flexx Free Features](https://i.imgur.com/mOirS1S.png)
 ### Flexx RED
 Flexx RED is the premium version of Flexx that adds quite a bit more options.
@@ -34,13 +34,15 @@ Flexx RED is the premium version of Flexx that adds quite a bit more options.
 3. Proxy list.
 4. Adds ability to add moviers and tv right from the Flexx client.
 5. TV Shows will automatically download the latest episodes as they air.
-6. You will have unlimited access to all Flexx clients for no aditional charge.
-<br></br><br></br>
+6. You will have unlimited access to all Flexx clients for no aditional charge.   
+
+
 ![Flexx Red Features](https://i.imgur.com/X8ShbAU.png)
 ## How much does Flexx RED cost?
 Flexx Red has 3 payment options, each have the same features just different ways of paying
 1. Monthly - $4.99
 2. Yearly - $39.99
-3. Lifetime - $149.99
-<br></br><br></br>
+3. Lifetime - $149.99   
+
+
 ![Flexx Red Pricing Tier](https://i.imgur.com/s3sdZPR.png)
